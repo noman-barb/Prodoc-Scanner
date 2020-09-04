@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        android:id="@+id/root"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <RelativeLayout
+            android:visibility="gone"
+            android:background="@color/colorGray1"
+            android:clickable="true"
+            android:id="@+id/protector"
+            android:elevation="20dp"
+            android:alpha="0.1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"></RelativeLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:background="@color/colorPrimary"
+            android:elevation="2dp"
+            android:minHeight="?attr/actionBarSize">
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginRight="8dp"
+
+                android:layout_toRightOf="@id/exitRL"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+
+                <RelativeLayout
+                    android:id="@+id/saveRL"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless">
+
+                    <ImageView
+                        android:id="@+id/saveIV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:padding="4dp"
+                        android:src="@drawable/baseline_save_white_24">
+
+                    </ImageView>
+
+                    <TextView
+
+
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_below="@id/saveIV"
+                        android:layout_centerHorizontal="true"
+                        android:maxLines="1"
+                        android:text="Export"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="12sp">
+
+                    </TextView>
+
+
+                </RelativeLayout>
+
+
+                <RelativeLayout
+                    android:id="@+id/shareRL"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_toLeftOf="@id/saveRL"
+
+
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless">
+
+                    <ImageView
+                        android:id="@+id/shareIV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:padding="4dp"
+                        android:src="@drawable/baseline_share_white_24">
+
+                    </ImageView>
+
+                    <TextView
+
+
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_below="@id/shareIV"
+                        android:layout_centerHorizontal="true"
+                        android:maxLines="1"
+                        android:text="Share"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="12sp">
+
+                    </TextView>
+
+
+                </RelativeLayout>
+
+
+                <RelativeLayout
+                    android:id="@+id/view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_toLeftOf="@id/shareRL"
+
+
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless">
+
+                    <ImageView
+                        android:id="@+id/gridViewIV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:padding="4dp"
+                        android:src="@drawable/baseline_open_in_new_white_24">
+
+                    </ImageView>
+
+                    <TextView
+
+
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_below="@id/gridViewIV"
+                        android:layout_centerHorizontal="true"
+                        android:maxLines="1"
+                        android:text="View"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="12sp">
+
+                    </TextView>
+
+
+                </RelativeLayout>
+
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toLeftOf="@id/view">
+
+
+                    >
+
+                    <RelativeLayout
+                        android:focusable="true"
+                        android:id="@+id/renameRL"
+                        android:clickable="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:elevation="2dp">
+
+                        <ImageView
+                            android:id="@+id/editFilenameIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentLeft="true"
+                            android:layout_marginLeft="5dp"
+                            android:layout_marginRight="5dp"
+                            android:src="@drawable/baseline_edit_white_18"></ImageView>
+
+
+                        <TextView
+
+                            android:id="@+id/fileNameTV"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_toRightOf="@id/editFilenameIV"
+                            android:alpha="0.9"
+
+                            android:maxLines="2"
+                            android:text="Prodoc Scan 2020"
+                            android:textColor="@color/colorWhite"
+                            android:textStyle="bold"></TextView>
+
+
+                    </RelativeLayout>
+
+
+                </RelativeLayout>
+
+
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/exitRL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:orientation="vertical"
+                android:padding="15dp">
+
+                <ImageView
+                    android:id="@+id/retakeIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:src="@drawable/baseline_clear_white_24">
+
+                </ImageView>
+
+
+            </RelativeLayout>
+
+
+        </RelativeLayout>
+
+
+
+
+
+        <RelativeLayout
+            android:visibility="gone"
+            android:clickable="true"
+            android:id="@+id/footerActionRL"
+            android:elevation="4dp"
+            android:layout_alignLeft="@id/foote"
+            android:layout_alignRight="@id/foote"
+            android:layout_alignTop="@id/foote"
+            android:layout_alignBottom="@id/foote"
+            android:background="@color/colorSecondaryDark"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:clickable="true"
+                android:layout_marginLeft="15dp"
+                android:background="@drawable/circular_just_border_white"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
+                android:id="@+id/fooActionClearIV"
+
+                android:padding="10dp"
+                android:src="@drawable/baseline_clear_white_24"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></ImageView>
+
+            <ImageView
+                android:clickable="true"
+                android:layout_marginRight="15dp"
+                android:layout_centerVertical="true"
+                android:background="@drawable/active_btn"
+                android:layout_alignParentRight="true"
+                android:id="@+id/fooActionOKIV"
+                android:padding="10dp"
+                android:src="@drawable/baseline_check_white_24"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"></ImageView>
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+
+            android:elevation="3dp"
+            android:id="@+id/foote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@color/colorSecondaryDark">
+
+            <HorizontalScrollView
+
+                android:id="@+id/bottomScrolView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:paddingLeft="5dp"
+                android:paddingTop="15dp"
+                android:paddingRight="5dp"
+                android:paddingBottom="15dp">
+
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+
+                    <RelativeLayout
+
+                        android:id="@+id/addPagesRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/addPagesIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_add_a_photo_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/addPagesIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Add Pages"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/cropRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/addPagesRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/cropIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_crop_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/cropIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Crop"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/colorRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/cropRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/colorIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_color_lens_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/colorIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Color"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/rotateRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/colorRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/rotateIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_rotate_right_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/rotateIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Rotate"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/shareSinglePageRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/rotateRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/shareSinglePageIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_share_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/shareSinglePageIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Share"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/reorderRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/shareSinglePageRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/reorderIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_view_module_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/reorderIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Reorder"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/deleteRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:layout_toRightOf="@id/reorderRL"
+
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/deleteIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_delete_white_24">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/deleteIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Delete"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                </RelativeLayout>
+
+            </HorizontalScrollView>
+
+
+        </RelativeLayout>
+
+
+
+
+        <RelativeLayout
+            android:id="@+id/recyclerViewParent"
+
+            android:clickable="true"
+            android:layout_above="@id/foote"
+            android:layout_below="@id/header"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.aaindia.prodocscanner.views.TouchableReyclerView
+
+                android:elevation="3dp"
+
+                android:background="@color/colorSecondaryDarkLight"
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                ></com.aaindia.prodocscanner.views.TouchableReyclerView>
+
+
+
+            <androidx.recyclerview.widget.RecyclerView
+
+                android:visibility="gone"
+                android:elevation="5dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/colorSecondaryDarkLight"
+                android:id="@+id/reOrderRecyclerView">
+
+            </androidx.recyclerview.widget.RecyclerView>
+
+
+
+
+        </RelativeLayout>
+
+
+
+
+
+        <RelativeLayout
+            android:clickable="true"
+            android:visibility="gone"
+            android:background="@color/colorBlackAlpha80"
+
+            android:layout_alignBottom="@id/recyclerViewParent"
+
+            android:id="@+id/colorControlRL"
+
+            android:paddingBottom="10dp"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:orientation="horizontal"
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+
+
+            <RelativeLayout
+
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/row1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.xw.repo.BubbleSeekBar
+
+                    app:bsb_bubble_color="@color/colorSecondary"
+                    app:bsb_max="100"
+                    app:bsb_min="0"
+                    app:bsb_second_track_color="@color/colorWhite"
+
+                    app:bsb_section_count="5"
+                    app:bsb_seek_by_section="true"
+                    app:bsb_seek_step_section="true"
+
+                    app:bsb_thumb_color="@color/colorSecondary"
+                    app:bsb_section_text_size="9sp"
+
+
+                    app:bsb_track_size="3dp"
+                    app:bsb_second_track_size="2dp"
+
+                    app:bsb_progress="50"
+
+                    app:bsb_thumb_text_color="@color/colorBackgroundDark"
+
+
+
+                    app:bsb_show_section_mark="true"
+                    app:bsb_show_section_text="false"
+                    app:bsb_show_thumb_text="false"
+                    app:bsb_track_color="@color/colorWhite"
+
+                    app:bsb_touch_to_seek="true"
+
+                    android:paddingBottom="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_toLeftOf="@id/grayCRL"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/colorTuneSK"
+                    android:layout_centerVertical="true"
+                    ></com.xw.repo.BubbleSeekBar>
+
+                <RelativeLayout
+                    android:paddingRight="8dp"
+                    android:paddingLeft="8dp"
+                    android:paddingBottom="10dp"
+                    android:layout_centerVertical="true"
+                    android:id="@+id/grayCRL"
+                    android:layout_alignParentRight="true"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+
+                        android:id="@+id/colorGrayCheck"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                    </androidx.appcompat.widget.AppCompatCheckBox>
+
+
+                </RelativeLayout>
+
+                <TextView
+
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginTop="20dp"
+                    android:textAlignment="textStart"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignRight="@id/colorTuneSK"
+                    android:layout_below="@id/colorTuneSK"
+                    android:text="Tone"
+                    android:textColor="@color/colorWhite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                </TextView>
+
+
+
+                <TextView
+                    android:layout_marginTop="20dp"
+
+                    android:textAlignment="center"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignLeft="@id/grayCRL"
+                    android:layout_below="@id/colorTuneSK"
+                    android:text="Gray"
+                    android:textColor="@color/colorWhite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                </TextView>
+
+
+
+            </RelativeLayout>
+
+
+
+        </RelativeLayout>
+
+
+
+    </RelativeLayout>
+
+</layout>

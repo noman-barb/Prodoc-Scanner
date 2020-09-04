@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorSecondaryDarkLight">
+
+
+    <RelativeLayout
+
+        android:id="@+id/pageNumberRL"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <!-- dummy-->
+
+        <RelativeLayout
+
+            android:layout_width="match_parent"
+
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+
+            android:background="@color/colorSecondaryDark"
+            android:elevation="1dp"
+            android:visibility="invisible">
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp">
+
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/circular_just_border_white"
+                    android:padding="10dp"
+                    android:src="@drawable/baseline_clear_white_24">
+
+                </ImageView>
+            </RelativeLayout>
+        </RelativeLayout>
+
+
+        <!-- dummy ends-->
+
+
+        <RelativeLayout
+            android:id="@+id/footerActionRL"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:background="@color/colorSecondaryDark"
+            android:elevation="1dp"
+            android:visibility="visible">
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp">
+
+
+                <ImageView
+                    android:id="@+id/nextClearActionIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/circular_just_border_white"
+                    android:clickable="true"
+                    android:padding="10dp"
+                    android:src="@drawable/baseline_clear_white_24">
+
+
+                </ImageView>
+
+
+                <ImageView
+                    android:id="@+id/nextActionIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/active_btn"
+                    android:clickable="true"
+                    android:padding="10dp"
+                    android:paddingLeft="25dp"
+                    android:paddingRight="25dp"
+                    android:src="@drawable/baseline_check_white_24">
+
+
+                </ImageView>
+
+
+            </RelativeLayout>
+
+
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/pageNumberTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="5dp"
+
+            android:background="@drawable/circular_full_xml_icon"
+
+            android:elevation="4dp"
+            android:fontFamily="sans-serif-condensed-medium"
+
+            android:maxLines="1"
+            android:padding="10dp"
+            android:text="1/10"
+            android:textColor="@color/colorWhite"
+            android:textSize="15sp">
+
+        </TextView>
+
+
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/theImageParentParent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+
+        android:layout_above="@id/pageNumberRL"
+        android:background="@color/colorSecondaryDarkLight">
+
+
+        <ProgressBar
+            android:id="@+id/processing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+
+            android:elevation="10dp"></ProgressBar>
+
+
+        <RelativeLayout
+
+            android:id="@+id/theImageParent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_margin="0dp"
+            android:background="@color/colorSecondaryDarkLight">
+
+
+            <ImageView
+
+                android:id="@+id/theImage"
+                android:layout_width="match_parent"
+
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:elevation="2dp"
+                android:src="@drawable/empty">
+
+            </ImageView>
+
+
+            <com.aaindia.prodocscanner.views.PolygonView
+
+
+                android:id="@+id/polygonView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:elevation="3dp"></com.aaindia.prodocscanner.views.PolygonView>
+
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+</RelativeLayout>

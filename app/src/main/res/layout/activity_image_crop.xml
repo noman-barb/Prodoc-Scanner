@@ -1,0 +1,587 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <RelativeLayout
+        android:id="@+id/root"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".activity.ImageCropActivity">
+
+
+        <RelativeLayout
+            android:layout_alignParentTop="true"
+            android:id="@+id/relativeLayoutTop"
+            android:elevation="2dp"
+            android:layout_width="match_parent"
+            android:minHeight="?attr/actionBarSize"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+
+            <RelativeLayout
+                android:layout_centerVertical="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp">
+
+                <RelativeLayout
+                    android:id="@+id/noCropRL"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                   android:layout_alignParentRight="true"
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/cropFreeIV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:src="@drawable/baseline_crop_free_white_24">
+
+                    </ImageView>
+
+                    <TextView
+
+
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+
+                        android:layout_below="@id/cropFreeIV"
+                        android:layout_centerHorizontal="true"
+                        android:maxLines="1"
+                        android:text="No Crop"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="10sp">
+
+                    </TextView>
+
+
+                </RelativeLayout>
+
+
+                <RelativeLayout
+                    android:padding="15dp"
+                    android:id="@+id/retakeRL"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                  android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/retakeIV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:src="@drawable/baseline_clear_white_24">
+
+                    </ImageView>
+
+
+
+
+                </RelativeLayout>
+
+
+            </RelativeLayout>
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:elevation="2dp"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/relativeLayoutBottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorSecondaryDark"
+            android:padding="2dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <LinearLayout
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:orientation="horizontal"
+                android:weightSum="100">
+
+
+                <LinearLayout
+
+                    android:id="@+id/cropLL"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="25"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:id="@+id/CropRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:padding="4dp"
+                            android:id="@+id/cropIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:src="@drawable/baseline_crop_white_36">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/cropIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Crop"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                </LinearLayout>
+
+                <LinearLayout
+
+
+                    android:id="@+id/colorLL"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="25"
+                    android:orientation="vertical">
+
+
+                    <RelativeLayout
+
+
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:id="@+id/colorRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:padding="4dp"
+                            android:id="@+id/colorIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:src="@drawable/baseline_color_lens_white_36">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/colorIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Color"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                </LinearLayout>
+
+
+                <LinearLayout
+
+
+                    android:id="@+id/rotateLL"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="25"
+                    android:orientation="vertical">
+
+
+                    <RelativeLayout
+
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:id="@+id/rotateRL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:clickable="true"
+                        android:foreground="?android:selectableItemBackgroundBorderless"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:padding="4dp"
+                            android:id="@+id/rotateIV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:src="@drawable/baseline_rotate_right_white_36">
+
+                        </ImageView>
+
+                        <TextView
+
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/rotateIV"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Rotate"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+
+                    </RelativeLayout>
+
+
+                </LinearLayout>
+
+
+                <LinearLayout
+
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="25"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="10dp"
+
+                        android:layout_marginRight="10dp"
+                        android:clickable="true">
+
+                        <ImageButton
+                            android:padding="4dp"
+                            android:id="@+id/nextCropIB"
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+
+                            android:background="@drawable/active_btn"
+                            android:foreground="?android:selectableItemBackgroundBorderless"
+
+                            android:src="@drawable/baseline_crop_white_36"
+                            android:textColor="@color/colorWhite"></ImageButton>
+
+
+                        <ImageButton
+                            android:padding="4dp"
+                            android:id="@+id/nextIB"
+
+                            android:visibility="gone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+
+                            android:background="@drawable/active_btn"
+                            android:foreground="?android:selectableItemBackgroundBorderless"
+
+                            android:src="@drawable/baseline_check_white_36"
+                            android:textColor="@color/colorWhite"></ImageButton>
+
+
+                        <TextView
+
+                            android:id="@+id/nextTVCrop"
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+
+                            android:layout_below="@id/nextCropIB"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Apply"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp"></TextView>
+
+                        <TextView
+
+                            android:id="@+id/nextTV"
+
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:visibility="gone"
+                            android:layout_below="@id/nextIB"
+                            android:layout_centerHorizontal="true"
+                            android:maxLines="1"
+                            android:text="Next"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="12sp">
+
+                        </TextView>
+
+                    </RelativeLayout>
+
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/theImageParentParent"
+            android:background="@color/colorSecondaryDarkLight"
+
+
+            android:layout_below="@id/relativeLayoutTop"
+            android:layout_above="@id/colorControlRL"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <ProgressBar
+                android:id="@+id/processing"
+                android:layout_centerInParent="true"
+                android:elevation="10dp"
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"></ProgressBar>
+
+
+
+            <RelativeLayout
+
+                android:id="@+id/theImageParent"
+
+                android:layout_centerInParent="true"
+                android:background="@color/colorSecondaryDarkLight"
+                android:layout_margin="0dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+
+
+                    <ImageView
+
+                        android:layout_centerInParent="true"
+                        android:elevation="2dp"
+
+
+                        android:src="@drawable/empty"
+                        android:id="@+id/theImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                    </ImageView>
+
+
+                <com.aaindia.prodocscanner.views.PolygonView
+
+                    android:visibility="gone"
+
+                    android:elevation="3dp"
+                    android:id="@+id/polygonView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"></com.aaindia.prodocscanner.views.PolygonView>
+
+
+
+
+            </RelativeLayout>
+
+
+
+
+
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:background="@color/colorSecondaryDarkLight"
+
+            android:id="@+id/colorControlRL"
+
+            android:paddingBottom="5dp"
+            android:paddingLeft="2dp"
+            android:paddingRight="2dp"
+            android:orientation="horizontal"
+
+            android:layout_above="@id/relativeLayoutBottom"
+
+
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+
+
+            <RelativeLayout
+
+                android:layout_marginRight="10dp"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/row1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.xw.repo.BubbleSeekBar
+
+                    app:bsb_bubble_color="@color/colorSecondary"
+                    app:bsb_max="100"
+                    app:bsb_min="0"
+                    app:bsb_second_track_color="@color/colorWhite"
+
+                    app:bsb_section_count="5"
+                    app:bsb_seek_by_section="true"
+                    app:bsb_seek_step_section="true"
+
+                    app:bsb_thumb_color="@color/colorSecondary"
+                    app:bsb_section_text_size="9sp"
+
+
+                    app:bsb_track_size="3dp"
+                    app:bsb_second_track_size="2dp"
+
+                    app:bsb_progress="50"
+                    app:bsb_section_text_position="sides"
+                    app:bsb_thumb_text_color="@color/colorBackgroundDark"
+
+
+                    app:bsb_show_section_mark="true"
+                    app:bsb_show_section_text="false"
+                    app:bsb_show_thumb_text="true"
+                    app:bsb_track_color="@color/colorWhite"
+
+                    app:bsb_touch_to_seek="true"
+
+                    android:paddingBottom="10dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_toLeftOf="@id/grayCRL"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/colorTuneSK"
+                    android:layout_centerVertical="true"
+                    ></com.xw.repo.BubbleSeekBar>
+
+                <RelativeLayout
+                    android:paddingRight="8dp"
+                    android:paddingLeft="8dp"
+                    android:paddingBottom="10dp"
+                    android:layout_centerVertical="true"
+                    android:id="@+id/grayCRL"
+                    android:layout_alignParentRight="true"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+
+                        android:id="@+id/colorGrayCheck"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                    </androidx.appcompat.widget.AppCompatCheckBox>
+
+
+                </RelativeLayout>
+
+                <TextView
+
+                    android:layout_marginTop="5dp"
+                    android:textAlignment="textStart"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignRight="@id/colorTuneSK"
+                    android:layout_below="@id/colorTuneSK"
+                    android:text="Color Tone"
+                    android:textColor="@color/colorWhite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                </TextView>
+
+
+
+                <TextView
+                    android:layout_marginTop="5dp"
+
+                    android:textAlignment="center"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignLeft="@id/grayCRL"
+                    android:layout_below="@id/colorTuneSK"
+                    android:text="Gray"
+                    android:textColor="@color/colorWhite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                </TextView>
+
+
+
+            </RelativeLayout>
+
+
+
+        </RelativeLayout>
+
+
+
+
+    </RelativeLayout>
+
+
+
+
+</layout>

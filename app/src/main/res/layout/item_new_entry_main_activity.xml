@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    card_view:cardBackgroundColor="@color/colorBackground"
+    card_view:cardElevation="2dp"
+    card_view:cardUseCompatPadding="true">
+
+    <RelativeLayout
+
+
+        android:id="@+id/mainRl"
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+
+        <LinearLayout
+            android:elevation="2dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignLeft="@id/r1"
+            android:layout_alignTop="@id/r1"
+            android:layout_alignRight="@id/r1"
+            android:layout_alignBottom="@id/r1"
+            android:orientation="vertical"
+            android:weightSum="10">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:orientation="vertical">
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+
+                    <ImageView
+                        android:elevation="3dp"
+                        android:id="@+id/moreOptions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginTop="2dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackgroundBorderless"
+                        android:paddingLeft="2dp"
+                        android:paddingBottom="20dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/baseline_more_vert_white_24">
+
+                    </ImageView>
+
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:alpha="0.65"
+                        android:background="@color/colorSecondaryDark">
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/numPagesRl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentRight="true"
+
+                        android:layout_alignParentBottom="true"
+                        android:layout_marginRight="3dp"
+                        android:layout_marginBottom="3dp"
+                        android:alpha="0.95"
+                        android:background="@drawable/circular_full_xml_icon"
+
+                        android:minWidth="20dp"
+                        android:minHeight="20dp">
+
+                        <TextView
+                            android:id="@+id/numPages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_centerVertical="true"
+                            android:fontFamily="sans-serif-condensed-medium"
+                            android:maxLines="1"
+                            android:padding="4dp"
+                            android:text="1"
+                            android:textColor="@color/colorWhite"
+                            android:textSize="10sp"></TextView>
+
+                    </RelativeLayout>
+
+
+                    <TextView
+
+                        android:id="@+id/dateCreated"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:layout_centerHorizontal="true"
+                        android:layout_margin="2dp"
+                        android:layout_marginBottom="5dp"
+                        android:layout_toLeftOf="@id/numPagesRl"
+                        android:fontFamily="sans-serif-condensed-light"
+                        android:lines="1"
+                        android:maxLines="1"
+                        android:text="02/05/19"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="10sp"></TextView>
+
+                    <TextView
+
+                        android:id="@+id/fileName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentTop="true"
+                        android:layout_marginLeft="2dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_toLeftOf="@id/moreOptions"
+                        android:fontFamily="sans-serif-condensed-medium"
+                        android:lines="2"
+                        android:maxLines="2"
+                        android:text="Folder 1 Important Files dont delete"
+                        android:textAlignment="center"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="12sp"></TextView>
+
+
+                </RelativeLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/r1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/colorBackgroundDark">
+
+
+            <ImageView
+                android:id="@+id/thumbnail_area"
+                android:visibility="invisible"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+                android:src="@drawable/folder_icon">
+
+
+            </ImageView>
+
+
+            <ImageView
+
+                android:layout_alignBottom="@id/thumbnail_area"
+                android:layout_alignTop="@id/thumbnail_area"
+                android:layout_alignRight="@id/thumbnail_area"
+                android:layout_alignLeft="@id/thumbnail_area"
+                android:id="@+id/thumbnail_folder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+              ></ImageView>
+
+            <ImageView
+                android:id="@+id/thumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignLeft="@id/thumbnail_folder"
+                android:layout_alignTop="@id/thumbnail_folder"
+                android:layout_alignRight="@id/thumbnail_folder"
+                android:layout_alignBottom="@id/thumbnail_folder"
+                android:padding="2dp"
+                android:scaleType="centerCrop">
+
+
+            </ImageView>
+
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/foreground_mask"
+            android:layout_alignBottom="@id/r1"
+            android:layout_alignTop="@id/r1"
+            android:layout_alignRight="@id/r1"
+            android:layout_alignLeft="@id/r1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorAccentAlpha">
+
+        </LinearLayout>
+
+
+
+    </RelativeLayout>
+
+
+</androidx.cardview.widget.CardView>

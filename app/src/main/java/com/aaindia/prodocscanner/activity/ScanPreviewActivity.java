@@ -130,13 +130,19 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
         getImageDetails().removePage(position);
         getImageDetails().sync();
-        FileUtils.deleteQuietly(new File(originalFilePath));
-        FileUtils.deleteQuietly(new File(processedImageFilepath));
+        //FileUtils.deleteQuietly(new File(originalFilePath));
+        //FileUtils.deleteQuietly(new File(processedImageFilepath));
+
+        FileNav.deleteDirectoryQuietely(new File(originalFilePath));
+
+        FileNav.deleteDirectoryQuietely(new File(processedImageFilepath));
 
         if (getOriginalFilepaths().size() == 0) {
 
 
-            FileUtils.deleteQuietly(new File(getScanDirPath()));
+           // FileUtils.deleteQuietly(new File(getScanDirPath()));
+
+            FileNav.deleteDirectoryQuietely(new File(getScanDirPath()));
 
             Intent intent = new Intent(ScanPreviewActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);

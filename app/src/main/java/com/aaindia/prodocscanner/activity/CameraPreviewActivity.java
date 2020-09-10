@@ -283,7 +283,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Permission Needed");
-            builder.setMessage("This app requires camera permission to capture images");
+            builder.setMessage("Camera permission is required to capture images");
 
 
             builder.setPositiveButton("OK", (dialog, which) -> {
@@ -294,10 +294,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 dialog.dismiss();
             });
 
-            builder.setNegativeButton("Cancel", (dialog, which) -> {
-
-                dialog.dismiss();
-            });
 
 
             builder.create();
@@ -309,6 +305,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
     private void setViews() {
+
+
 
         int flashMode = Prefs.UserSettingsCaptureImage.getFlash(this);
         int scanMode = Prefs.UserSettingsCaptureImage.getScanMode(this);
@@ -518,7 +516,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(this);
                     builder.setTitle("Permission not granted");
-                    builder.setMessage("The app will not be able to capture images without camera permission.");
+                    builder.setMessage("Cannot capture images as permission to use the camera was denied");
 
 
                     builder.setPositiveButton("OK", (dialog, which) -> {

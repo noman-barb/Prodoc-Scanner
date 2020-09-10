@@ -325,7 +325,7 @@ public class FileNav {
             }
 
 
-            if (numPages==0 && isScan)
+            if (numPages == 0 && isScan)
                 continue;
 
             fIlesInfos.add(new ListFIlesInfo(filepath, filename, dateModified, numPages, isScan, thumbnailPath));
@@ -665,5 +665,16 @@ public class FileNav {
         return context.getExternalFilesDir(null);
     }
 
+
+    public static void deleteDirectoryQuietely(File file) {
+
+
+        try {
+
+            FileUtils.deleteDirectory(file);
+        } catch (Exception e) {
+        }
+
+    }
 
 }

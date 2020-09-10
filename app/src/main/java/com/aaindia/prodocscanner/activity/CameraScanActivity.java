@@ -467,6 +467,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void flashModeChange(ImageView view) {
         super.flashModeChange(view);
 
+        if (getImageCapture()==null)
+            return;
+
+
+
         int state = Prefs.UserSettingsCaptureImage.getFlash(getApplicationContext());
         switch (state) {
 

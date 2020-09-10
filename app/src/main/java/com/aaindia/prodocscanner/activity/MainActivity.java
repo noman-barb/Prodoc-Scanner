@@ -680,7 +680,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         FileUtils.copyDirectory(src, dst);
 
                         if (clipboard.deleteAfter) {
-                            FileUtils.deleteDirectory(src);
+
+                            //FileUtils.deleteDirectory(src);
+                            FileNav.deleteDirectoryQuietely(src);
                             clipboard.filepaths.remove(i);
                             i--;
 
@@ -688,7 +690,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         }
 
 
-                    } catch (IOException e) {
+                    } catch (Exception e) {
 
                     }
 
@@ -1609,8 +1611,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
                     try {
-                        FileUtils.deleteDirectory(new File(adapter.data.get(i).filepath));
-                    } catch (IOException e) {
+                       // FileUtils.deleteDirectory(new File(adapter.data.get(i).filepath));
+
+                        FileNav.deleteDirectoryQuietely(new File(adapter.data.get(i).filepath));
+
+                    } catch (Exception e) {
 
                     }
                     adapter.data.remove(i);
@@ -1668,11 +1673,13 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         builder.setPositiveButton("Delete", (dialog, which) -> {
 
             try {
-                FileUtils.deleteDirectory(new File(filepath));
+             //   FileUtils.deleteDirectory(new File(filepath));
+
+                FileNav.deleteDirectoryQuietely(new File(filepath));
                 nagivateTo(currentPath);
                 simpleToast("Deleted");
                 deselectAll();
-            } catch (IOException e) {
+            } catch (Exception e) {
 
             }
 

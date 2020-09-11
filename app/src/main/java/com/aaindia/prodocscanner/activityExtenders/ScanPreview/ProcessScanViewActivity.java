@@ -29,36 +29,30 @@ import java.util.Map;
 public class ProcessScanViewActivity extends ScanViewActivity {
 
 
-    private Bitmap displayBitmap = null;
-
-    private Mat originalMat = new Mat(); // store original image
-    private Mat processedMat = new Mat(); // store after complete processing
-    private Mat displayMat = new Mat();  // mat used for display only
-
     private Thread displayImageProcessThread;
-    private boolean processedDisplayImageThreadStop = false;
+
 
     private SavedImageDetails imageDetails;
 
     private String lastPreparedFilename = null;
 
 
-    public Mat getProcessedMat() {
-        return processedMat;
-    }
-
-    public Mat getDisplayMat() {
-        return displayMat;
-    }
-
-    public Bitmap getDisplayBitmap() {
-        return displayBitmap;
-    }
-
-
-    public Mat getOriginalMat() {
-        return originalMat;
-    }
+//    public Mat getholder.processedMat() {
+//        return holder.processedMat;
+//    }
+//
+//    public Mat getholder.displayMat() {
+//        return holder.displayMat;
+//    }
+//
+//    public Bitmap getholder.displayBitmap() {
+//        return holder.displayBitmap;
+//    }
+//
+//
+//    public Mat getholder.originalMat() {
+//        return holder.originalMat;
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +63,15 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
     @Override
-    public void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
+    public synchronized void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
 
 
+        prepareMats(holder, position);
 
 
         getBinding().protector.setVisibility(View.VISIBLE);
-
         holder.processing.setVisibility(View.VISIBLE);
         Effects effects = imageDetails.getEffects(imageDetails.getAt(position));
-
 
 
         int colorCode = effects.color;
@@ -86,27 +79,13 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         int colorTune = effects.colorTune;
 
 
-        if (displayImageProcessThread != null) {
-            processedDisplayImageThreadStop = true;
-
-
-            try {
-                displayImageProcessThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            processedDisplayImageThreadStop = false;
-
-        }
-
         displayImageProcessThread = new Thread(new Runnable() {
             @Override
             public void run() {
 
 
-                float widthScaleFactor = originalMat.width() * 1.0f / displayMat.width();
-                float heightScaleFactor = originalMat.height() * 1.0f / displayMat.height();
+                float widthScaleFactor = holder.originalMat.width() * 1.0f / holder.displayMat.width();
+                float heightScaleFactor = holder.originalMat.height() * 1.0f / holder.displayMat.height();
 
 
                 Map<Integer, PointF> cropBoundsOriginalMap = new HashMap<>();
@@ -134,10 +113,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 }
 
 
-                if (processedDisplayImageThreadStop)
-                    return;
-
-
                 Point point1 = new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y);
                 Point point2 = new Point(cropBoundsMap.get(1).x, cropBoundsMap.get(1).y);
                 Point point3 = new Point(cropBoundsMap.get(3).x, cropBoundsMap.get(3).y);
@@ -147,35 +122,20 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 int diffHeight = (int) ((Math.sqrt((point2.x - point3.x) * (point2.x - point3.x) + (point2.y - point3.y) * (point2.y - point3.y)) / 2) + (Math.sqrt((point2.x - point3.x) * (point2.x - point3.x) + (point2.y - point3.y) * (point2.y - point3.y)) / 2));
 
 
-                if (processedDisplayImageThreadStop)
-                    return;
-
-
                 Mat src = new MatOfPoint2f(new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y), new Point(cropBoundsMap.get(1).x, cropBoundsMap.get(1).y), new Point(cropBoundsMap.get(3).x, cropBoundsMap.get(3).y), new Point(cropBoundsMap.get(2).x, cropBoundsMap.get(2).y));
-                Mat dst = new MatOfPoint2f(new Point(0, 0), new Point(originalMat.width() - 1, 0), new Point(originalMat.width() - 1, originalMat.height() - 1), new Point(0, originalMat.height() - 1));
+                Mat dst = new MatOfPoint2f(new Point(0, 0), new Point(holder.originalMat.width() - 1, 0), new Point(holder.originalMat.width() - 1, holder.originalMat.height() - 1), new Point(0, holder.originalMat.height() - 1));
 
-
-                if (processedDisplayImageThreadStop)
-                    return;
 
                 Mat transform = Imgproc.getPerspectiveTransform(src, dst);
 
-                if (processedDisplayImageThreadStop)
-                    return;
-                Imgproc.warpPerspective(originalMat, processedMat, transform, originalMat.size());
 
-                if (processedDisplayImageThreadStop)
-                    return;
-                Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
-
-                if (processedDisplayImageThreadStop)
-                    return;
+                Imgproc.warpPerspective(holder.originalMat, holder.processedMat, transform, holder.originalMat.size());
 
 
-                MatFilter.colorize(processedMat, colorCode, colorTune, colorGray);
+                Imgproc.resize(holder.processedMat, holder.processedMat, new Size(diffWidth, diffHeight));
 
-                if (processedDisplayImageThreadStop)
-                    return;
+
+                MatFilter.colorize(holder.processedMat, colorCode, colorTune, colorGray);
 
 
                 imageDetails.getEffects(imageDetails.getAt(position)).corners = (HashMap<Integer, PointF>) cropBoundsOriginalMap;
@@ -184,19 +144,17 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 String processedImageFilepath = FileNav.getProcessedFileFromName(getScanDirPath(), imageDetails.getOrdering().get(position)).getAbsolutePath();
 
 
-                if (imageDetails.sync()){
+                if (imageDetails.sync()) {
                     int rot = imageDetails.getRotation(imageDetails.getAt(position));
 
 
-                    int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY,90};
+                    int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
 
 
-                    BitmapUtils.rotateMatDegrees(processedMat, rot);
-                    Imgcodecs.imwrite(processedImageFilepath, processedMat, new MatOfInt(parameters));
+                    BitmapUtils.rotateMatDegrees(holder.processedMat, rot);
+                    Imgcodecs.imwrite(processedImageFilepath, holder.processedMat, new MatOfInt(parameters));
 
                 }
-
-
 
 
                 runOnUiThread(new Runnable() {
@@ -208,8 +166,12 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                         holder.polygonView.setVisibility(View.GONE);
                         holder.processing.setVisibility(View.GONE);
                         getRecyclerView().getAdapter().notifyDataSetChanged();
-                        getBinding().protector.setVisibility(View.GONE);
+
+                        zoomageEnableDisable(holder, true);
                         setDocumentChanged(true);
+
+
+                        getBinding().protector.setVisibility(View.GONE);
 
                     }
                 });
@@ -222,67 +184,99 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     }
 
+    @Override
+    public synchronized void autocropThis(String path, SavedImageDetails imageDetails) {
 
-    public void prepareMats(ScanPreviewAdapter.ViewHolder holder, int position) {
-
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                getBinding().protector.setVisibility(View.VISIBLE);
-            }
-        });
-
-        if (lastPreparedFilename!=null){
-
-            String currentFilename = getImageDetails().getAt(position);
-
-            if (lastPreparedFilename.equals(currentFilename)) {
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-
-                        getBinding().protector.setVisibility(View.GONE);
-                    }
-                });
-                return;
-            }
-        }
-
-        originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));
-
+        Mat originalMat = Imgcodecs.imread(path);
 
         if (originalMat.channels() == 4)
             Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
-//        else if(originalMat.channels()==3)
-//            Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGR2RGB);
+
+        MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
 
 
-        Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(originalMat.width(), originalMat.height()), holder.imageView.getMeasuredWidth(), holder.imageView.getMeasuredHeight());
-
-        Imgproc.resize(originalMat, displayMat, optimalImageSizeForDisplay);
-
-        if (displayMat.channels()==3)
-            Imgproc.cvtColor(displayMat, displayMat, Imgproc.COLOR_BGR2RGB);
-
-        displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
+        MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
 
 
-        org.opencv.android.Utils.matToBitmap(displayMat, displayBitmap);
+        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
+        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat);
+
+
+        for (int i = 0; i < 4; i++) {
+
+
+            if (sortedPoints[i] == null) {
+
+                sortedPoints[0] = new Point();
+                sortedPoints[1] = new Point();
+                sortedPoints[2] = new Point();
+                sortedPoints[3] = new Point();
+
+
+                sortedPoints[0].x = 0;
+                sortedPoints[0].y = 0;
+
+                sortedPoints[1].x = originalMat.width();
+                sortedPoints[1].y = 0;
+
+                sortedPoints[2].x = 0;
+                sortedPoints[2].y = originalMat.height();
+
+                sortedPoints[3].x = originalMat.width();
+                sortedPoints[3].y = originalMat.height();
+
+
+            }
+
+            cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
+        }
+
+
+        Effects effects1 = new Effects(cropBoundsMap, MatFilter.DEFAULT_COLOR_CODE, false, 0, 0);
+
+        getImageDetails().putEffects(new File(path).getName(), effects1);
+
+
+    }
+
+
+    public synchronized void prepareMats(ScanPreviewAdapter.ViewHolder holder, int position) {
+
+
+        holder.originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));
+
+
+        if (holder.originalMat.channels() == 4)
+            Imgproc.cvtColor(holder.originalMat, holder.originalMat, Imgproc.COLOR_BGRA2BGR);
+
+
+        if (wd == -1) {
+            wd = holder.imageView.getMeasuredWidth();
+            ht = holder.imageView.getMeasuredHeight();
+        }
+
+        Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(holder.originalMat.width(), holder.originalMat.height()), wd, ht);
+
+
+        Imgproc.resize(holder.originalMat, holder.displayMat, optimalImageSizeForDisplay);
+
+        if (holder.displayMat.channels() == 3)
+            Imgproc.cvtColor(holder.displayMat, holder.displayMat, Imgproc.COLOR_BGR2RGB);
+
+        holder.displayBitmap = Bitmap.createBitmap(holder.displayMat.width(), holder.displayMat.height(), Bitmap.Config.ARGB_8888);
+
+
+        org.opencv.android.Utils.matToBitmap(holder.displayMat, holder.displayBitmap);
 
 
         lastPreparedFilename = getImageDetails().getAt(position);
 
 
-
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                getBinding().protector.setVisibility(View.GONE);
+
             }
         });
 

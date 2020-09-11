@@ -378,12 +378,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
         } else {
 
 
-            try {
-
-                Intent returnIntent = new Intent();
-                setResult(Activity.RESULT_CANCELED, returnIntent);
-            } catch (Exception e) {
+            if (scanDirPath != null) {
+                goToDocViewer();
             }
+
 
             finish();
         }
@@ -395,20 +393,21 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void next(Button view) {
         super.next(view);
 
-        if (isAddPages) {
-
-            Intent returnIntent = new Intent();
-            setResult(Activity.RESULT_OK, returnIntent);
-            finish();
-
-            return;
-        }
+//        if (isAddPages) {
+//
+//            Intent returnIntent = new Intent();
+//            setResult(Activity.RESULT_OK, returnIntent);
+//            finish();
+//
+//            return;
+//        }
 
 
         if (numPages == 0)
             return;
 
         goToDocViewer();
+        finish();
 
     }
 
@@ -416,7 +415,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
         Intent intent = new Intent(CameraScanActivity.this, ScanPreviewActivity.class);
         intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, scanDirPath);
         intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
-        //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
 
 
@@ -467,9 +467,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void flashModeChange(ImageView view) {
         super.flashModeChange(view);
 
-        if (getImageCapture()==null)
+        if (getImageCapture() == null)
             return;
-
 
 
         int state = Prefs.UserSettingsCaptureImage.getFlash(getApplicationContext());

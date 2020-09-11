@@ -2,6 +2,7 @@ package com.aaindia.prodocscanner.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,8 +22,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.views.PolygonView;
+import com.aaindia.prodocscanner.views.TouchableReyclerView;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -30,7 +33,9 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.bumptech.glide.request.transition.DrawableCrossFadeTransition;
+
+
+import org.opencv.core.Mat;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -69,6 +74,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
 
+        Log.d("aaaaaaaaaaaa", "nos ");
+
         holder.imageViewParent.clearAnimation();
         holder.imageViewParent.setScaleX(1.0f);
         holder.imageViewParent.setScaleY(1.0f);
@@ -98,6 +105,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         holder.nextAction.setVisibility(View.GONE);
 
         if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
+
+
 
             holder.nextAction.setVisibility(View.GONE);
 
@@ -144,6 +153,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
         } else {
 
+            Log.d("bbbbbbbbb", "ScanPrevAdapter Not found "+position);
 
             Glide.with(context)
 
@@ -245,6 +255,15 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         public RelativeLayout nextAction;
         public ImageView processImage;
         public ImageView clearAction;
+
+
+
+        public Bitmap displayBitmap = null;
+
+        public Mat originalMat = new Mat(); // store original image
+        public Mat processedMat = new Mat(); // store after complete processing
+        public Mat displayMat = new Mat();  // mat used for display only
+
 
 
         public ViewHolder(@NonNull View itemView) {

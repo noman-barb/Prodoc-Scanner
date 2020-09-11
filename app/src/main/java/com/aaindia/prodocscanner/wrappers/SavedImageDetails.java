@@ -52,6 +52,7 @@ public class SavedImageDetails {
                 this.order = imageDetails.order;
             }
 
+            Log.d("ccccccccccccc", "file reading ends");
 
         } catch (FileNotFoundException e) {
 

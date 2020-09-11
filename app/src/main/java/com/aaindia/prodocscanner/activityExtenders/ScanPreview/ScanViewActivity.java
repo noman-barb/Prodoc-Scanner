@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.databinding.ActivityScanViewBinding;
@@ -48,6 +50,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface {
 
@@ -92,6 +95,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
+    public int wd = -1;
+    public int ht = -1;
+
+    private int colorTuneLastProgress = -1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,6 +121,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         SnapHelper helper = new PagerSnapHelper();
         helper.attachToRecyclerView(binding.recyclerView);
+
+        binding.recyclerView.setItemViewCacheSize(1);
 
         binding.recyclerView.setAdapter(adapter);
 
@@ -149,6 +159,13 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
 
 
+                if (colorTuneLastProgress == progress) {
+
+                    return;
+                }
+
+                colorTuneLastProgress = progress;
+
                 if (!colorTuneListen)
                     return;
                 int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
@@ -156,10 +173,15 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
 
                 colorTuneChanged(holder, position, progress);
+
+                binding.colorTuneSK.setProgress(progress);
+
+
             }
 
             @Override
             public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat, boolean fromUser) {
+
 
             }
         });
@@ -207,6 +229,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onResume() {
         super.onResume();
+
+
+        getBinding().recyclerView.getAdapter().notifyDataSetChanged();
     }
 
 
@@ -216,7 +241,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     public void loadInitialData() {
 
-
         originalDirFile = new File(scanDirPath, FileNav.ORIGINAL_IMAGE_DIR);
         processedDirFile = new File(scanDirPath, FileNav.PROCESSED_IMAGE_DIR);
 
@@ -224,22 +248,115 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         originalFilepaths = new ArrayList<>();
         imageDetails = new SavedImageDetails(FileNav.getEffectsFile(scanDirPath));
 
-        LinkedList<String> linkedList = imageDetails.getOrdering();
+
+        // check auto crop
+
+        ProgressDialog pd = new ProgressDialog(ScanViewActivity.this);
+        pd.setTitle("Just a moment");
+        pd.setMessage("Detecting document edges");
+        pd.setCancelable(false);
 
 
-        for (int i = 0; i < linkedList.size(); i++) {
-            String filename = linkedList.get(i);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-            originalFilepaths.add(originalDirFile.getAbsolutePath() + File.separator + filename);
-        }
-
-        adapter.scanDirName = getScanDirPath();
-        adapter.originalFilepaths = originalFilepaths;
-        adapter.savedImageDetails = imageDetails;
-
-        binding.fileNameTV.setText(FileNav.getPDFName(getScanDirPath()).replace(".pdf", ""));
+                LinkedList<String> linkedList = imageDetails.getOrdering();
 
 
+                File[] originalFiles = originalDirFile.listFiles();
+
+
+                ListIterator<String> listIterator = linkedList.listIterator();
+
+                HashSet<String> set = new HashSet<>();
+
+                while (listIterator.hasNext()) {
+
+                    set.add(listIterator.next());
+                }
+
+                for (File f : originalFiles) {
+
+                    if (!set.contains(f.getName())) {
+
+                        linkedList.add(f.getName());
+                    }
+
+                }
+
+                imageDetails.sync();
+
+
+                listIterator = linkedList.listIterator();
+
+
+                for (int i = 0; i < linkedList.size(); i++) {
+
+
+                    int finalI = i;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pd.setMessage("Detecting document edges " + (finalI + 1) + "/" + linkedList.size());
+                        }
+                    });
+
+
+                    String filename = linkedList.get(i);
+
+                    String path = originalDirFile.getAbsolutePath() + File.separator + filename;
+
+                    originalFilepaths.add(path);
+
+
+                    if (imageDetails.getEffects(filename) == null) {
+
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+
+                                if (!pd.isShowing())
+                                    pd.show();
+                            }
+                        });
+
+                        autocropThis(path, imageDetails);
+                    }
+
+                }
+
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        imageDetails.sync();
+
+                        if (pd.isShowing())
+                            pd.dismiss();
+                        adapter.scanDirName = getScanDirPath();
+                        adapter.originalFilepaths = getOriginalFilepaths();
+                        adapter.savedImageDetails = imageDetails;
+
+                        binding.fileNameTV.setText(FileNav.getPDFName(getScanDirPath()).replace(".pdf", ""));
+
+                        getBinding().recyclerView.getAdapter().notifyDataSetChanged();
+
+
+                    }
+                });
+
+
+            }
+        }).start();
+
+
+    }
+
+    public synchronized void autocropThis(String path, SavedImageDetails imageDetails) {
     }
 
 
@@ -355,20 +472,33 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public void notProcessed(int postion, ScanPreviewAdapter.ViewHolder holder) {
 
 
+        getBinding().protector.setVisibility(View.VISIBLE);
+
         if (!autoCropped.contains(getImageDetails().getAt(postion))) {
 
 
-            crop(holder, postion);
+            if (wd == -1) {
 
-            holder.imageView.post(new Runnable() {
-                @Override
-                public void run() {
+                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                crop(holder, postion);
+                            }
+                        });
+
+                    }
+                }, 350);
+
+            } else {
+                crop(holder, postion);
+            }
 
 
-                }
-            });
         } else {
-
 
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
@@ -378,7 +508,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                         public void run() {
 
 
+                            getBinding().protector.setVisibility(View.GONE);
+
                             if (holder != null && holder.itemView != null && holder.imageViewParent != null && holder.nextAction != null) {
+
 
                                 holder.nextAction.setVisibility(View.GONE);
                                 getRecyclerView().getAdapter().notifyDataSetChanged();
@@ -388,7 +521,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                         }
                     });
                 }
-            }, 200);
+            }, 1000);
         }
 
 
@@ -448,6 +581,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
             binding.colorControlRL.setVisibility(View.GONE);
         }
+
+
+    }
+
+    public void zoomageEnableDisable(ScanPreviewAdapter.ViewHolder holder, boolean enable) {
 
 
     }

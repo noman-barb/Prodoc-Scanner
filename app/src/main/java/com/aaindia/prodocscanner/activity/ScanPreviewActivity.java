@@ -177,20 +177,22 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
         if (!new File(shareFilePath).exists())
             shareFilePath = getOriginalFilepaths().get(position);
 
-        share.setType("image/jpeg");
+        share.setType("*/*");
         share.putExtra(Intent.EXTRA_SUBJECT, Constants.singlePageShareMessage(position + 1));
         share.putExtra(Intent.EXTRA_TEXT, Constants.singlePageShareMessage(position + 1));
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
-            share.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
             share.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(getApplicationContext(), getPackageName() + ".provider", new File(shareFilePath)));
 
         } else {
             share.putExtra(Intent.EXTRA_STREAM, Uri.parse(shareFilePath));
 
         }
+
+        share.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
 
         startActivity(Intent.createChooser(share, Constants.singlePageShareMessage(position + 1)));
@@ -288,6 +290,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                 intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(pdfPath));
             }
 
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Shared using Prodoc Scanner");
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
             startActivity(intent);
@@ -298,6 +301,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
 
         Intent intent = new Intent(intentAction);
+        intent.putExtra(Intent.EXTRA_SUBJECT, "Shared using Prodoc Scanner");
         intent.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
 
 
@@ -509,13 +513,13 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
                         FileUtils.copyFile(new File(outputPath), outputStream);
 
-                        Log.d("cccccccccccc", "svd");
+
 
                     } catch (FileNotFoundException e) {
-                        Log.d("cccccccccccc", e.getMessage());
+
                         e.printStackTrace();
                     } catch (IOException e) {
-                        Log.d("cccccccccccc", e.getMessage());
+
                         e.printStackTrace();
                     } finally {
                         runOnUiThread(new Runnable() {

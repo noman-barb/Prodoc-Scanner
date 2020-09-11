@@ -16,7 +16,7 @@
             android:clickable="true"
             android:id="@+id/protector"
             android:elevation="20dp"
-            android:alpha="0.1"
+            android:alpha="0.01"
             android:layout_width="match_parent"
             android:layout_height="match_parent"></RelativeLayout>
 
@@ -678,9 +678,9 @@
                     app:bsb_min="0"
                     app:bsb_second_track_color="@color/colorWhite"
 
-                    app:bsb_section_count="5"
-                    app:bsb_seek_by_section="true"
-                    app:bsb_seek_step_section="true"
+
+                    app:bsb_seek_by_section="false"
+                    app:bsb_seek_step_section="false"
 
                     app:bsb_thumb_color="@color/colorSecondary"
                     app:bsb_section_text_size="9sp"
@@ -690,14 +690,14 @@
                     app:bsb_second_track_size="2dp"
 
                     app:bsb_progress="50"
-
+                    app:bsb_section_text_position="sides"
                     app:bsb_thumb_text_color="@color/colorBackgroundDark"
 
 
-
-                    app:bsb_show_section_mark="true"
+                    app:bsb_thumb_radius="10dp"
+                    app:bsb_show_section_mark="false"
                     app:bsb_show_section_text="false"
-                    app:bsb_show_thumb_text="false"
+                    app:bsb_show_thumb_text="true"
                     app:bsb_track_color="@color/colorWhite"
 
                     app:bsb_touch_to_seek="true"
@@ -709,6 +709,8 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/colorTuneSK"
                     android:layout_centerVertical="true"
+
+
                     ></com.xw.repo.BubbleSeekBar>
 
                 <RelativeLayout

@@ -163,11 +163,13 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
     @Override
-    public void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public synchronized void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
 
+
+        zoomageEnableDisable(holder, false);
 
         recyclerViewActivateDeact(false);
-
+        getBinding().protector.setVisibility(View.VISIBLE);
 
         new Thread(new Runnable() {
             @Override
@@ -180,9 +182,9 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                     @Override
                     public void run() {
 
-                        holder.imageView.getLayoutParams().width = (int) getDisplayBitmap().getWidth();
-                        holder.imageView.getLayoutParams().height = (int) getDisplayBitmap().getHeight();
-                        holder.imageView.setImageBitmap(getDisplayBitmap());
+                        holder.imageView.getLayoutParams().width = (int) holder.displayBitmap.getWidth();
+                        holder.imageView.getLayoutParams().height = (int) holder.displayBitmap.getHeight();
+                        holder.imageView.setImageBitmap(holder.displayBitmap);
                         holder.imageView.requestLayout();
                         initAutoCrop(position, holder);
 
@@ -196,10 +198,11 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     }
 
 
-    private void initAutoCrop(int position, ScanPreviewAdapter.ViewHolder holder) {
+    private synchronized void initAutoCrop(int position, ScanPreviewAdapter.ViewHolder holder) {
 
         holder.polygonView.setVisibility(View.VISIBLE);
 
+        getBinding().protector.setVisibility(View.VISIBLE);
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) holder.imageView.getLayoutParams();
 
         RelativeLayout.LayoutParams params1 = ViewUtils.copy(params);
@@ -212,139 +215,39 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
         Effects effects = getImageDetails().getEffects(new File(getOriginalFilepaths().get(position)).getName());
 
-        if (effects == null) {
 
-            MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
+        double scaleX = holder.displayMat.width() * 1.0 / holder.originalMat.width();
+        double scaleY = holder.displayMat.height() * 1.0 / holder.originalMat.height();
 
-            holder.processing.setVisibility(View.VISIBLE);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
+        HashMap<Integer, PointF> corners = effects.corners;
 
-                    MatFilter.cropV1(getDisplayMat().getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+        HashMap<Integer, PointF> cropbounds = new HashMap<>();
 
+        for (int i = 0; i < 4; i++) {
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
+            PointF pointF = corners.get(i);
 
 
-                            holder.processing.setVisibility(View.GONE);
+            int x = (int) (pointF.x * scaleX);
+            int y = (int) (pointF.y * scaleY);
+            PointF pointF1 = new PointF(x, y);
 
 
-                            HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-                            Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat);
-
-
-                            for (int i = 0; i < 4; i++) {
-
-
-                                if (sortedPoints[i] == null) {
-
-                                    sortedPoints[i] = new Point();
-
-                                    switch (i) {
-                                        case 0:
-
-                                            sortedPoints[0].x = 0;
-                                            sortedPoints[0].y = 0;
-                                            break;
-
-                                        case 1:
-
-                                            sortedPoints[1].x = 400;
-                                            sortedPoints[1].y = 0;
-                                            break;
-                                        case 2:
-                                            sortedPoints[2].x = 0;
-                                            sortedPoints[2].y = 400;
-
-                                            break;
-                                        case 3:
-
-                                            sortedPoints[3].x = 400;
-                                            sortedPoints[3].y = 400;
-
-                                            break;
-
-                                    }
-
-                                }
-
-                                cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
-                            }
-
-                            holder.polygonView.setPoints(cropBoundsMap);
-                            holder.polygonView.requestLayout();
-
-
-                            float widthScaleFactor = getOriginalMat().width() * 1.0f / getDisplayMat().width();
-                            float heightScaleFactor = getOriginalMat().height() * 1.0f / getDisplayMat().height();
-
-
-                            HashMap<Integer, PointF> cropBoundsOriginalMap = new HashMap<>();
-
-                            for (int i = 0; i < 4; i++) {
-
-                                PointF pointF = cropBoundsMap.get(i);
-
-
-                                pointF.x *= widthScaleFactor;
-                                pointF.y *= heightScaleFactor;
-
-                                cropBoundsOriginalMap.put(i, new PointF(pointF.x, pointF.y));
-
-                            }
-
-                            Effects effects1 = new Effects(cropBoundsOriginalMap, MatFilter.DEFAULT_COLOR_CODE, false, 0, 0);
-
-                            getImageDetails().putEffects(new File(getOriginalFilepaths().get(position)).getName(), effects1);
-                            getImageDetails().sync();
-                            holder.nextAction.setVisibility(View.VISIBLE);
-
-
-                        }
-                    });
-
-
-                }
-            }).start();
-
-
-        } else {
-
-
-            double scaleX = getDisplayMat().width() * 1.0 / getOriginalMat().width();
-            double scaleY = getDisplayMat().height() * 1.0 / getOriginalMat().height();
-
-            HashMap<Integer, PointF> corners = effects.corners;
-
-            HashMap<Integer, PointF> cropbounds = new HashMap<>();
-
-            for (int i = 0; i < 4; i++) {
-
-                PointF pointF = corners.get(i);
-
-
-                int x = (int) (pointF.x * scaleX);
-                int y = (int) (pointF.y * scaleY);
-                PointF pointF1 = new PointF(x, y);
-
-
-                cropbounds.put(i, pointF1);
-            }
-
-            holder.polygonView.setPoints(cropbounds);
-            holder.polygonView.requestLayout();
-
-            holder.nextAction.setVisibility(View.VISIBLE);
-            rotateImageView(0, effects.rotation, holder, false);
+            cropbounds.put(i, pointF1);
         }
 
+        holder.polygonView.setPoints(cropbounds);
+        holder.polygonView.requestLayout();
+
+        holder.nextAction.setVisibility(View.VISIBLE);
+        rotateImageView(0, effects.rotation, holder, false);
+
+        getBinding().protector.setVisibility(View.GONE);
 
     }
 
-    private void rotateImageView(int globalRotation, int rotateBy, ScanPreviewAdapter.ViewHolder holder, boolean animateTrue) {
+
+    private synchronized void rotateImageView(int globalRotation, int rotateBy, ScanPreviewAdapter.ViewHolder holder, boolean animateTrue) {
 
         animateTrue = false;
 
@@ -372,8 +275,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             int maxWidth = holder.imageViewParent.getMeasuredWidth();
             int maxHeight = holder.imageViewParent.getMeasuredHeight();
 
-            int currentWidth = getDisplayMat().height();
-            int currentHeight = getDisplayMat().width();
+            int currentWidth = holder.displayMat.height();
+            int currentHeight = holder.displayMat.width();
 
 
             // try scaling width

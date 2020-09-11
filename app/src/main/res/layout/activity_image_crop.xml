@@ -12,6 +12,9 @@
         tools:context=".activity.ImageCropActivity">
 
 
+
+
+
         <RelativeLayout
             android:layout_alignParentTop="true"
             android:id="@+id/relativeLayoutTop"
@@ -403,6 +406,7 @@
 
             <RelativeLayout
 
+
                 android:id="@+id/theImageParent"
 
                 android:layout_centerInParent="true"
@@ -415,6 +419,8 @@
 
                     <ImageView
 
+
+                        android:clickable="false"
                         android:layout_centerInParent="true"
                         android:elevation="2dp"
 
@@ -428,6 +434,8 @@
 
 
                 <com.aaindia.prodocscanner.views.PolygonView
+
+                    android:clickable="false"
 
                     android:visibility="gone"
 
@@ -484,9 +492,9 @@
                     app:bsb_min="0"
                     app:bsb_second_track_color="@color/colorWhite"
 
-                    app:bsb_section_count="5"
-                    app:bsb_seek_by_section="true"
-                    app:bsb_seek_step_section="true"
+
+                    app:bsb_seek_by_section="false"
+                    app:bsb_seek_step_section="false"
 
                     app:bsb_thumb_color="@color/colorSecondary"
                     app:bsb_section_text_size="9sp"
@@ -500,7 +508,8 @@
                     app:bsb_thumb_text_color="@color/colorBackgroundDark"
 
 
-                    app:bsb_show_section_mark="true"
+                    app:bsb_thumb_radius="10dp"
+                    app:bsb_show_section_mark="false"
                     app:bsb_show_section_text="false"
                     app:bsb_show_thumb_text="true"
                     app:bsb_track_color="@color/colorWhite"

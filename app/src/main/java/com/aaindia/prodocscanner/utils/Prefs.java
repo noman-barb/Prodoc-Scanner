@@ -102,7 +102,7 @@ public class Prefs {
         public static int getScanMode(Context context) {
 
             SharedPreferences prefs = context.getSharedPreferences(USER_SETTINGS_CAPTURE_IMAGE_PREFS, context.MODE_PRIVATE);
-            return prefs.getInt(SCAN_MODE_KEY, UserSettingsCaptureImageWrapper.SCAN_MODE_SINGLE);
+            return prefs.getInt(SCAN_MODE_KEY, UserSettingsCaptureImageWrapper.SCAN_MODE_BATCH);
         }
 
         public static int getGrid(Context context) {

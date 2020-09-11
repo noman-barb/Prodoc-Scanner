@@ -146,8 +146,20 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         originalImageFilename = getIntent().getExtras().getString(FileNav.ORIGINAL_IMAGE_FILE);
         processedImageFilename = getIntent().getExtras().getString(FileNav.PROCESSED_IMAGE_FILE);
+
+        if (originalBitmap == null || originalImageFilename == null) {
+
+            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            startActivity(intent);
+
+        }
+
 
         globalRotation = 0;
 
@@ -205,6 +217,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 processDisplayImage();
             }
         });
+
+
     }
 
 
@@ -237,7 +251,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 displayMat = new Mat();
                 Imgproc.resize(originalMat, displayMat, optimalImageSizeForDisplay);
 
-                if (displayBitmap!=null)
+                if (displayBitmap != null)
                     displayBitmap.recycle();
 
                 displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
@@ -273,10 +287,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     private void initAutoCrop() {
 
-
         nextCropEnableDisable(true);
         cropStart = true;
-
 
 
         if (!binding.polygonView.autoCropped) {
@@ -315,13 +327,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                             rotate(rotationDegrees);
                             binding.processing.setVisibility(View.GONE);
+
+
                         }
                     });
 
                 }
             }).start();
-        }
-        else {
+        } else {
             nextCropEnableDisable(true);
         }
 
@@ -427,8 +440,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                         return;
 
 
-
-
                 } else {
 
                     if (processedDisplayImageThreadStop)
@@ -480,6 +491,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                         nextCropEnableDisable(false);
 
+
+                        zoomageEnableDisable(true);
+
                     }
                 });
 
@@ -491,6 +505,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private void zoomageEnableDisable(boolean enable){
+
+
+
+    }
 
     private synchronized void processImage() {
 
@@ -523,7 +542,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             return;
 
 
-        int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY,90};
+        int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
 
 
         Imgcodecs.imwrite(originalImageFilename, originalMat, new MatOfInt(parameters));
@@ -575,8 +594,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 if (colorCode == MatFilter.COLOR_WHITEBOARD || colorCode == MatFilter.COLOR_PAPER) {
                     colorGray = true;
                     colorTune = MatFilter.getDefaultTune(id);
-                }
-                else {
+                } else {
                     colorGray = false;
 
                 }
@@ -667,7 +685,10 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.noCropRL:
 
-                if (displayBitmap!=null)
+
+
+                zoomageEnableDisable(false);
+                if (displayBitmap != null)
                     displayBitmap.recycle();
 
 
@@ -721,11 +742,17 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.nextIB:
 
+                if (cropStart)
+                    return;
+
                 next();
 
                 break;
 
             case R.id.CropRL:
+
+
+                zoomageEnableDisable(false);
 
                 if (!binding.polygonView.autoCropped)
                     return;
@@ -746,6 +773,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.colorRL:
 
+                if (cropStart)
+                    return;
 
                 chooseColor();
 
@@ -754,12 +783,16 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.retakeRL:
 
+
                 onBackPressed();
 
                 break;
 
             case R.id.rotateRL:
 
+
+                if (cropStart)
+                    return;
 
                 rotate(90);
 

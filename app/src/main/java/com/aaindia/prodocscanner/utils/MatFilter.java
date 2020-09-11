@@ -45,21 +45,18 @@ public class MatFilter {
     private static void whiteboard(Mat mat, float control) {
 
 
-
-        if (mat.channels()>1)
-
-        {
+        if (mat.channels() > 1) {
             Mat gray = new Mat();
             Mat binary = new Mat();
 
-            if (mat.channels()==3)
+            if (mat.channels() == 3)
                 Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY);
-            else if (mat.channels()==4)
+            else if (mat.channels() == 4)
                 Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGRA2GRAY);
 
             //Imgproc.medianBlur(gray, gray, 3);
 
-            Imgproc.blur(gray, gray, new Size(3,3));
+            Imgproc.blur(gray, gray, new Size(3, 3));
 
 
             Imgproc.adaptiveThreshold(gray, binary, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 51, 10);
@@ -81,54 +78,42 @@ public class MatFilter {
             Core.bitwise_or(mats.get(2), binary, mats.get(2));
 
 
-            Core.merge(mats,mat);
+            Core.merge(mats, mat);
 
             // compute the threshold
-            Imgproc.cvtColor(mat,gray, Imgproc.COLOR_BGR2GRAY);
+            Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY);
 
             Double thresh = Imgproc.threshold(gray, binary, 0, 255, Imgproc.THRESH_OTSU);
 
-            if (control>50)
-                adjustGamma(mat.getNativeObjAddr(), (float) ((thresh + 55) * 1.0f / 255) * 5 * control/5.0f );
+
+            adjustGamma(mat.getNativeObjAddr(), (float) (thresh / 255.0f) * (control / 100) * 3);
 
 
             Core.bitwise_not(binary, binary);
 
-            Imgproc.cvtColor(mat,mat,Imgproc.COLOR_BGR2HSV);
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2HSV);
 
             mats = new LinkedList<>();
 
             Core.split(mat, mats);
 
 
-            int saturation = 100;
+            Core.add(mats.get(1), new Scalar(100), mats.get(1), binary);
 
-
-            saturation*=(control/50);
-
-
-
-            Core.add(mats.get(1), new Scalar(saturation), mats.get(1), binary);
-
-            //mats.get(1).setTo(new Scalar(255), binary);
+            // mats.get(1).setTo(new Scalar(200), binary);
 
 
             Core.merge(mats, mat);
 
-            Imgproc.cvtColor(mat,mat,Imgproc.COLOR_HSV2BGR);
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2BGR);
 
 
-
-
-        }
-
-
-        else {
+        } else {
 
 
             //Imgproc.medianBlur(mat, mat, 3);
 
-            Imgproc.blur(mat,mat, new Size(3,3));
+            Imgproc.blur(mat, mat, new Size(3, 3));
 
             Mat binary = new Mat();
 
@@ -162,7 +147,6 @@ public class MatFilter {
             Core.bitwise_xor(mat, mat, mat, binary);
 
         }
-
 
 
     }
@@ -213,16 +197,15 @@ public class MatFilter {
     public static void colorize(Mat mat, int color, int tune, boolean gray) {
 
 
-
-        if (gray){
+        if (gray) {
 
             if (color == COLOR_WHITEBOARD)
-                tune+=20;
+                tune += 20;
 
-            if(mat.channels()==4)
+            if (mat.channels() == 4)
                 Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGRA2GRAY);
-            else  if (mat.channels() == 3)
-                Imgproc.cvtColor(mat,mat, Imgproc.COLOR_BGR2GRAY);
+            else if (mat.channels() == 3)
+                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2GRAY);
 
         }
 

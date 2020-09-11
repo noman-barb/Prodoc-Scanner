@@ -284,6 +284,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Permission Needed");
             builder.setMessage("Camera permission is required to capture images");
+            builder.setCancelable(false);
 
 
             builder.setPositiveButton("OK", (dialog, which) -> {
@@ -295,7 +296,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             });
 
 
-
             builder.create();
             builder.show();
 
@@ -305,7 +305,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
     private void setViews() {
-
 
 
         int flashMode = Prefs.UserSettingsCaptureImage.getFlash(this);
@@ -472,6 +471,14 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         int id = view.getId();
 
 
+        if (camera == null) {
+
+            if (id != R.id.backArrow)
+                return;
+
+        }
+
+
         if (id == R.id.flashIV) {
 
             flashModeChange(((ImageView) view));
@@ -518,6 +525,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     builder.setTitle("Permission not granted");
                     builder.setMessage("Cannot capture images as permission to use the camera was denied");
 
+                    builder.setCancelable(false);
 
                     builder.setPositiveButton("OK", (dialog, which) -> {
 
@@ -546,6 +554,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
     public void onBackArrowPressed(ImageView view) {
+
+        onBackPressed();
 
     }
 

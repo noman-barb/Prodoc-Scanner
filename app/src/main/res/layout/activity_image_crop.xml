@@ -13,6 +13,15 @@
 
 
 
+        <RelativeLayout
+            android:alpha="0.1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/protector"
+            android:background="@color/colorSecondaryDark"
+            android:elevation="32dp">
+
+        </RelativeLayout>
 
 
         <RelativeLayout

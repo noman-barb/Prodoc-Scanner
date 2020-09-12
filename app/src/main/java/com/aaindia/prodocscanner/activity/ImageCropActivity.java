@@ -326,7 +326,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                             binding.polygonView.autoCropped = true;
 
                             rotate(rotationDegrees);
-                            binding.processing.setVisibility(View.GONE);
+                            binding.processing.setVisibility(View.GONE);  binding.protector.setVisibility(View.GONE);
 
 
                         }

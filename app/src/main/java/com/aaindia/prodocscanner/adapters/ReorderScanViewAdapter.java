@@ -72,6 +72,7 @@ public class ReorderScanViewAdapter extends RecyclerView.Adapter<ReorderScanView
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .into(holder.imageView);
 
+        holder.filepath = filepath;
 
     }
 
@@ -88,6 +89,7 @@ public class ReorderScanViewAdapter extends RecyclerView.Adapter<ReorderScanView
 
         public ImageView imageView;
         public TextView pageNumber;
+        public String filepath = null;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);

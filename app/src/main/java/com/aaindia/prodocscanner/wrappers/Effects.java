@@ -17,6 +17,7 @@ public class Effects {
     public int colorTune = MatFilter.getDefaultTune(color);
 
 
+
     public Effects(HashMap<Integer, PointF> corners, int color, boolean isGray, int rotation, int colorTune) {
         this.corners = corners;
         this.color = color;

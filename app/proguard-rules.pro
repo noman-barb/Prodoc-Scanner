@@ -30,5 +30,6 @@
 -keep class com.xw.* { *; }
 -keep class org.* { *; }
 -keep class androidx.* { *; }
--keep class com.itextpdf.* { *; }
 -keep class com.tom_roush.* { *; }
+-keep class com.aaindia.prodocscanner.wrappers.* { *; }
+

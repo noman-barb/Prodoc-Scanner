@@ -1,5 +1,9 @@
 package com.aaindia.prodocscanner.utils;
 
+import android.util.Log;
+
+import com.aaindia.prodocscanner.constants.Constants;
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -41,112 +45,12 @@ public class MatFilter {
 
     private static native void adjustGamma(long nativeObjAddr, float gamma);
 
+    private static native void cleanText(long nativeObjAddr, float percentage);
+
 
     private static void whiteboard(Mat mat, float control) {
 
-
-        if (mat.channels() > 1) {
-            Mat gray = new Mat();
-            Mat binary = new Mat();
-
-            if (mat.channels() == 3)
-                Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY);
-            else if (mat.channels() == 4)
-                Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGRA2GRAY);
-
-            //Imgproc.medianBlur(gray, gray, 3);
-
-            Imgproc.blur(gray, gray, new Size(3, 3));
-
-
-            Imgproc.adaptiveThreshold(gray, binary, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 51, 10);
-
-            Core.bitwise_not(binary, binary);
-
-            Imgproc.dilate(binary, binary, Mat.ones(new Size(7, 7), binary.type()), new Point(-1, -1), 3);
-
-            Core.bitwise_not(binary, binary);
-
-            paperize(mat.getNativeObjAddr(), 0);
-
-            LinkedList<Mat> mats = new LinkedList<>();
-
-            Core.split(mat, mats);
-
-            Core.bitwise_or(mats.get(0), binary, mats.get(0));
-            Core.bitwise_or(mats.get(1), binary, mats.get(1));
-            Core.bitwise_or(mats.get(2), binary, mats.get(2));
-
-
-            Core.merge(mats, mat);
-
-            // compute the threshold
-            Imgproc.cvtColor(mat, gray, Imgproc.COLOR_BGR2GRAY);
-
-            Double thresh = Imgproc.threshold(gray, binary, 0, 255, Imgproc.THRESH_OTSU);
-
-
-            adjustGamma(mat.getNativeObjAddr(), (float) (thresh / 255.0f) * (control / 100) * 3);
-
-
-            Core.bitwise_not(binary, binary);
-
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2HSV);
-
-            mats = new LinkedList<>();
-
-            Core.split(mat, mats);
-
-
-            Core.add(mats.get(1), new Scalar(100), mats.get(1), binary);
-
-            // mats.get(1).setTo(new Scalar(200), binary);
-
-
-            Core.merge(mats, mat);
-
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2BGR);
-
-
-        } else {
-
-
-            //Imgproc.medianBlur(mat, mat, 3);
-
-            Imgproc.blur(mat, mat, new Size(3, 3));
-
-            Mat binary = new Mat();
-
-            Imgproc.adaptiveThreshold(mat, binary, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 51, 10);
-
-
-            Core.bitwise_not(binary, binary);
-
-            Imgproc.dilate(binary, binary, Mat.ones(new Size(7, 7), binary.type()), new Point(-1, -1), 3);
-
-            Core.bitwise_not(binary, binary);
-
-            paperize(mat.getNativeObjAddr(), 0);
-
-            Core.bitwise_or(mat, binary, mat);
-
-
-            Double thresh = Imgproc.threshold(mat, binary, 0, 255, Imgproc.THRESH_OTSU);
-
-
-            control += 1;
-
-            control = control >= 50 ? control / 5.0f : control / 200f;
-
-
-            adjustGamma(mat.getNativeObjAddr(), (float) ((thresh + 55) * 1.0f / 255) * 0.8f * control);
-
-
-            Core.bitwise_not(binary, binary);
-
-            Core.bitwise_xor(mat, mat, mat, binary);
-
-        }
+        cleanText(mat.getNativeObjAddr(), control);
 
 
     }
@@ -236,6 +140,30 @@ public class MatFilter {
                 whiteboard(mat, tune);
 
         }
+
+
+    }
+
+    public static int colorCodeFromDocumentType(String documentType) {
+
+
+        int colorCode = DEFAULT_COLOR_CODE;
+
+        if (documentType == null) {
+            Log.d("aaaaaaaaa", "null");
+            return colorCode;
+        }
+
+        if (documentType.equals(Constants.DOCUMENT_TYPE_NOTE))
+            colorCode = COLOR_PAPER;
+
+        else if (documentType.equals(Constants.DOCUMENT_TYPE_DOCUMENT))
+            colorCode = COLOR_WHITEBOARD;
+
+        else if (documentType.equals(Constants.DOCUMENT_TYPE_PHOTO))
+            colorCode = COLOR_CONTRAST;
+
+        return colorCode;
 
 
     }

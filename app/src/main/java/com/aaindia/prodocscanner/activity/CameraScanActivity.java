@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
@@ -77,6 +78,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private String currentDir = null;
     private int numPages = 0;
     private int insertAt = 0;
+    private int pageInsertStartFrom = 0;
 
 
     private boolean isCapturing = false;
@@ -284,7 +286,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
             intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
 
-
+            intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
             startActivityForResult(intent, CROP_ACTIVITY_CODE);
 
 
@@ -349,8 +351,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
             isAddPages = extras.getBoolean(ADD_PAGES, false);
 
             if (scanDirPath != null) {
-                insertAt = extras.getInt(INSERT_AT);
-                numPages = extras.getInt(NUM_PAGES);
+                insertAt = extras.getInt(INSERT_AT, 0);
+                numPages = extras.getInt(NUM_PAGES, 0);
+                pageInsertStartFrom = insertAt;
 
                 backpressReturnToDir = false;
             }
@@ -393,15 +396,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void next(Button view) {
         super.next(view);
 
-//        if (isAddPages) {
-//
-//            Intent returnIntent = new Intent();
-//            setResult(Activity.RESULT_OK, returnIntent);
-//            finish();
-//
-//            return;
-//        }
-
 
         if (numPages == 0)
             return;
@@ -415,6 +409,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
         Intent intent = new Intent(CameraScanActivity.this, ScanPreviewActivity.class);
         intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, scanDirPath);
         intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
+        intent.putExtra(ScanPreviewActivity.SCROLL_TO, insertAt);
+
+
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
@@ -450,6 +447,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
             scanMode = Prefs.UserSettingsCaptureImageWrapper.SCAN_MODE_BATCH;
             binding.scanModeTV.setText("Batch Mode");
 
+            Toast.makeText(getApplicationContext(), "Batch Mode", Toast.LENGTH_SHORT).show();
+
 
             Prefs.UserSettingsCaptureImage.setScanMode(getApplicationContext(), Prefs.UserSettingsCaptureImageWrapper.SCAN_MODE_BATCH);
         } else {
@@ -458,6 +457,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             scanMode = Prefs.UserSettingsCaptureImageWrapper.SCAN_MODE_SINGLE;
             Prefs.UserSettingsCaptureImage.setScanMode(getApplicationContext(), Prefs.UserSettingsCaptureImageWrapper.SCAN_MODE_SINGLE);
             binding.scanModeTV.setText("Single Mode");
+            Toast.makeText(getApplicationContext(), "Single Mode", Toast.LENGTH_SHORT).show();
 
 
         }
@@ -576,6 +576,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
                     intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
 
+                    intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
                     super.onCaptureSuccess(image);
                     startActivityForResult(intent, CROP_ACTIVITY_CODE);
 
@@ -610,6 +611,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     imageDetails.putEffects(filename, effects);
                 }
 
+                imageDetails.getDocType().put(filename, getDocumentType());
                 imageDetails.getOrdering().add(insertAt, filename);
 
                 imageDetails.sync();

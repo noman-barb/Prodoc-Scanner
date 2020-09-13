@@ -18,11 +18,19 @@ import java.util.LinkedList;
 public class SavedImageDetails {
 
 
+    public static final int DOCUMENT_TYPE_KEY = 1;
+
     private LinkedList<String> order = null;
     private HashMap<String, Effects> imageEffects = null;
 
+    private HashMap<String, String> docType = null;
 
     private File storageLocation = null;
+
+
+    public HashMap<String, String> getDocType() {
+        return docType;
+    }
 
 
     public SavedImageDetails(File imageDetailsFile) {
@@ -46,18 +54,26 @@ public class SavedImageDetails {
             } else {
                 this.imageEffects = imageDetails.imageEffects;
             }
+
+
+            if (imageDetails.docType == null) {
+                this.docType = new HashMap<>();
+            } else {
+                this.docType = imageDetails.docType;
+            }
+
             if (imageDetails.order == null) {
                 order = new LinkedList<>();
             } else {
                 this.order = imageDetails.order;
             }
 
-            Log.d("ccccccccccccc", "file reading ends");
 
         } catch (FileNotFoundException e) {
 
             order = new LinkedList<>();
             imageEffects = new HashMap<>();
+            docType = new HashMap<>();
 
 
         } catch (IOException e) {
@@ -171,6 +187,8 @@ public class SavedImageDetails {
 
 
         } catch (IOException e) {
+
+
             e.printStackTrace();
         }
 

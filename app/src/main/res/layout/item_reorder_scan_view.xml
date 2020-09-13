@@ -4,22 +4,28 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
-    app:cardBackgroundColor="@color/colorSecondaryDarkLight">
+
+
+    android:background="@color/colorWhiteAlpha20"
+    >
 
 
     <ImageView
 
+
+        android:layout_alignParentBottom="true"
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+
         android:scaleType="fitEnd">
 
     </ImageView>
 
 
     <RelativeLayout
-        android:visibility="invisible"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@id/image"
@@ -29,10 +35,11 @@
         android:alpha="0.95"
         android:background="@drawable/circular_full_xml_icon"
 
-        android:minWidth="20dp"
-        android:minHeight="20dp">
+        android:minWidth="25dp"
+        android:minHeight="25dp">
 
         <TextView
+
             android:id="@+id/pageNumberTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,6 +50,8 @@
             android:text="1"
             android:textColor="@color/colorWhite"
             android:textSize="10sp"></TextView>
+
+
 
     </RelativeLayout>
 

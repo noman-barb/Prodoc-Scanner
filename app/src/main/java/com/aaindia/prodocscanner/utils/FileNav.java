@@ -40,6 +40,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.newDirectoryStream;
 
 public class FileNav {
 
@@ -66,7 +67,7 @@ public class FileNav {
     public static final String ORIGINAL_IMAGE_FILE = "original_image_file";
 
 
-    public static void unZipAll(InputStream inputStream, File destination) throws IOException {
+    public static void unZipAll(InputStream inputStream, File destination, OnZipProgress OnZipProgress) throws IOException {
 
 
         try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
@@ -80,10 +81,13 @@ public class FileNav {
 
             if (zipInputStream.available() < 1)
                 return;
+
+
             while ((entry = zipInputStream.getNextEntry()) != null) {
 
 
                 String currentEntry = entry.getName();
+
 
                 File destFile = new File(destination, currentEntry);
 
@@ -92,7 +96,11 @@ public class FileNav {
                 // create the parent directory structure if needed
                 destinationParent.mkdirs();
 
+
+                long totalLen = 0;
+
                 if (!entry.isDirectory()) {
+
 
                     FileOutputStream fos = null;
 
@@ -104,12 +112,14 @@ public class FileNav {
                         int len;
 
                         while ((len = zipInputStream.read(buffer)) != -1) {
+                            totalLen += len;
                             fos.write(buffer, 0, len);
                         }
 
-
-                        zipInputStream.closeEntry();
                         fos.close();
+
+
+                        OnZipProgress.onProgress(totalLen);
 
 
                     } catch (Exception e) {
@@ -119,7 +129,7 @@ public class FileNav {
                             fos.close();
                         }
 
-                        zipInputStream.close();
+                        zipInputStream.closeEntry();
 
                     }
                 } else {
@@ -138,9 +148,17 @@ public class FileNav {
 
 
     public static void zipDir(String dir2zip, File base, ZipOutputStream zos) {
+
+
+        zipDir(dir2zip, base, zos, true);
+    }
+
+    private static void zipDir(String dir2zip, File base, ZipOutputStream zos, boolean firstCall) {
         try {
 
             File zipDir = new File(dir2zip);
+
+
             //get a listing of the directory content
             String[] dirList = zipDir.list();
             byte[] readBuffer = new byte[2156];
@@ -152,7 +170,7 @@ public class FileNav {
                     //if the File object is a directory, call this
                     //function again to add its content recursively
                     String filePath = f.getPath();
-                    zipDir(filePath, base, zos);
+                    zipDir(filePath, base, zos, false);
                     //loop again
                     continue;
                 }
@@ -166,6 +184,8 @@ public class FileNav {
                 //place the zip entry in the ZipOutputStream object
                 zos.putNextEntry(anEntry);
                 //now write the content of the file to the ZipOutputStream
+
+
                 while ((bytesIn = fis.read(readBuffer)) != -1) {
                     zos.write(readBuffer, 0, bytesIn);
                 }
@@ -676,5 +696,12 @@ public class FileNav {
         }
 
     }
+
+
+    public interface OnZipProgress {
+
+        public void onProgress(long progress);
+    }
+
 
 }

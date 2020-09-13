@@ -2,76 +2,124 @@
 
 
 <layout>
+
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:background="@color/colorBackground"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:elevation="1dp"
         android:layout_height="match_parent"
+        android:background="@color/colorBackground"
+        android:elevation="1dp"
         tools:context=".activity.MainActivity">
 
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+
+            android:layout_marginRight="30dp"
+            android:layout_marginBottom="40dp"
+            android:background="@drawable/circular_xml_icon"
+            android:clickable="false"
+            android:clipChildren="false"
+            android:elevation="6dp"
+            android:orientation="horizontal"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+
+            <ImageView
+
+                android:id="@+id/addPhotos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="5dp"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:paddingLeft="10dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:src="@drawable/round_add_photo_alternate_white_36"></ImageView>
+
+            <ImageView
+
+
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="12dp"
+                android:alpha="0.5"
+                android:background="@color/colorWhite"
+                android:foreground="@color/colorWhite"
+                android:src="@drawable/round_add_a_photo_white_36">
+
+            </ImageView>
+
+            <ImageView
+                android:id="@+id/cameraCapture"
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="8dp"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:paddingTop="5dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="5dp"
+                android:src="@drawable/round_add_a_photo_white_36">
+
+            </ImageView>
+
+
+        </LinearLayout>
+
+
         <androidx.appcompat.widget.Toolbar
-            android:elevation="3dp"
-            android:contentInsetRight="0dp"
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:layout_margin="0dp"
+            android:background="@color/colorPrimary"
             android:contentInsetLeft="0dp"
+            android:contentInsetRight="0dp"
+            android:elevation="3dp"
             app:contentInsetEnd="0dp"
             app:contentInsetLeft="0dp"
             app:contentInsetRight="0dp"
-            android:layout_margin="0dp"
-            android:id="@+id/toolbar"
-            android:background="@color/colorPrimary"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
 
-
-
             <RelativeLayout
-                android:background="@color/colorPrimary"
-                android:layout_margin="0dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_margin="0dp"
+                android:background="@color/colorPrimary">
 
-
-
-
-                <TextView
-                    android:id="@+id/toolbarTitle"
-                    android:layout_marginLeft="15dp"
-                    android:layout_centerVertical="true"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/colorWhite"
-                    android:text="@string/app_name_short"
-                    android:maxLines="1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-
-                    android:layout_toLeftOf="@id/middle_options_rl"
-                    ></TextView>
 
                 <RelativeLayout
-                    android:visibility="gone"
-                    android:foreground="?android:selectableItemBackgroundBorderless"
-                    android:clickable="true"
                     android:id="@+id/backArrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:foreground="?android:selectableItemBackgroundBorderless"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+                    android:visibility="gone">
 
                     <ImageView
 
 
-                        android:layout_centerVertical="true"
-                        android:src="@drawable/round_keyboard_backspace_white_24"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/round_keyboard_backspace_white_24">
 
 
                     </ImageView>
@@ -79,45 +127,43 @@
 
                 </RelativeLayout>
 
-
-
                 <RelativeLayout
-                    android:layout_margin="7dp"
+                    android:id="@+id/middle_options_rl"
 
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_centerHorizontal="true"
+
+                    android:layout_centerVertical="true"
+                    android:layout_margin="7dp"
+                    android:clickable="true"
                     android:foreground="?android:selectableItemBackgroundBorderless"
                     android:paddingLeft="10dp"
-                    android:paddingRight="20dp"
-
-                    android:clickable="true"
-                    android:id="@+id/middle_options_rl"
-                    android:layout_centerHorizontal="true"
-                    android:layout_centerVertical="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+                    android:paddingRight="20dp">
 
 
                     <ImageView
-                        android:layout_centerVertical="true"
                         android:id="@+id/arrow_down_toolbar"
-                        android:layout_alignParentLeft="true"
-                        android:src="@drawable/baseline_arrow_drop_down_white_24"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/baseline_arrow_drop_down_white_24">
 
                     </ImageView>
 
                     <TextView
                         android:id="@+id/middle_options_text"
-                        android:textSize="16sp"
-                        android:layout_toRightOf="@id/arrow_down_toolbar"
-                        android:layout_centerVertical="true"
-                        android:textColor="@color/colorWhite"
-
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:textStyle="normal"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Groupped">
+                        android:layout_centerVertical="true"
+                        android:layout_toRightOf="@id/arrow_down_toolbar"
+
+                        android:fontFamily="sans-serif-condensed-medium"
+                        android:text="Groupped"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="16sp"
+                        android:textStyle="normal">
 
 
                     </TextView>
@@ -126,46 +172,54 @@
                 </RelativeLayout>
 
 
-
-
-
-
-
                 <RelativeLayout
                     android:id="@+id/more_options_rl"
 
 
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:addStatesFromChildren="false"
                     android:clickable="true"
                     android:clipChildren="false"
-                    android:addStatesFromChildren="false"
                     android:foreground="?android:selectableItemBackgroundBorderless"
                     android:paddingLeft="20dp"
-                    android:paddingRight="20dp"
-                    android:layout_alignParentRight="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent">
+                    android:paddingRight="20dp">
 
                     <ImageView
 
-                        android:background="@drawable/baseline_more_vert_white_24"
-                        android:layout_centerVertical="true"
-                        android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
-                        >
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/baseline_more_vert_white_24">
 
 
                     </ImageView>
 
 
-
                 </RelativeLayout>
+
+
+                <TextView
+                    android:id="@+id/toolbarTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="15dp"
+                    android:layout_toLeftOf="@id/middle_options_rl"
+                    android:maxLines="1"
+                    android:text="@string/app_name_short"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="22sp"
+
+                    android:textStyle="bold"></TextView>
 
 
                 <androidx.appcompat.widget.SearchView
 
-                    style="@style/SearchViewStyle"
-
                     android:id="@+id/search_view"
+
+                    style="@style/SearchViewStyle"
                     android:layout_width="wrap_content"
 
                     android:layout_height="wrap_content"
@@ -180,7 +234,6 @@
                 </androidx.appcompat.widget.SearchView>
 
 
-
             </RelativeLayout>
 
         </androidx.appcompat.widget.Toolbar>
@@ -188,17 +241,24 @@
 
         <androidx.core.widget.NestedScrollView
 
-            android:layout_marginTop="4dp"
-            android:layout_below="@id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:layout_below="@id/toolbar"
+            android:layout_marginTop="4dp">
 
 
             <RelativeLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="90dp">
+
+
+                </LinearLayout>
 
 
                 <RelativeLayout
@@ -207,61 +267,58 @@
                     android:layout_height="match_parent">
 
                     <RelativeLayout
-                        android:layout_centerInParent="true"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true">
 
 
                         <LinearLayout
 
                             android:id="@+id/emptyImageLL"
-                            android:weightSum="3"
-                            android:orientation="horizontal"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:weightSum="3">
 
                             <RelativeLayout
-                                android:layout_weight="1"
                                 android:layout_width="0dp"
-                                android:layout_height="wrap_content"></RelativeLayout>
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"></RelativeLayout>
 
                             <RelativeLayout
-                                android:layout_weight="1"
                                 android:layout_width="0dp"
-                                android:layout_height="wrap_content">
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1">
 
 
                                 <ImageView
-                                    android:alpha="0.4"
-                                    android:src="@drawable/icon_large"
-
-                                    android:scaleType="fitEnd"
                                     android:layout_width="match_parent"
-                                    android:layout_height="match_parent">
+                                    android:layout_height="match_parent"
+
+                                    android:alpha="0.4"
+                                    android:scaleType="fitEnd"
+                                    android:src="@drawable/icon_large">
 
                                 </ImageView>
 
                             </RelativeLayout>
 
                             <RelativeLayout
-                                android:layout_weight="1"
                                 android:layout_width="0dp"
-                                android:layout_height="wrap_content"></RelativeLayout>
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"></RelativeLayout>
 
                         </LinearLayout>
 
                         <TextView
                             android:id="@+id/emptyDocumentTV"
-                            android:layout_marginTop="20dp"
-                            android:layout_below="@id/emptyImageLL"
-                            android:textColor="@color/colorGray1"
-                            android:textAlignment="center"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_below="@id/emptyImageLL"
+                            android:layout_marginTop="20dp"
                             android:text="It's empty here. Start scanning."
-                            ></TextView>
-
-
+                            android:textAlignment="center"
+                            android:textColor="@color/colorGray1"></TextView>
 
 
                     </RelativeLayout>
@@ -269,103 +326,39 @@
                 </RelativeLayout>
 
 
-                <androidx.recyclerview.widget.RecyclerView
-
-                    android:background="@color/colorBackground"
-                    android:id="@+id/scanList"
+                <androidx.core.widget.NestedScrollView
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                </androidx.recyclerview.widget.RecyclerView>
-
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="90dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
 
 
 
-                </LinearLayout>
+                        <androidx.recyclerview.widget.RecyclerView
+
+                            android:id="@+id/scanList"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@color/colorBackground">
+
+                        </androidx.recyclerview.widget.RecyclerView>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="150dp"
+                            android:orientation="vertical"></LinearLayout>
+
+                    </LinearLayout>
+
+
+                </androidx.core.widget.NestedScrollView>
             </RelativeLayout>
 
 
-
         </androidx.core.widget.NestedScrollView>
-
-
-
-
-
-        <LinearLayout
-            android:clipChildren="false"
-
-            android:clickable="false"
-            android:orientation="horizontal"
-            android:elevation="6dp"
-
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:background="@drawable/circular_xml_icon"
-            android:layout_marginBottom="40dp"
-            android:layout_marginRight="30dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-
-
-            <ImageView
-
-                android:layout_marginLeft="8dp"
-                android:paddingBottom="5dp"
-                android:paddingTop="5dp"
-                android:paddingLeft="10dp"
-                android:foreground="?android:selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:layout_marginRight="5dp"
-                android:id="@+id/addPhotos"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/round_add_photo_alternate_white_36">
-            </ImageView>
-
-            <ImageView
-
-
-
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="12dp"
-                android:alpha="0.5"
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:src="@drawable/round_add_a_photo_white_36"
-                android:background="@color/colorWhite"
-                android:foreground="@color/colorWhite"
-                >
-
-            </ImageView>
-
-            <ImageView
-                android:layout_marginRight="8dp"
-                android:foreground="?android:selectableItemBackgroundBorderless"
-
-                android:paddingBottom="5dp"
-                android:paddingTop="5dp"
-                android:paddingRight="10dp"
-                android:clickable="true"
-                android:layout_marginLeft="5dp"
-                android:id="@+id/cameraCapture"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/round_add_a_photo_white_36">
-
-            </ImageView>
-
-
-
-        </LinearLayout>
-
 
 
     </RelativeLayout>

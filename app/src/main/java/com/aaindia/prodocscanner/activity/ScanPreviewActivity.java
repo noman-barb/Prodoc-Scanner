@@ -50,6 +50,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
 
     public static final String SCAN_DIR_PATH = "scan_dir_path";
+    public static final String SCROLL_TO = "scroll_to";
     private static final int ADD_PAGES_ACTIVITY_RESULT_CODE = 929;
 
     private static final int EXPORT_TO_DEVICE_CODE = 826;
@@ -58,6 +59,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
     }
 
@@ -140,7 +142,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
         if (getOriginalFilepaths().size() == 0) {
 
 
-           // FileUtils.deleteQuietly(new File(getScanDirPath()));
+            // FileUtils.deleteQuietly(new File(getScanDirPath()));
 
             FileNav.deleteDirectoryQuietely(new File(getScanDirPath()));
 
@@ -246,10 +248,15 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                     intent.addCategory(Intent.CATEGORY_OPENABLE);
 
                     intent.putExtra(Intent.EXTRA_TITLE, FileNav.getPDFName(getScanDirPath()));
-                    intent.setType("*/*");
+                    intent.setType("application/pdf");
 
 
-                    startActivityForResult(intent, EXPORT_TO_DEVICE_CODE);
+                    try {
+
+                        startActivityForResult(intent, EXPORT_TO_DEVICE_CODE);
+                    } catch (Exception e) {
+                        Toast.makeText(getApplicationContext(), "No app is installed to open PDF", Toast.LENGTH_LONG).show();
+                    }
 
 
                 } else {
@@ -280,13 +287,13 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                 File file = new File(pdfPath);
                 Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
 
-                intent.setDataAndType(uri, "application/pdf");
+                intent.setDataAndType(uri, "*/*");
 
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
             } else {
 
-                intent.setDataAndType(Uri.parse(pdfName), "application/pdf");
+                intent.setDataAndType(Uri.parse(pdfName), "*/*");
                 intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(pdfPath));
             }
 
@@ -305,7 +312,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
         intent.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
 
 
-        intent.setType("application/pdf");
+        intent.setType("*/*");
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -330,6 +337,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
     @Override
     public void share() {
+
 
         Utils.copyNotProcessedOriginals(getImageDetails(), getScanDirPath());
 
@@ -514,7 +522,6 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                         FileUtils.copyFile(new File(outputPath), outputStream);
 
 
-
                     } catch (FileNotFoundException e) {
 
                         e.printStackTrace();
@@ -525,7 +532,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                 pd.dismiss();
+                                pd.dismiss();
                             }
                         });
                     }
@@ -543,8 +550,21 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
     @Override
     public void viewPDF() {
 
-
         createPdf(true, PDFCreator.QUALITY_FULL, Intent.ACTION_VIEW);
 
+    }
+
+
+    @Override
+    public void onBackPressed() {
+
+
+        if (isReordeing()) {
+            reorderViewEnableDisable(false);
+
+            return;
+        }
+
+        super.onBackPressed();
     }
 }

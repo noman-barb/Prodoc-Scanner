@@ -69,11 +69,20 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
         }
 
+        binding.protector.setVisibility(View.VISIBLE);
+
 
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 prepareMats(holder, position);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        binding.protector.setVisibility(View.GONE);
+                    }
+                });
             }
         });
 
@@ -148,6 +157,13 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                 Effects effects = getImageDetails().getEffects(getImageDetails().getAt(position));
 
                 effects.color = colorCode;
+
+
+                if (effects.color == MatFilter.COLOR_WHITEBOARD) {
+                    effects.isGray = true;
+                    getBinding().colorGrayCheck.setChecked(effects.isGray);
+                }
+
                 effects.colorTune = MatFilter.getDefaultTune(colorCode);
 
                 processImage(holder, position, true);
@@ -163,11 +179,12 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
     @Override
-    public synchronized void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
         zoomageEnableDisable(holder, false);
 
+        holder.processing.setVisibility(View.VISIBLE);
         recyclerViewActivateDeact(false);
         getBinding().protector.setVisibility(View.VISIBLE);
 
@@ -186,7 +203,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                         holder.imageView.getLayoutParams().height = (int) holder.displayBitmap.getHeight();
                         holder.imageView.setImageBitmap(holder.displayBitmap);
                         holder.imageView.requestLayout();
-                        initAutoCrop(position, holder);
+                        initCrop(position, holder);
 
                     }
                 });
@@ -198,7 +215,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     }
 
 
-    private synchronized void initAutoCrop(int position, ScanPreviewAdapter.ViewHolder holder) {
+    private void initCrop(int position, ScanPreviewAdapter.ViewHolder holder) {
 
         holder.polygonView.setVisibility(View.VISIBLE);
 
@@ -236,6 +253,32 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             cropbounds.put(i, pointF1);
         }
 
+
+        try {
+
+            if (getImageDetails().getDocType() != null) {
+
+                String documentType = getImageDetails().getDocType().get(getImageDetails().getAt(position));
+
+                if (documentType != null) {
+
+                    effects.color = MatFilter.colorCodeFromDocumentType(documentType);
+
+                }
+            }
+        } catch (Exception e) {
+        }
+
+
+        effects.colorTune = MatFilter.getDefaultTune(effects.color);
+        if (effects.color == MatFilter.COLOR_WHITEBOARD) {
+            effects.isGray = true;
+            setColorTuneListen(false);
+            getBinding().colorGrayCheck.setChecked(effects.isGray);
+            setColorTuneListen(true);
+        }
+
+
         holder.polygonView.setPoints(cropbounds);
         holder.polygonView.requestLayout();
 
@@ -243,11 +286,12 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         rotateImageView(0, effects.rotation, holder, false);
 
         getBinding().protector.setVisibility(View.GONE);
+        holder.processing.setVisibility(View.GONE);
 
     }
 
 
-    private synchronized void rotateImageView(int globalRotation, int rotateBy, ScanPreviewAdapter.ViewHolder holder, boolean animateTrue) {
+    private void rotateImageView(int globalRotation, int rotateBy, ScanPreviewAdapter.ViewHolder holder, boolean animateTrue) {
 
         animateTrue = false;
 

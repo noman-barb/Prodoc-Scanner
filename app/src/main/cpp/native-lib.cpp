@@ -445,15 +445,13 @@ void normalize_image(Mat &image, Mat &result) {
 
     double begin = now_ms();
 
-    __android_log_print(ANDROID_LOG_INFO, TAG,  "NORMALIZED _ START 0 "  );
-
-
+    __android_log_print(ANDROID_LOG_INFO, TAG, "NORMALIZED _ START 0 ");
 
 
     vector<Mat> image_planes;
     split(image, image_planes);
 
-    __android_log_print(ANDROID_LOG_INFO, TAG,  "SPLIT %f", now_ms() - begin );
+    __android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
 
     Mat temp(image.rows, image.cols, CV_8U);
 
@@ -464,7 +462,7 @@ void normalize_image(Mat &image, Mat &result) {
             dilate(image_planes[i], temp, Mat::ones(7, 7, CV_8U));
             //medianBlur(temp, temp, 21);
 
-            blur(temp, temp, Size(21,21));
+            blur(temp, temp, Size(21, 21));
 
 
             absdiff(image_planes[i], temp, temp);
@@ -479,30 +477,30 @@ void normalize_image(Mat &image, Mat &result) {
 
         Mat image_original = image;
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "BEFORE DILATE %f", now_ms() - begin );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
 
         dilate(image_original, temp, Mat::ones(7, 7, CV_8U));
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "AFTER DILATE %f", now_ms() - begin );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
 
         //medianBlur(temp, temp, 21);
 
-        blur(temp, temp, Size(21,21));
+        blur(temp, temp, Size(21, 21));
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "AFTER BLUR %f", now_ms() - begin );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER BLUR %f", now_ms() - begin);
 
         absdiff(image_original, temp, temp);
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "AFTER DIFF %f", now_ms() - begin );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DIFF %f", now_ms() - begin);
 
         temp = 255 - temp;
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "AFTER INVERT %f", now_ms() - begin  );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER INVERT %f", now_ms() - begin);
 
         //NORM_MINMAX = 32
         normalize(temp, image_original, 0, 255, 32);
 
-        __android_log_print(ANDROID_LOG_INFO, TAG,  "AFTER NORMALIZE %f", now_ms() - begin  );
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
 
 
     }
@@ -863,7 +861,16 @@ Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1(JNIEnv *env, jo
 }
 
 
+void paperize(jlong matAddr, jfloat colorVal) {
 
+    Mat &image_original = *(Mat *) matAddr;
+
+    normalize_image(image_original, image_original);
+
+    colorVal = colorVal >= 50 ? colorVal - 49 : colorVal / 50;
+
+    BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
+}
 
 
 extern "C"
@@ -884,13 +891,8 @@ JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_utils_MatFilter_paperize(JNIEnv *env, jclass clazz,
                                                         jlong matAddr, jfloat colorVal) {
 
-    Mat &image_original = *(Mat *) matAddr;
+    paperize(matAddr, colorVal);
 
-    normalize_image(image_original, image_original);
-
-    colorVal = colorVal>=50?  colorVal-49 : colorVal/50;
-
-    BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
 
 }extern "C"
 JNIEXPORT void JNICALL
@@ -906,7 +908,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_adjustGamma(JNIEnv *env, jclass c
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1(JNIEnv *env, jobject thiz,
+Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1(JNIEnv *env, jclass clazz,
                                                       jlong matAddr,
                                                       jlong native_obj_addr1) {
 
@@ -945,6 +947,109 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1(JNIEnv *env, jobject thiz,
 
     }
     catch (...) {
+
+    }
+
+
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_aaindia_prodocscanner_utils_MatFilter_cleanText(JNIEnv *env, jclass clazz,
+                                                         jlong matAddr, jfloat colorVal) {
+
+
+    Mat &mat = *(Mat *) matAddr;
+
+    if (mat.channels() > 1) {
+
+
+        Mat gray(mat.rows, mat.cols, CV_8U);
+        Mat binary(mat.rows, mat.cols, CV_8U);
+
+        if (mat.channels() == 3) {
+            cvtColor(mat, gray, COLOR_BGR2GRAY);
+        } else if (mat.channels() == 4) {
+            cvtColor(mat, gray, COLOR_BGRA2GRAY);
+        }
+
+        blur(gray, gray, Size(3, 3));
+
+        adaptiveThreshold(gray, binary, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 51, 10);
+
+        bitwise_not(binary, binary);
+
+        dilate(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
+
+        bitwise_not(binary, binary);
+
+        paperize(matAddr, 0);
+
+        vector<Mat> mats;
+        split(mat, mats);
+
+        bitwise_or(mats[0], binary, mats[0]);
+
+        bitwise_or(mats[1], binary, mats[1]);
+
+        bitwise_or(mats[2], binary, mats[2]);
+
+        merge(mats, mat);
+
+        cvtColor(mat, gray, COLOR_BGR2GRAY);
+
+        double control = colorVal;
+        double thresh = threshold(gray, binary, 0, 255, THRESH_OTSU);
+
+        gamma_correction(mat, mat, (float) (thresh / 255.0f) * (control / 100) * 3);
+
+        bitwise_not(binary, binary);
+
+        cvtColor(mat, mat, COLOR_BGR2HSV);
+
+
+        vector<Mat> mats2;
+
+        split(mat, mats2);
+
+        add(mats2[1], Scalar(100), mats2[1], binary);
+
+        merge(mats2, mat);
+
+        cvtColor(mat, mat, COLOR_HSV2BGR);
+
+
+    } else {
+
+        blur(mat, mat, Size(3, 3));
+
+        Mat binary(mat.rows, mat.cols, CV_8U);
+
+        adaptiveThreshold(mat, binary, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 51, 10);
+
+        bitwise_not(binary, binary);
+
+        dilate(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
+
+        bitwise_not(binary, binary);
+
+        paperize(matAddr, 0);
+
+        bitwise_or(mat, binary, mat);
+
+        double thresh = threshold(mat, binary, 0, 255, THRESH_OTSU);
+
+        double control = colorVal;
+
+        control += 1;
+
+        control = control >= 50 ? control / 5.0 : control / 200.0;
+
+        gamma_correction(mat, mat, (float) ((thresh + 55) * 1.0 / 255) * 0.8 * control);
+
+        bitwise_not(binary, binary);
+
+        bitwise_xor(mat, mat, mat, binary);
+
 
     }
 

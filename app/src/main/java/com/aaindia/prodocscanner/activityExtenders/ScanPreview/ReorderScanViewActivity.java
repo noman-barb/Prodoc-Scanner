@@ -1,20 +1,20 @@
 package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.adapters.ReorderScanViewAdapter;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 
 public class ReorderScanViewActivity extends EditScanViewActivity {
@@ -24,6 +24,15 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
 
     LinkedList<String> ordering = new LinkedList<>();
     private ReorderScanViewAdapter adapter;
+
+
+    private boolean isReordeing = false;
+
+
+    public boolean isReordeing(){
+        return isReordeing;
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,11 +53,37 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
                 int toPosition = target.getAdapterPosition();
 
 
-                Collections.swap(originalPaths, fromPostion, toPosition);
-                Collections.swap(ordering, fromPostion, toPosition);
+                if (toPosition < fromPostion) {
+                    originalPaths.add(toPosition, originalPaths.remove(fromPostion));
+                    ordering.add(toPosition, ordering.remove(fromPostion));
+                } else {
+
+                    String s1 = originalPaths.get(fromPostion);
+                    String s2 = ordering.get(fromPostion);
+
+                    originalPaths.add(toPosition + 1, s1);
+                    ordering.add(toPosition + 1, s2);
+
+                    originalPaths.remove(fromPostion);
+                    ordering.remove(fromPostion);
+
+                }
 
 
                 getBinding().reOrderRecyclerView.getAdapter().notifyItemMoved(fromPostion, toPosition);
+
+
+                for (int i = 0; i < originalPaths.size(); i++) {
+
+                    ReorderScanViewAdapter.ViewHolder holder = (ReorderScanViewAdapter.ViewHolder) binding.reOrderRecyclerView.findViewHolderForAdapterPosition(i);
+
+
+                    if (holder != null) {
+
+                        holder.pageNumber.setText((i + 1) + "");
+                    }
+
+                }
 
 
                 return false;
@@ -68,6 +103,8 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
 
                 reorderViewEnableDisable(false);
 
+                isReordeing = false;
+
             }
         });
 
@@ -76,6 +113,7 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
             @Override
             public void onClick(View view) {
 
+
                 setOriginalFilepaths(new ArrayList<>(originalPaths));
                 ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
                 getImageDetails().setOrdering(new LinkedList<>(ordering));
@@ -83,6 +121,8 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
                 reorderViewEnableDisable(false);
 
                 getRecyclerView().getAdapter().notifyDataSetChanged();
+
+                isReordeing = false;
 
             }
         });
@@ -99,6 +139,7 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
     @Override
     public void reorder() {
         super.reorder();
+
 
 
         reorderViewEnableDisable(true);
@@ -123,9 +164,14 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
         binding.reOrderRecyclerView.getAdapter().notifyDataSetChanged();
 
 
+        isReordeing = true;
+
+
     }
 
-    private void reorderViewEnableDisable(boolean reorder) {
+    public void reorderViewEnableDisable(boolean reorder) {
+
+        isReordeing = reorder;
 
 
         if (reorder) {
@@ -136,6 +182,7 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
             getBinding().recyclerView.setVisibility(View.VISIBLE);
             getBinding().reOrderRecyclerView.setVisibility(View.GONE);
             getBinding().footerActionRL.setVisibility(View.GONE);
+            getBinding().reOrderRecyclerView.setVisibility(View.GONE);
         }
 
 

@@ -14,353 +14,376 @@
 
         <RelativeLayout
 
-            android:layout_marginTop="20dp"
             android:id="@+id/toolbarRL"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:background="@color/colorSecondaryDark"
             android:elevation="3dp"
             android:minHeight="?attr/actionBarSize">
 
 
-            <TextView
-                android:alpha="0.8"
-                android:textColor="@color/colorWhite"
-                android:layout_centerVertical="true"
-                android:layout_centerHorizontal="true"
-                android:text="Batch Mode"
-                android:id="@+id/scanModeTV"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"></TextView>
-
             <ImageView
-                android:clickable="true"
                 android:id="@+id/backArrow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="12dp"
+                android:clickable="true"
                 android:src="@drawable/round_keyboard_backspace_white_24"></ImageView>
 
             <RelativeLayout
 
-                android:layout_marginRight="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
+
                 android:layout_centerVertical="true"
-
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_marginRight="24dp">
 
                 <ImageView
 
-                    android:padding="5dp"
-                    android:clickable="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_marginLeft="12dp"
-                    android:src="@drawable/outline_highlight_white_24_outline"
-                    ></ImageView>
+                    android:clickable="true"
+                    android:padding="5dp"
+                    android:src="@drawable/outline_highlight_white_24_outline"></ImageView>
 
                 <ImageView
-                    android:alpha="0"
-                    android:padding="5dp"
-                    android:contextClickable="true"
                     android:id="@+id/torchIV"
-                    android:clickable="true"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_marginLeft="12dp"
-                    android:src="@drawable/baseline_highlight_white_24"
-                    ></ImageView>
-
-
-
-
-            </RelativeLayout>
-
-
-
-        </RelativeLayout>
-
-
-        <RelativeLayout
-
-            android:elevation="20dp"
-            android:layout_alignTop="@id/previewCL"
-            android:layout_alignRight="@id/previewCL"
-            android:layout_alignBottom="@id/previewCL"
-            android:layout_alignLeft="@id/previewCL"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-
-            <ImageView
-
-                android:visibility="gone"
-                android:id="@+id/focusIV"
-                android:src="@drawable/baseline_crop_free_white_48"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-            </ImageView>
-
-        </RelativeLayout>
-
-
-        <RelativeLayout
-
-            android:layout_below="@id/toolbarRL"
-            android:id="@+id/previewCL"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-
-
-
-
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-
-
-
-            android:id="@+id/cameraPreviewCL"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:elevation="5dp">
-
-            <FrameLayout
-
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_marginLeft="0dp"
-                android:layout_marginTop="0dp"
-                android:layout_marginRight="0dp"
-                android:background="@android:color/black"
-                app:layout_constraintDimensionRatio="H,3:4"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-
-                app:layout_constraintBottom_toBottomOf="parent"
-                >
-
-
-                <androidx.camera.view.PreviewView
-
-                    android:id="@+id/camera_preview"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:scaleType="fitCenter"></androidx.camera.view.PreviewView>
-
-
-
-
-            </FrameLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <RelativeLayout
-
-                android:layout_alignLeft="@id/cameraPreviewCL"
-                android:layout_alignRight="@id/cameraPreviewCL"
-                android:layout_alignBottom="@id/cameraPreviewCL"
-                android:layout_alignTop="@id/cameraPreviewCL"
-                android:elevation="10dp"
-                android:alpha="1"
-
-                android:background="@color/colorBlack"
-                android:id="@+id/cameraAlphaAnimationRL"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                    android:alpha="0"
+                    android:clickable="true"
+                    android:contextClickable="true"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_highlight_white_24"></ImageView>
 
 
             </RelativeLayout>
 
-
-        </RelativeLayout>
-
-
-        <RelativeLayout
-
-
-            android:layout_below="@id/previewCL"
-            android:id="@+id/bottom"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-
-            android:background="@color/colorSecondaryDark"
-            android:elevation="6dp"
-            >
-
-            <ImageView
-                android:clickable="true"
-                android:foreground="?attr/selectableItemBackgroundBorderless"
-                android:id="@+id/cameraCapture"
+            <TextView
+                android:id="@+id/scanModeTV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true"
-                android:src="@drawable/click_photo">
-
-            </ImageView>
-
-            <LinearLayout
-
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:layout_toLeftOf="@id/cameraCapture"
-                android:orientation="horizontal"
-                android:paddingLeft="3dp"
-                android:paddingRight="3dp"
-                android:weightSum="3">
-
-
-                <LinearLayout
-
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-
-                            android:paddingLeft="10dp"
-                            android:paddingRight="10dp"
-                            android:paddingTop="20dp"
-                            android:paddingBottom="20dp"
-
-                            android:id="@+id/flashIV"
-                            android:clickable="true"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:layout_centerVertical="true"
-                            android:src="@drawable/baseline_flash_auto_white_24"></ImageView>
-
-                    </RelativeLayout>
-
-
-                </LinearLayout>
-
-                <LinearLayout
-
-
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:paddingLeft="10dp"
-                            android:paddingRight="10dp"
-                            android:paddingTop="20dp"
-                            android:paddingBottom="20dp"
-                            android:id="@+id/scanModeIV"
-                            android:clickable="true"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:layout_centerVertical="true"
-                            android:src="@drawable/baseline_style_white_24"></ImageView>
-
-                    </RelativeLayout>
-                </LinearLayout>
-
-                <LinearLayout
-
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-
-                            android:id="@+id/importIV"
-                            android:paddingLeft="10dp"
-                            android:paddingRight="10dp"
-                            android:paddingTop="20dp"
-                            android:paddingBottom="20dp"
-                            android:clickable="true"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:layout_centerVertical="true"
-                            android:src="@drawable/baseline_add_photo_alternate_white_24"></ImageView>
-                    </RelativeLayout>
-                </LinearLayout>
-            </LinearLayout>
-
-
-            <RelativeLayout
-                android:layout_centerVertical="true"
-                android:layout_toRightOf="@id/cameraCapture"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <RelativeLayout
-                    android:layout_centerHorizontal="true"
-                    android:id="@+id/numPagesRl"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-
-                    android:layout_marginRight="3dp"
-                    android:layout_marginBottom="3dp"
-                    android:background="@drawable/circular_full_xml_border_white"
-
-                    android:minWidth="20dp"
-                    android:minHeight="20dp">
-
-                    <TextView
-
-                        android:layout_centerVertical="true"
-                        android:layout_centerHorizontal="true"
-                        android:id="@+id/numPagesTV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:maxLines="1"
-                        android:padding="4dp"
-                        android:text="0"
-                        android:textColor="@color/colorSecondaryDark"
-                        android:textSize="10sp"></TextView>
-
-                </RelativeLayout>
-
-
-                <Button
-
-                    android:id="@+id/next"
-                    android:layout_below="@id/numPagesRl"
-                    android:background="@drawable/active_btn"
-                    android:layout_centerHorizontal="true"
-
-                    android:text="Next"
-                    android:textColor="@color/colorWhite"
-                    android:layout_centerVertical="true"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                </Button>
-
-            </RelativeLayout>
+                android:alpha="0.8"
+                android:text="Batch Mode"
+                android:textColor="@color/colorWhite"></TextView>
 
 
         </RelativeLayout>
 
+
+        <RelativeLayout
+
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignLeft="@id/previewCL"
+            android:layout_alignTop="@id/previewCL"
+            android:layout_alignRight="@id/previewCL"
+            android:layout_alignBottom="@id/previewCL"
+            android:elevation="20dp">
+
+
+            <ImageView
+
+                android:id="@+id/focusIV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/baseline_crop_free_white_48"
+                android:visibility="gone">
+
+            </ImageView>
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+
+            android:id="@+id/previewCL"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/toolbarRL">
+
+
+            <RelativeLayout
+
+                android:id="@+id/cameraAlphaAnimationRL"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignLeft="@id/cameraPreviewCL"
+                android:layout_alignTop="@id/cameraPreviewCL"
+                android:layout_alignRight="@id/cameraPreviewCL"
+
+                android:layout_alignBottom="@id/cameraPreviewCL"
+                android:alpha="1"
+                android:background="@color/colorBlack"
+                android:elevation="10dp">
+
+
+            </RelativeLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+
+
+                android:id="@+id/cameraPreviewCL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:elevation="5dp">
+
+                <FrameLayout
+
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginLeft="0dp"
+                    android:layout_marginTop="0dp"
+                    android:layout_marginRight="0dp"
+                    android:background="@android:color/black"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="H,3:4"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+
+                    app:layout_constraintTop_toTopOf="parent">
+
+
+                    <androidx.camera.view.PreviewView
+
+                        android:id="@+id/camera_preview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:scaleType="fitCenter"></androidx.camera.view.PreviewView>
+
+
+                </FrameLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+
+
+            android:id="@+id/bottom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/previewCL"
+
+            android:background="@color/colorSecondaryDark"
+            android:elevation="6dp">
+
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/horizontalPicker"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:clipToPadding="false"
+                        android:paddingLeft="183dp"
+                        android:paddingRight="183dp" />
+
+
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/cameraCapture"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_centerVertical="true"
+                        android:clickable="true"
+                        android:foreground="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/click_photo">
+
+                    </ImageView>
+
+                    <LinearLayout
+
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toLeftOf="@id/cameraCapture"
+                        android:orientation="horizontal"
+                        android:paddingLeft="3dp"
+                        android:paddingRight="3dp"
+                        android:weightSum="3">
+
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <ImageView
+
+                                    android:id="@+id/flashIV"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerHorizontal="true"
+
+                                    android:layout_centerVertical="true"
+                                    android:clickable="true"
+                                    android:paddingLeft="10dp"
+                                    android:paddingTop="20dp"
+                                    android:paddingRight="10dp"
+                                    android:paddingBottom="20dp"
+                                    android:src="@drawable/baseline_flash_auto_white_24"></ImageView>
+
+                            </RelativeLayout>
+
+
+                        </LinearLayout>
+
+                        <LinearLayout
+
+
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <ImageView
+                                    android:id="@+id/scanModeIV"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerHorizontal="true"
+                                    android:layout_centerVertical="true"
+                                    android:clickable="true"
+                                    android:paddingLeft="10dp"
+                                    android:paddingTop="20dp"
+                                    android:paddingRight="10dp"
+                                    android:paddingBottom="20dp"
+                                    android:src="@drawable/baseline_style_white_24"></ImageView>
+
+                            </RelativeLayout>
+                        </LinearLayout>
+
+                        <LinearLayout
+
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <ImageView
+
+                                    android:id="@+id/importIV"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerHorizontal="true"
+                                    android:layout_centerVertical="true"
+                                    android:clickable="true"
+                                    android:paddingLeft="10dp"
+                                    android:paddingTop="20dp"
+                                    android:paddingRight="10dp"
+                                    android:paddingBottom="20dp"
+                                    android:src="@drawable/baseline_add_photo_alternate_white_24"></ImageView>
+                            </RelativeLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toRightOf="@id/cameraCapture">
+
+                        <Button
+
+                            android:id="@+id/next"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/numPagesRl"
+
+                            android:layout_centerHorizontal="true"
+                            android:layout_centerVertical="true"
+                            android:background="@drawable/active_btn"
+                            android:text="Next"
+                            android:textColor="@color/colorWhite">
+
+                        </Button>
+
+
+                        <RelativeLayout
+                            android:id="@+id/numPagesRl"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+
+                            android:layout_marginRight="3dp"
+                            android:layout_marginBottom="3dp"
+                            android:background="@drawable/circular_full_xml_border_white"
+
+                            android:minWidth="20dp"
+                            android:minHeight="20dp">
+
+                            <TextView
+
+                                android:id="@+id/numPagesTV"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerHorizontal="true"
+                                android:layout_centerVertical="true"
+                                android:fontFamily="sans-serif-condensed-medium"
+                                android:maxLines="1"
+                                android:padding="4dp"
+                                android:text="0"
+                                android:textColor="@color/colorSecondaryDark"
+                                android:textSize="10sp"></TextView>
+
+                        </RelativeLayout>
+
+                    </RelativeLayout>
+
+
+                </RelativeLayout>
+
+
+            </LinearLayout>
+
+
+
+
+        </RelativeLayout>
 
 
     </RelativeLayout>

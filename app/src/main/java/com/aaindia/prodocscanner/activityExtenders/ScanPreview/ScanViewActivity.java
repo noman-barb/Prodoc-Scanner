@@ -186,6 +186,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             }
         });
 
+
         binding.colorGrayCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -243,6 +244,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         originalDirFile = new File(scanDirPath, FileNav.ORIGINAL_IMAGE_DIR);
         processedDirFile = new File(scanDirPath, FileNav.PROCESSED_IMAGE_DIR);
+
+        originalDirFile.mkdirs();
+        processedDirFile.mkdirs();
 
 
         originalFilepaths = new ArrayList<>();

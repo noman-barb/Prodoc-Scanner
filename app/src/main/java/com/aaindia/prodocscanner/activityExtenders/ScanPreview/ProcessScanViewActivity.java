@@ -63,10 +63,10 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
     @Override
-    public synchronized void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
+    public void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
 
 
-        prepareMats(holder, position);
+        //  prepareMats(holder, position);
 
 
         getBinding().protector.setVisibility(View.VISIBLE);
@@ -79,7 +79,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         int colorTune = effects.colorTune;
 
 
-        displayImageProcessThread = new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
 
@@ -135,6 +135,11 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Imgproc.resize(holder.processedMat, holder.processedMat, new Size(diffWidth, diffHeight));
 
 
+                setColorTuneListen(false);
+                getBinding().colorTuneSK.setProgress(colorTune);
+                getBinding().colorGrayCheck.setChecked(colorGray);
+                setColorTuneListen(true);
+
                 MatFilter.colorize(holder.processedMat, colorCode, colorTune, colorGray);
 
 
@@ -145,10 +150,13 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
                 if (imageDetails.sync()) {
+
+
                     int rot = imageDetails.getRotation(imageDetails.getAt(position));
 
 
                     int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
+
 
 
                     BitmapUtils.rotateMatDegrees(holder.processedMat, rot);
@@ -177,15 +185,13 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 });
 
             }
-        });
-
-        displayImageProcessThread.start();
+        }).start();
 
 
     }
 
     @Override
-    public synchronized void autocropThis(String path, SavedImageDetails imageDetails) {
+    public void autocropThis(String path, SavedImageDetails imageDetails) {
 
         Mat originalMat = Imgcodecs.imread(path);
 
@@ -240,7 +246,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     }
 
 
-    public synchronized void prepareMats(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void prepareMats(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
         holder.originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));

@@ -51,6 +51,8 @@ import com.aaindia.prodocscanner.wrappers.Clipboard;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+import com.tom_roush.pdfbox.pdfparser.PDFParser;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -59,6 +61,7 @@ import org.opencv.android.CameraActivity;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -460,7 +463,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-        intent.setType("*/*");
+        intent.setType("application/zip");
 
 
         startActivityForResult(intent, IMPORT_BACKUP_REQUEST_CODE);
@@ -473,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
         pd.setTitle("Importing Backup");
-        pd.setMessage("It may take a while");
+        pd.setMessage("It will take a while");
         pd.setCancelable(false);
         pd.show();
 
@@ -485,15 +488,33 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 try (InputStream fin = getContentResolver().openInputStream(uri);) {
 
+                    long totalSize = fin.available();
+                    final long[] doneSize = {0};
 
-                    FileNav.unZipAll(fin, FileNav.getBaseDir(getApplicationContext()));
+                    FileNav.unZipAll(fin, FileNav.getBaseDir(getApplicationContext()), new FileNav.OnZipProgress() {
+                        @Override
+                        public void onProgress(long progress) {
+
+                            doneSize[0] += progress;
 
 
-                } catch (FileNotFoundException e) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    pd.setMessage("" + String.format("%.2f", (float) doneSize[0] * 100.0f / totalSize * 1.0f) + "% complete");
+                                }
+                            });
+                        }
+                    });
 
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                } catch (FileNotFoundException e1) {
+
+
+                    e1.printStackTrace();
+                } catch (IOException e2) {
+
+                    e2.printStackTrace();
 
                 }
 
@@ -1061,7 +1082,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         showItemMoreOptions(view, position);
 
-        selectDeselect(position);
+
+        //selectDeselect(position);
     }
 
     private void showItemMoreOptions(View view, int position) {
@@ -1411,7 +1433,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         if (uris.size() == 1) {
                             Intent intent = new Intent(Intent.ACTION_SEND);
                             //      intent.setData(uris.get(0));
-                            intent.setType("application/pdf");
+                            intent.setType("*/*");
                             intent.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
 
                             intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
@@ -1432,7 +1454,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                             Intent share = new Intent(Intent.ACTION_SEND_MULTIPLE);
 
-                            share.setType("application/pdf");
+                            share.setType("*/*");
                             share.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
                             share.putExtra(Intent.EXTRA_SUBJECT, "Scans from Prodoc Scanner");
 
@@ -1611,7 +1633,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
                     try {
-                       // FileUtils.deleteDirectory(new File(adapter.data.get(i).filepath));
+                        // FileUtils.deleteDirectory(new File(adapter.data.get(i).filepath));
 
                         FileNav.deleteDirectoryQuietely(new File(adapter.data.get(i).filepath));
 
@@ -1673,7 +1695,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         builder.setPositiveButton("Delete", (dialog, which) -> {
 
             try {
-             //   FileUtils.deleteDirectory(new File(filepath));
+                //   FileUtils.deleteDirectory(new File(filepath));
 
                 FileNav.deleteDirectoryQuietely(new File(filepath));
                 nagivateTo(currentPath);
@@ -1701,6 +1723,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void pdfToBitmapSave(File pdfFile, ProgressDialog pd) {
 
 
+
+
         try {
 
             File scanDir = FileNav.newScanDir(currentPath);
@@ -1712,6 +1736,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             PdfRenderer renderer = new PdfRenderer(ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY));
+
 
             Bitmap bitmap;
 
@@ -1804,6 +1829,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     } catch (Exception e) {
 
                     }
+
+
 
 
                     pdfToBitmapSave(temp, pd);

@@ -46,6 +46,7 @@ import java.util.LinkedList;
 public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.ViewHolder> {
 
 
+    public static final String SCROLL_TO = "scroll_to";
     public String scanDirName;
     public LinkedList<String> orders;
 
@@ -73,8 +74,6 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-
-        Log.d("aaaaaaaaaaaa", "nos ");
 
         holder.imageViewParent.clearAnimation();
         holder.imageViewParent.setScaleX(1.0f);
@@ -105,7 +104,6 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         holder.nextAction.setVisibility(View.GONE);
 
         if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
-
 
 
             holder.nextAction.setVisibility(View.GONE);
@@ -153,7 +151,6 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
         } else {
 
-            Log.d("bbbbbbbbb", "ScanPrevAdapter Not found "+position);
 
             Glide.with(context)
 
@@ -200,8 +197,6 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                         }
                     })
                     .into(holder.imageView);
-
-
 
 
         }
@@ -257,13 +252,11 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         public ImageView clearAction;
 
 
-
         public Bitmap displayBitmap = null;
 
-        public Mat originalMat = new Mat(); // store original image
+        public Mat originalMat = null; // store original image
         public Mat processedMat = new Mat(); // store after complete processing
         public Mat displayMat = new Mat();  // mat used for display only
-
 
 
         public ViewHolder(@NonNull View itemView) {

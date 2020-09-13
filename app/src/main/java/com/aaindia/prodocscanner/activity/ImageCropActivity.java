@@ -118,7 +118,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     private int colorTune = MatFilter.getDefaultTune(colorCode);
 
-    private boolean colorGray = true;
+    private boolean colorGray = false;
     private boolean cropStart = false;
 
 
@@ -130,6 +130,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     private String originalImageFilename;
     private String processedImageFilename;
     private Thread displayImageProcessThread;
+
+    public static final String DOCUMENT_TYPE_KEY = "document_type";
 
 
     @Override
@@ -218,6 +220,19 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             }
         });
 
+
+        colorCode = MatFilter.colorCodeFromDocumentType(getIntent().getExtras().getString(DOCUMENT_TYPE_KEY));
+
+        colorTune = MatFilter.getDefaultTune(colorCode);
+
+
+        if (colorCode == MatFilter.COLOR_WHITEBOARD) {
+            colorGray = true;
+            colorTune = MatFilter.getDefaultTune(colorCode);
+        } else {
+            colorGray = false;
+
+        }
 
     }
 
@@ -326,7 +341,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                             binding.polygonView.autoCropped = true;
 
                             rotate(rotationDegrees);
-                            binding.processing.setVisibility(View.GONE);  binding.protector.setVisibility(View.GONE);
+                            binding.processing.setVisibility(View.GONE);
+                            binding.protector.setVisibility(View.GONE);
 
 
                         }
@@ -505,8 +521,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     }
 
-    private void zoomageEnableDisable(boolean enable){
-
+    private void zoomageEnableDisable(boolean enable) {
 
 
     }
@@ -591,7 +606,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                 colorTune = MatFilter.getDefaultTune(id);
 
-                if (colorCode == MatFilter.COLOR_WHITEBOARD || colorCode == MatFilter.COLOR_PAPER) {
+                if (colorCode == MatFilter.COLOR_WHITEBOARD) {
                     colorGray = true;
                     colorTune = MatFilter.getDefaultTune(id);
                 } else {
@@ -684,7 +699,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
 
             case R.id.noCropRL:
-
 
 
                 zoomageEnableDisable(false);

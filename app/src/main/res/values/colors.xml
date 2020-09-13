@@ -19,6 +19,7 @@
     <color name="colorBackgroundDark">#E1E2E1</color>
 
     <color name="colorWhite">#FFFFFF</color>
+    <color name="colorWhiteAlpha20">#33FFFFFF</color>
     <color name="colorBlack">#000</color>
 
     <color name="colorAccentAlpha">#6A2962FF</color>

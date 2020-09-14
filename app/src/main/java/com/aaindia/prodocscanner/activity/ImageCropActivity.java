@@ -232,6 +232,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         } else {
             colorGray = false;
 
+
         }
 
     }

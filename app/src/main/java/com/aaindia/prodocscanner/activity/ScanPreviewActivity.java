@@ -45,6 +45,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.Executors;
 
 public class ScanPreviewActivity extends ReorderScanViewActivity implements View.OnClickListener {
 
@@ -132,19 +133,14 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
         getImageDetails().removePage(position);
         getImageDetails().sync();
-        //FileUtils.deleteQuietly(new File(originalFilePath));
-        //FileUtils.deleteQuietly(new File(processedImageFilepath));
-
         FileNav.deleteDirectoryQuietely(new File(originalFilePath));
-
         FileNav.deleteDirectoryQuietely(new File(processedImageFilepath));
+
 
         if (getOriginalFilepaths().size() == 0) {
 
 
-            // FileUtils.deleteQuietly(new File(getScanDirPath()));
-
-            FileNav.deleteDirectoryQuietely(new File(getScanDirPath()));
+            FileNav.deleteDirectoryQuietely((new File(getScanDirPath())));
 
             Intent intent = new Intent(ScanPreviewActivity.this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -287,7 +283,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
                 File file = new File(pdfPath);
                 Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".provider", file);
 
-                intent.setDataAndType(uri, "*/*");
+                intent.setDataAndType(uri, "application/pdf");
 
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
@@ -300,7 +296,12 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
             intent.putExtra(Intent.EXTRA_SUBJECT, "Shared using Prodoc Scanner");
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
-            startActivity(intent);
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+
+                Toast.makeText(getApplicationContext(), "No PDF viewer app found", Toast.LENGTH_SHORT).show();
+            }
 
 
             return;

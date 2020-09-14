@@ -685,16 +685,22 @@ public class FileNav {
         return context.getExternalFilesDir(null);
     }
 
-
-    public static void deleteDirectoryQuietely(File file) {
+    public static void deleteDirectoryQuietely(File src) {
 
 
         try {
 
-            FileUtils.deleteDirectory(file);
-        } catch (Exception e) {
+            if (src.isDirectory()){
+                FileUtils.deleteDirectory(src);
+
+            }
+
+            else {
+                FileUtils.deleteQuietly(src);
+            }
         }
 
+        catch (Exception e){}
     }
 
 

@@ -52,10 +52,10 @@ public class PDFCreator {
 
     public static int QUALITY_FULL = 100;
 
-    public static int QUALITY_MEDIUM = 40;
+    public static int QUALITY_MEDIUM = 30;
 
 
-    public static int QUALITY_LOW = 14;
+    public static int QUALITY_LOW = 8;
 
 
     Activity activity;
@@ -213,7 +213,7 @@ public class PDFCreator {
             PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
 
-            PDImageXObject ximage = JPEGFactory.createFromImage(document, bitmap, quality / 200.0f, 300);
+            PDImageXObject ximage = JPEGFactory.createFromImage(document, bitmap, quality / 250.0f, 300);
 
 
             contentStream.drawXObject(ximage, 0, 0, pdfWidth, pdfHeight);

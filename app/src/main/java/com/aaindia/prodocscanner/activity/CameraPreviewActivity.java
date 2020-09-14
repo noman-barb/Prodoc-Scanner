@@ -21,8 +21,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
@@ -34,6 +36,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ImageFormat;
+import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -274,42 +277,20 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
     private void documentTypeChooser() {
 
-        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScroller(binding.horizontalPicker.getContext()) {
 
-            @Override
-            protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
-                return 100.0f / displayMetrics.densityDpi;
-            }
-        };
+        int width = getResources().getDisplayMetrics().widthPixels;
 
-        HorizontalDocumentChooserAdapter horizontalDocumentChooserAdapter = new HorizontalDocumentChooserAdapter(this
+        binding.horizontalPicker.setPadding(width / 3, 0, width / 3, 0);
+        binding.horizontalPicker.requestLayout();
 
-                , new HorizontalDocumentChooserAdapter.OnItemTouchListener() {
-            @Override
-            public void onTouch(HorizontalDocumentChooserAdapter.Viewholder viewholder, int position) {
-
-                binding.horizontalPicker.smoothScrollToPosition(position);
+        binding.horizontalPicker.setLayoutManager(new LinearLayoutManager(
+                this,
+                LinearLayoutManager.HORIZONTAL,
+                false));
 
 
-
-                linearSmoothScroller.setTargetPosition(position);
-                binding.horizontalPicker.getLayoutManager().startSmoothScroll(linearSmoothScroller);
-            }
-        }
-        );
-
-        binding.horizontalPicker.setAdapter(horizontalDocumentChooserAdapter);
-
-        PickerLayoutManager pickerLayoutManager = new PickerLayoutManager(this, PickerLayoutManager.HORIZONTAL, false);
-        pickerLayoutManager.setChangeAlpha(true);
-
-        pickerLayoutManager.setScaleDownBy(0.2f);
-        pickerLayoutManager.setScaleDownDistance(0.1f);
-
-        SnapHelper snapHelper = new LinearSnapHelper();
+        SnapHelper snapHelper = new PagerSnapHelper();
         snapHelper.attachToRecyclerView(binding.horizontalPicker);
-
-        binding.horizontalPicker.setLayoutManager(pickerLayoutManager);
 
 
         binding.horizontalPicker.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -318,8 +299,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 super.onScrollStateChanged(recyclerView, newState);
 
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    View centerView = snapHelper.findSnapView(pickerLayoutManager);
-                    int pos = pickerLayoutManager.getPosition(centerView);
+                    View centerView = snapHelper.findSnapView(binding.horizontalPicker.getLayoutManager());
+                    int pos = binding.horizontalPicker.getLayoutManager().getPosition(centerView);
 
                     documentType = Constants.documentImageTypes().get(pos);
 
@@ -327,18 +308,26 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     String text = Constants.documentImageTypes().get(pos);
                     documentType = text;
 
-                    for (int i = 0; i < Constants.documentImageTypes().size(); i++) {
 
-                        HorizontalDocumentChooserAdapter.Viewholder viewholder = (HorizontalDocumentChooserAdapter.Viewholder) binding.horizontalPicker.findViewHolderForLayoutPosition(i);
+                    try {
 
-                        if (viewholder != null) {
 
-                            if (pos != i) {
-                                viewholder.documentItem.setTextColor(Color.GRAY);
-                            } else {
-                                viewholder.documentItem.setTextColor(Color.WHITE);
+                        for (int i = 0; i < Constants.documentImageTypes().size(); i++) {
+
+                            HorizontalDocumentChooserAdapter.Viewholder viewholder = (HorizontalDocumentChooserAdapter.Viewholder) binding.horizontalPicker.findViewHolderForLayoutPosition(i);
+
+                            if (viewholder != null) {
+
+                                if (pos != i) {
+                                    viewholder.documentItem.setTextColor(Color.GRAY);
+                                } else {
+                                    viewholder.documentItem.setTextColor(Color.WHITE);
+                                }
                             }
                         }
+
+
+                    } catch (Exception e) {
                     }
 
 
@@ -346,7 +335,23 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             }
         });
 
-        binding.horizontalPicker.smoothScrollToPosition(Constants.documentImageTypes().indexOf(Constants.DEFAULT_DOCUMENT_TYPE));
+
+        HorizontalDocumentChooserAdapter horizontalDocumentChooserAdapter = new HorizontalDocumentChooserAdapter(this
+
+                , new HorizontalDocumentChooserAdapter.OnItemTouchListener() {
+            @Override
+            public void onTouch(HorizontalDocumentChooserAdapter.Viewholder viewholder, int position) {
+
+                binding.horizontalPicker.smoothScrollToPosition(position);
+            }
+        }
+        );
+
+        binding.horizontalPicker.setAdapter(horizontalDocumentChooserAdapter);
+
+        binding.horizontalPicker.smoothScrollToPosition(1);
+
+
     }
 
     private void startCamera() {

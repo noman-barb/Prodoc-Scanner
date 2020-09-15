@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.JsonReader;
@@ -95,6 +96,12 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private boolean isAddPages = false;
     private boolean importImages = false;
 
+
+    @Override
+    protected void onDestroy() {
+        recycleImageCropActivityBitmap();
+        super.onDestroy();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -270,6 +277,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
             in.close();
 
 
+            recycleImageCropActivityBitmap();
+
             ImageCropActivity.originalBitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
             ImageCropActivity.rotationDegrees = BitmapUtils.exifRotationDegrees(temp.getAbsolutePath());
 
@@ -295,6 +304,12 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
+    }
+
+    private void recycleImageCropActivityBitmap() {
+
+        if (ImageCropActivity.originalBitmap != null)
+            ImageCropActivity.originalBitmap.recycle();
     }
 
 
@@ -368,6 +383,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+
+        recycleImageCropActivityBitmap();
 
         if (backpressReturnToDir) {
 

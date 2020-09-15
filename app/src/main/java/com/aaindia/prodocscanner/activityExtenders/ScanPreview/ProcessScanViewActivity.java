@@ -1,5 +1,6 @@
 package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
+import android.app.ActivityManager;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 
@@ -36,37 +38,28 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     private String lastPreparedFilename = null;
 
-
-//    public Mat getholder.processedMat() {
-//        return holder.processedMat;
-//    }
-//
-//    public Mat getholder.displayMat() {
-//        return holder.displayMat;
-//    }
-//
-//    public Bitmap getholder.displayBitmap() {
-//        return holder.displayBitmap;
-//    }
-//
-//
-//    public Mat getholder.originalMat() {
-//        return holder.originalMat;
-//    }
+    ActivityManager am;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         imageDetails = getImageDetails();
+        am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
     }
+
+
+    HashSet<Integer> currentProcessing = new HashSet<>();
 
 
     @Override
     public void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
 
 
-        //  prepareMats(holder, position);
+        if (currentProcessing.contains(position))
+            return;
+
+        currentProcessing.add(position);
 
 
         getBinding().protector.setVisibility(View.VISIBLE);
@@ -84,8 +77,9 @@ public class ProcessScanViewActivity extends ScanViewActivity {
             public void run() {
 
 
-                float widthScaleFactor = holder.originalMat.width() * 1.0f / holder.displayMat.width();
-                float heightScaleFactor = holder.originalMat.height() * 1.0f / holder.displayMat.height();
+                Mat processedMat = new Mat();
+                float widthScaleFactor = holder.originalMat.width() * 1.0f / holder.displayBitmap.getWidth();
+                float heightScaleFactor = holder.originalMat.height() * 1.0f / holder.displayBitmap.getHeight();
 
 
                 Map<Integer, PointF> cropBoundsOriginalMap = new HashMap<>();
@@ -129,10 +123,10 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Mat transform = Imgproc.getPerspectiveTransform(src, dst);
 
 
-                Imgproc.warpPerspective(holder.originalMat, holder.processedMat, transform, holder.originalMat.size());
+                Imgproc.warpPerspective(holder.originalMat, processedMat, transform, holder.originalMat.size());
 
 
-                Imgproc.resize(holder.processedMat, holder.processedMat, new Size(diffWidth, diffHeight));
+                Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
 
 
                 setColorTuneListen(false);
@@ -140,7 +134,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 getBinding().colorGrayCheck.setChecked(colorGray);
                 setColorTuneListen(true);
 
-                MatFilter.colorize(holder.processedMat, colorCode, colorTune, colorGray);
+                MatFilter.colorize(processedMat, colorCode, colorTune, colorGray);
 
 
                 imageDetails.getEffects(imageDetails.getAt(position)).corners = (HashMap<Integer, PointF>) cropBoundsOriginalMap;
@@ -158,16 +152,20 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                     int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
 
 
-
-                    BitmapUtils.rotateMatDegrees(holder.processedMat, rot);
-                    Imgcodecs.imwrite(processedImageFilepath, holder.processedMat, new MatOfInt(parameters));
+                    BitmapUtils.rotateMatDegrees(processedMat, rot);
+                    Imgcodecs.imwrite(processedImageFilepath, processedMat, new MatOfInt(parameters));
 
                 }
 
 
+                processedMat.release();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+
+
+                        currentProcessing.remove(position);
 
                         getAutoCroppedSet().add(imageDetails.getAt(position));
 
@@ -243,11 +241,29 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         getImageDetails().putEffects(new File(path).getName(), effects1);
 
 
+        originalMat.release();
+        cropBoundsMat.release();
+
     }
 
 
-    public void prepareMats(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void prepareMat(ScanPreviewAdapter.ViewHolder holder, int position) {
 
+
+        if (holder.originalMat != null && holder.originalMat.width() > 0) {
+
+            if (holder.matPosition == position)
+                return;
+
+        }
+
+
+        if (holder.originalMat != null) {
+            holder.originalMat.release();
+        }
+
+
+        Mat displayMat = new Mat();
 
         holder.originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));
 
@@ -264,27 +280,27 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(holder.originalMat.width(), holder.originalMat.height()), wd, ht);
 
 
-        Imgproc.resize(holder.originalMat, holder.displayMat, optimalImageSizeForDisplay);
+        Imgproc.resize(holder.originalMat, displayMat, optimalImageSizeForDisplay);
 
-        if (holder.displayMat.channels() == 3)
-            Imgproc.cvtColor(holder.displayMat, holder.displayMat, Imgproc.COLOR_BGR2RGB);
+        if (displayMat.channels() == 3)
+            Imgproc.cvtColor(displayMat, displayMat, Imgproc.COLOR_BGR2RGB);
+        if (displayMat.channels() == 4)
+            Imgproc.cvtColor(displayMat, displayMat, Imgproc.COLOR_BGRA2RGB);
 
-        holder.displayBitmap = Bitmap.createBitmap(holder.displayMat.width(), holder.displayMat.height(), Bitmap.Config.ARGB_8888);
+        if (holder.displayBitmap != null)
+            holder.displayBitmap.recycle();
+
+        holder.displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
 
 
-        org.opencv.android.Utils.matToBitmap(holder.displayMat, holder.displayBitmap);
+        org.opencv.android.Utils.matToBitmap(displayMat, holder.displayBitmap);
 
 
         lastPreparedFilename = getImageDetails().getAt(position);
 
+        displayMat.release();
+        holder.matPosition = position;
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-
-            }
-        });
 
     }
 

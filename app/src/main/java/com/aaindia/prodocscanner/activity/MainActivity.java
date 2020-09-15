@@ -1068,6 +1068,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 Intent intent = new Intent(MainActivity.this, ScanPreviewActivity.class);
                 intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, adapter.data.get(position).filepath);
                 intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 startActivity(intent);
             }
@@ -1296,6 +1297,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.putExtra(Intent.EXTRA_TITLE, adapter.data.get(position).filename + ".pdf");
         intent.setType("application/pdf");
+
 
         startActivityForResult(intent, EXPORT_REQUEST_CODE);
     }
@@ -1723,8 +1725,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void pdfToBitmapSave(File pdfFile, ProgressDialog pd) {
 
 
-
-
         try {
 
             File scanDir = FileNav.newScanDir(currentPath);
@@ -1831,8 +1831,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     }
 
 
-
-
                     pdfToBitmapSave(temp, pd);
 
                     runOnUiThread(new Runnable() {
@@ -1893,6 +1891,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 intent.putExtra(CameraScanActivity.CURRENT_DIR_KEY, currentPath);
                 intent.putExtra(CameraScanActivity.INSERT_AT, 0);
 
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
                 MainActivity.this.startActivity(intent);
 
 
@@ -1907,6 +1907,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 intent2.putExtra(CameraScanActivity.CURRENT_DIR_KEY, currentPath);
                 intent2.putExtra(CameraScanActivity.INSERT_AT, 0);
                 intent2.putExtra(CameraScanActivity.IMPORT_IMAGES, true);
+                intent2.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                 MainActivity.this.startActivity(intent2);
 

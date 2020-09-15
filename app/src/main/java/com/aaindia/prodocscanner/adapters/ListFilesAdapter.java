@@ -68,6 +68,7 @@ public class ListFilesAdapter extends RecyclerView.Adapter<ListFilesAdapter.View
 
 
 
+        Glide.with(context).clear(holder.thumbnail);
 
 
 

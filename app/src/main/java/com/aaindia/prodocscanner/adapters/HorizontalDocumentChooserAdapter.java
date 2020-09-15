@@ -70,6 +70,8 @@ public class HorizontalDocumentChooserAdapter extends RecyclerView.Adapter<Horiz
         public Viewholder(@NonNull View itemView) {
             super(itemView);
 
+            this.setIsRecyclable(false);
+
             documentItem = itemView.findViewById(R.id.itemText);
 
             itemView.setOnClickListener(this);

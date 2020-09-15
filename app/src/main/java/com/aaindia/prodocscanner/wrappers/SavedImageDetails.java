@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.opencv.core.Point;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.util.LinkedList;
 
 public class SavedImageDetails {
 
+    public static final String BACKUP_FILE = "effects_backup.json";
 
     public static final int DOCUMENT_TYPE_KEY = 1;
 
@@ -69,14 +72,58 @@ public class SavedImageDetails {
             }
 
 
-        } catch (FileNotFoundException e) {
-
-            order = new LinkedList<>();
-            imageEffects = new HashMap<>();
-            docType = new HashMap<>();
+        } catch (Exception e1) {
 
 
-        } catch (IOException e) {
+            // try again
+
+            this.storageLocation = imageDetailsFile;
+
+
+            try {
+
+
+                FileUtils.copyFile(new File(this.storageLocation.getParent() + File.separator + BACKUP_FILE), this.storageLocation);
+
+
+                Gson gson = new Gson();
+                FileReader reader = new FileReader(imageDetailsFile);
+
+                SavedImageDetails imageDetails = gson.fromJson(reader, this.getClass());
+                reader.close();
+
+
+                if (imageDetails.imageEffects == null) {
+                    imageDetails.imageEffects = new HashMap<>();
+
+                } else {
+                    this.imageEffects = imageDetails.imageEffects;
+                }
+
+
+                if (imageDetails.docType == null) {
+                    this.docType = new HashMap<>();
+                } else {
+                    this.docType = imageDetails.docType;
+                }
+
+                if (imageDetails.order == null) {
+                    order = new LinkedList<>();
+                } else {
+                    this.order = imageDetails.order;
+                }
+
+
+            } catch (Exception e2) {
+
+
+                order = new LinkedList<>();
+                imageEffects = new HashMap<>();
+                docType = new HashMap<>();
+
+            }
+
+
         }
 
     }
@@ -177,18 +224,51 @@ public class SavedImageDetails {
     public boolean sync() {
 
         boolean done = false;
+
+
         try {
-            FileWriter fileWriter = new FileWriter(storageLocation);
-            Gson gson = new Gson();
-
-            gson.toJson(this, fileWriter);
-            fileWriter.close();
-            done = true;
 
 
-        } catch (IOException e) {
+            try {
+
+                File backupLoc = new File(storageLocation.getParent() + File.separator + BACKUP_FILE);
+                FileWriter fileWriter = new FileWriter(backupLoc);
+                Gson gson = new Gson();
+
+                gson.toJson(this, fileWriter);
+                fileWriter.close();
 
 
+                // make sure the file isnt corrupted
+                Gson gson2 = new Gson();
+                FileReader reader2 = new FileReader(backupLoc);
+
+                SavedImageDetails imageDetails = gson.fromJson(reader2, this.getClass());
+                reader2.close();
+
+
+                if (imageDetails.imageEffects == null || imageDetails.order == null || imageDetails.docType == null) {
+                }
+
+
+                // write to original
+
+
+                FileUtils.copyFile(backupLoc, storageLocation); // the only window where original can get corrupted
+                // the code has reached this line which means backup is ready
+
+
+                done = true;
+
+
+            } catch (IOException e) {
+
+
+                e.printStackTrace();
+            }
+
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

@@ -140,6 +140,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
         Intent returnIntent = new Intent();
         setResult(Activity.RESULT_CANCELED, returnIntent);
+        releaseMats();
         finish();
     }
 
@@ -680,12 +681,42 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                         returnIntent.putExtra(COLOR_TUNE, colorTune);
 
                         setResult(Activity.RESULT_OK, returnIntent);
+
+
+                        releaseMats();
+
                         finish();
                     }
                 });
 
             }
         }).start();
+
+
+    }
+
+    private void releaseMats() {
+
+        try {
+
+            if (originalMat != null) {
+                originalMat.release();
+            }
+
+            if (displayMat != null) {
+                displayMat.release();
+            }
+
+            if (processedMat != null) {
+                processedMat.release();
+            }
+
+            if (lastCroppedMat != null) {
+                lastCroppedMat.release();
+            }
+
+        } catch (Exception e) {
+        }
 
 
     }

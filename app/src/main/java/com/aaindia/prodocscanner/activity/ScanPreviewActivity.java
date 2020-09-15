@@ -480,9 +480,9 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
         if (requestCode == ADD_PAGES_ACTIVITY_RESULT_CODE) {
 
-            loadInitialData();
+//            loadInitialData();
             getRecyclerView().getAdapter().notifyDataSetChanged();
-
+//
         } else if (requestCode == EXPORT_TO_DEVICE_CODE && resultCode == Activity.RESULT_OK) {
 
 
@@ -560,6 +560,10 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
     public void onBackPressed() {
 
 
+        if (getBinding().protector.getVisibility() == View.VISIBLE) {
+            return;
+        }
+
         if (isReordeing()) {
             reorderViewEnableDisable(false);
 
@@ -567,5 +571,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
         }
 
         super.onBackPressed();
+
+        finish();
     }
 }

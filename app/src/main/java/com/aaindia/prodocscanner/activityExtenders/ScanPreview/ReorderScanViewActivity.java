@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.adapters.ReorderScanViewAdapter;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
+import com.bumptech.glide.Glide;
+import com.google.android.datatransport.runtime.synchronization.SynchronizationException;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -29,7 +31,7 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
     private boolean isReordeing = false;
 
 
-    public boolean isReordeing(){
+    public boolean isReordeing() {
         return isReordeing;
 
     }
@@ -37,6 +39,9 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        binding.reOrderRecyclerView.setItemViewCacheSize(50);
+
 
         adapter = new ReorderScanViewAdapter(this, getScanDirPath(), originalPaths);
 
@@ -103,7 +108,17 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
 
                 reorderViewEnableDisable(false);
 
+
+                releaseGlide();
+
+                adapter.originalFilepaths.clear();
+
+                adapter.notifyDataSetChanged();
+
                 isReordeing = false;
+
+
+                System.gc();
 
             }
         });
@@ -122,7 +137,16 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
 
                 getRecyclerView().getAdapter().notifyDataSetChanged();
 
+                releaseGlide();
+
+                adapter.originalFilepaths.clear();
+
+                adapter.notifyDataSetChanged();
+
+
+                System.gc();
                 isReordeing = false;
+
 
             }
         });
@@ -135,11 +159,28 @@ public class ReorderScanViewActivity extends EditScanViewActivity {
 
     }
 
+    private void releaseGlide() {
+
+        for (int i=0 ; i <adapter.originalFilepaths.size() ; i++){
+
+            try {
+
+                ReorderScanViewAdapter.ViewHolder holder = (ReorderScanViewAdapter.ViewHolder) binding.reOrderRecyclerView.findViewHolderForLayoutPosition(i);
+
+                if (holder!=null)
+
+                    Glide.with(ReorderScanViewActivity.this).clear(holder.imageView);
+            }
+
+            catch (Exception e){}
+
+        }
+    }
+
 
     @Override
     public void reorder() {
         super.reorder();
-
 
 
         reorderViewEnableDisable(true);

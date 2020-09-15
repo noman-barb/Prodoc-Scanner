@@ -86,7 +86,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         holder.imageView.requestLayout();
 
         if (imageViewMargin == 0) {
-            int margin = (int) (holder.polygonView.ballSize * 1 / 2);
+            int margin = (int) (holder.polygonView.ballSize * 1);
             ((RelativeLayout.LayoutParams) holder.imageView.getLayoutParams()).setMargins(margin, margin, margin, margin);
             holder.imageView.requestLayout();
 
@@ -103,6 +103,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
         holder.nextAction.setVisibility(View.GONE);
 
+
+        Glide.with(context).clear(holder.imageView);
         if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
 
 
@@ -255,8 +257,11 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         public Bitmap displayBitmap = null;
 
         public Mat originalMat = null; // store original image
-        public Mat processedMat = new Mat(); // store after complete processing
-        public Mat displayMat = new Mat();  // mat used for display only
+        //    public Mat processedMat = new Mat(); // store after complete processing
+        //public Mat displayMat = new Mat();  // mat used for display only
+
+
+        public int matPosition = -1;
 
 
         public ViewHolder(@NonNull View itemView) {

@@ -75,7 +75,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                prepareMats(holder, position);
+                prepareMat(holder, position);
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -161,7 +161,11 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
                 if (effects.color == MatFilter.COLOR_WHITEBOARD) {
                     effects.isGray = true;
+
+                    setColorTuneListen(false);
+
                     getBinding().colorGrayCheck.setChecked(effects.isGray);
+                    setColorTuneListen(true);
                 }
 
                 effects.colorTune = MatFilter.getDefaultTune(colorCode);
@@ -192,8 +196,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             @Override
             public void run() {
 
-                prepareMats(holder, position);
 
+                prepareMat(holder, position);
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -233,8 +237,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         Effects effects = getImageDetails().getEffects(new File(getOriginalFilepaths().get(position)).getName());
 
 
-        double scaleX = holder.displayMat.width() * 1.0 / holder.originalMat.width();
-        double scaleY = holder.displayMat.height() * 1.0 / holder.originalMat.height();
+        double scaleX = holder.displayBitmap.getWidth() * 1.0 / holder.originalMat.width();
+        double scaleY = holder.displayBitmap.getHeight() * 1.0 / holder.originalMat.height();
 
         HashMap<Integer, PointF> corners = effects.corners;
 
@@ -258,13 +262,22 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
             if (getImageDetails().getDocType() != null) {
 
-                String documentType = getImageDetails().getDocType().get(getImageDetails().getAt(position));
 
-                if (documentType != null) {
+                if (getImageDetails().getEffects(getImageDetails().getAt(position)) == null) {
 
-                    effects.color = MatFilter.colorCodeFromDocumentType(documentType);
+
+                    String documentType = getImageDetails().getDocType().get(getImageDetails().getAt(position));
+
+                    if (documentType != null) {
+
+                        effects.color = MatFilter.colorCodeFromDocumentType(documentType);
+
+                    }
+
 
                 }
+
+
             }
         } catch (Exception e) {
         }
@@ -293,11 +306,9 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
     private void rotateImageView(int globalRotation, int rotateBy, ScanPreviewAdapter.ViewHolder holder, boolean animateTrue) {
 
-        animateTrue = false;
 
         globalRotation += rotateBy;
 
-        //globalRotation = 0;
 
         if (Math.abs(globalRotation) > 360)
             globalRotation = 90;
@@ -306,8 +317,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (globalRotation >= 90)
             holder.imageViewParent.setRotation(globalRotation - 90);
 
-        int width = holder.imageViewParent.getWidth();
-        int height = holder.imageViewParent.getHeight();
+
 
 
         double scale = 1.0;
@@ -319,8 +329,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             int maxWidth = holder.imageViewParent.getMeasuredWidth();
             int maxHeight = holder.imageViewParent.getMeasuredHeight();
 
-            int currentWidth = holder.displayMat.height();
-            int currentHeight = holder.displayMat.width();
+            int currentWidth = holder.displayBitmap.getHeight();
+            int currentHeight = holder.displayBitmap.getWidth();
 
 
             // try scaling width
@@ -340,32 +350,9 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         }
 
 
-        if (animateTrue) {
-            ValueAnimator anim = ValueAnimator.ofFloat(holder.imageViewParent.getRotation(), globalRotation);
 
 
-            anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    float val = (float) valueAnimator.getAnimatedValue();
-
-                    holder.imageViewParent.setRotation(val);
-
-                    if (val >= 350)
-                        holder.imageViewParent.setRotation(0);
-
-
-                }
-            });
-
-            anim.setInterpolator(new AccelerateInterpolator());
-            anim.setDuration(300);
-            anim.start();
-
-        } else {
-            holder.imageViewParent.setRotation(globalRotation);
-
-        }
+        holder.imageViewParent.setRotation(globalRotation);
         holder.imageViewParent.setScaleX((float) scale);
         holder.imageViewParent.setScaleY((float) scale);
 
@@ -376,7 +363,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     public void colorGrayChanged(ScanPreviewAdapter.ViewHolder holder, int position, boolean b) {
 
         getImageDetails().getEffects(getImageDetails().getAt(position)).isGray = b;
-        // prepareMats(holder, position);
+        prepareMat(holder, position);
         processImage(holder, position, true);
     }
 
@@ -385,7 +372,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     public void colorTuneChanged(ScanPreviewAdapter.ViewHolder holder, int position, int progress) {
 
         getImageDetails().getEffects(getImageDetails().getAt(position)).colorTune = progress;
-        // prepareMats(holder, position);
+        prepareMat(holder, position);
         processImage(holder, position, true);
     }
 
@@ -395,7 +382,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         super.rotate(holder, position);
 
 
-        prepareMats(holder, position);
+        prepareMat(holder, position);
 
 
         if (getImageDetails().getEffects(getImageDetails().getAt(position)) == null) {

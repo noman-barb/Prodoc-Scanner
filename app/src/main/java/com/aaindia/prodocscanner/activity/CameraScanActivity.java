@@ -6,6 +6,8 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -13,13 +15,19 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.media.AudioManager;
 import android.media.Image;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -97,9 +105,26 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private boolean importImages = false;
 
 
+    MediaPlayer cameraShutterSound = null;
+
     @Override
     protected void onDestroy() {
         recycleImageCropActivityBitmap();
+
+
+        try {
+
+            if (cameraShutterSound != null) {
+
+                if (cameraShutterSound.isPlaying())
+                    cameraShutterSound.stop();
+
+                cameraShutterSound.release();
+            }
+        } catch (Exception e) {
+        }
+
+
         super.onDestroy();
     }
 
@@ -329,6 +354,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
 
+        try {
+
+            cameraShutterSound = new MediaPlayer();
+            cameraShutterSound.setAudioStreamType(AudioManager.STREAM_RING);
+            cameraShutterSound.setDataSource(this, Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.camera_shutter));
+            cameraShutterSound.prepare();
+        } catch (Exception e) {
+
+        }
+
+
         importImages = getIntent().getExtras().getBoolean(IMPORT_IMAGES, false);
 
         setRequestPermission(!importImages);
@@ -550,9 +586,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
-                    isCapturing = false;
-
                     imageSaved(imageFile.getName(), null);
+                    cameraShutterAnimation();
+
+
+                    isCapturing = false;
 
                 }
 
@@ -576,6 +614,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
                 isCapturing = false;
+
+                cameraShutterAnimation();
 
                 ImageCropActivity.originalBitmap = BitmapUtils.imageProxyToBitmap(image);
                 ImageCropActivity.rotationDegrees = image.getImageInfo().getRotationDegrees();
@@ -607,6 +647,59 @@ public class CameraScanActivity extends CameraPreviewActivity {
         });
 
 
+    }
+
+
+    private void cameraShutterAnimation() {
+
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                binding.cameraAlphaAnimationRL.setVisibility(View.VISIBLE);
+
+                ValueAnimator valueAnimator = ValueAnimator.ofFloat(0.2f, 0.4f, 0.6f, 0.8f, 1f, 1f, 1f, 0.8f, 0.6f, 0.4f, 0.2f, 0f);
+
+                valueAnimator.setDuration(150);
+
+                valueAnimator.setInterpolator(new AccelerateInterpolator());
+
+                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+
+                        float value = (float) valueAnimator.getAnimatedValue();
+                        binding.cameraAlphaAnimationRL.setAlpha(value);
+
+
+                        if (value < 0.1f) {
+
+                            binding.cameraAlphaAnimationRL.setVisibility(View.GONE);
+                        }
+
+                    }
+                });
+
+
+                try {
+
+                    if (cameraShutterSound != null) {
+                        if (cameraShutterSound.isPlaying())
+                            cameraShutterSound.stop();
+
+                        cameraShutterSound.start();
+                    }
+
+                } catch (Exception e) {
+                }
+
+
+                valueAnimator.start();
+
+
+            }
+        });
     }
 
     private void imageSaved(String filename, Effects effects) {

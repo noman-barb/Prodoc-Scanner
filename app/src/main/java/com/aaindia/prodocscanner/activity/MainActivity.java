@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     public static final String ITEM_OPTIONS_RENAME = "Rename";
 
 
-    public static final String _ALL = " All";
+    public static final String _ALL = " Selected";
     public static final String BLANK_SPACE_5 = "     ";
 
     public static final int MENU_ITEM_ID_MORE_OPTIONS_CREATE_NEW_FOLDER = 1;
@@ -167,6 +167,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     public int selectedFilesNos = 0;
 
+    public static boolean listingModified = false;
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -204,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         File[] f = new File(currentPath).listFiles();
 
 
-        if (f.length != adapter.data.size()) {
+        if (f.length != adapter.data.size() || listingModified) {
 
             nagivateTo(currentPath);
         }
@@ -586,6 +588,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     @Override
                     public void run() {
                         pd.dismiss();
+
+                        Toast.makeText(MainActivity.this, "Done", Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -702,8 +706,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         if (clipboard.deleteAfter) {
 
-                            //FileUtils.deleteDirectory(src);
-                            FileNav.deleteDirectoryQuietely(src);
+                            if (src.compareTo(new File(currentPath)) != 0)
+                                FileNav.deleteDirectoryQuietely(src);
                             clipboard.filepaths.remove(i);
                             i--;
 

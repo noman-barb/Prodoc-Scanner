@@ -262,8 +262,11 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
             if (getImageDetails().getDocType() != null) {
 
+                String imageFilename = new File(getOriginalFilepaths().get(position)).getName();
 
-                if (getImageDetails().getEffects(getImageDetails().getAt(position)) == null) {
+                File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), imageFilename);
+
+                if (!processedFile.exists()) {
 
 
                     String documentType = getImageDetails().getDocType().get(getImageDetails().getAt(position));
@@ -284,6 +287,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
         effects.colorTune = MatFilter.getDefaultTune(effects.color);
+
+
         if (effects.color == MatFilter.COLOR_WHITEBOARD) {
             effects.isGray = true;
             setColorTuneListen(false);
@@ -318,8 +323,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             holder.imageViewParent.setRotation(globalRotation - 90);
 
 
-
-
         double scale = 1.0;
 
 
@@ -348,8 +351,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
         }
-
-
 
 
         holder.imageViewParent.setRotation(globalRotation);

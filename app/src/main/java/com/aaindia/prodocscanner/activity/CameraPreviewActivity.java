@@ -94,7 +94,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import travel.ithaka.android.horizontalpickerlib.PickerLayoutManager;
+
 
 public class CameraPreviewActivity extends AppCompatActivity implements View.OnClickListener {
 

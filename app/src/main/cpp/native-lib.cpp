@@ -443,15 +443,11 @@ void auto_canny(Mat &image, Mat &result, float sigma) {
 
 void normalize_image(Mat &image, Mat &result) {
 
-    double begin = now_ms();
-
-    __android_log_print(ANDROID_LOG_INFO, TAG, "NORMALIZED _ START 0 ");
-
 
     vector<Mat> image_planes;
     split(image, image_planes);
 
-    __android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
+    //__android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
 
     Mat temp(image.rows, image.cols, CV_8U);
 
@@ -477,30 +473,29 @@ void normalize_image(Mat &image, Mat &result) {
 
         Mat image_original = image;
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
+        // __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
 
         dilate(image_original, temp, Mat::ones(7, 7, CV_8U));
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
 
-        //medianBlur(temp, temp, 21);
 
         blur(temp, temp, Size(21, 21));
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER BLUR %f", now_ms() - begin);
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER BLUR %f", now_ms() - begin);
 
         absdiff(image_original, temp, temp);
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DIFF %f", now_ms() - begin);
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DIFF %f", now_ms() - begin);
 
         temp = 255 - temp;
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER INVERT %f", now_ms() - begin);
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER INVERT %f", now_ms() - begin);
 
         //NORM_MINMAX = 32
         normalize(temp, image_original, 0, 255, 32);
 
-        __android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
 
 
     }
@@ -974,7 +969,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanText(JNIEnv *env, jclass cla
 
         blur(gray, gray, Size(3, 3));
 
-        adaptiveThreshold(gray, binary, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 51, 10);
+        adaptiveThreshold(gray, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
 
         bitwise_not(binary, binary);
 
@@ -1011,32 +1006,72 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanText(JNIEnv *env, jclass cla
 
         split(mat, mats2);
 
-        add(mats2[1], Scalar(100), mats2[1], binary);
+        add(mats2[1], Scalar(80), mats2[1], binary);
 
         merge(mats2, mat);
 
         cvtColor(mat, mat, COLOR_HSV2BGR);
 
+        gray.release();
+        binary.release();
+
 
     } else {
 
-        blur(mat, mat, Size(3, 3));
+        double begin = now_ms();
+
+        // __android_log_print(ANDROID_LOG_INFO, TAG, "START %f", now_ms() - begin);
+
+
+        Mat mat1 = mat.clone();
+
+        blur(mat1, mat1, Size(3, 3));
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BLUR %f", now_ms() - begin);
+
 
         Mat binary(mat.rows, mat.cols, CV_8U);
 
-        adaptiveThreshold(mat, binary, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 51, 10);
+
+        adaptiveThreshold(mat1, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
+
+        mat1.release();
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "ADAPTIVE THRESH %f", now_ms() - begin);
+
 
         bitwise_not(binary, binary);
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
 
         dilate(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
 
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "DILATE %f", now_ms() - begin);
+
+
         bitwise_not(binary, binary);
+
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
 
         paperize(matAddr, 0);
 
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "PAPERIZE %f", now_ms() - begin);
+
+
         bitwise_or(mat, binary, mat);
 
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE OR %f", now_ms() - begin);
+
+
         double thresh = threshold(mat, binary, 0, 255, THRESH_OTSU);
+
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "OTSU %f", now_ms() - begin);
+
 
         double control = colorVal;
 
@@ -1046,9 +1081,25 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanText(JNIEnv *env, jclass cla
 
         gamma_correction(mat, mat, (float) ((thresh + 55) * 1.0 / 255) * 0.8 * control);
 
+        //threshold(mat, mat, thresh + control, 255, THRESH_TOZERO);
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "GAMMA %f", now_ms() - begin);
+
+
         bitwise_not(binary, binary);
 
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
+
         bitwise_xor(mat, mat, mat, binary);
+
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE XOR %f", now_ms() - begin);
+
+
+        binary.release();
+
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "BINARY RELEASE %f", now_ms() - begin);
 
 
     }

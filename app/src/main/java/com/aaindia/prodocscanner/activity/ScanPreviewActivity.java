@@ -69,6 +69,8 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
     public void addPages(ScanPreviewAdapter.ViewHolder holder, int position) {
         super.addPages(holder, position);
 
+        MainActivity.listingModified = true;
+
         Intent intent = new Intent(ScanPreviewActivity.this, CameraScanActivity.class);
 
 
@@ -97,6 +99,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
         super.deleteFile(holder, position);
 
+        MainActivity.listingModified = true;
 
         SpannableString cancel = new SpannableString("Cancel");
         setSpanActionColor(cancel, 1, 1);
@@ -289,7 +292,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
             } else {
 
-                intent.setDataAndType(Uri.parse(pdfName), "*/*");
+                intent.setDataAndType(Uri.parse(pdfName), "application/pdf");
                 intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(pdfPath));
             }
 
@@ -396,6 +399,8 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
     public void rename() {
         super.rename();
 
+        MainActivity.listingModified = true;
+
         SpannableString spannableString = new SpannableString("Rename");
 
         setSpanActionColor(spannableString, 1, 1);
@@ -480,6 +485,7 @@ public class ScanPreviewActivity extends ReorderScanViewActivity implements View
 
         if (requestCode == ADD_PAGES_ACTIVITY_RESULT_CODE) {
 
+            MainActivity.listingModified = true;
 //            loadInitialData();
             getRecyclerView().getAdapter().notifyDataSetChanged();
 //

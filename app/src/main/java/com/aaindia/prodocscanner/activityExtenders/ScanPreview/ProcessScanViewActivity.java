@@ -160,6 +160,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                 processedMat.release();
 
+                System.gc();
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

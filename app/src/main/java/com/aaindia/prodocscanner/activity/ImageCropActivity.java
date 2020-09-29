@@ -50,6 +50,7 @@ import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.ViewUtils;
+import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.wrappers.BitmapMat;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
@@ -63,7 +64,8 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
-import com.xw.repo.BubbleSeekBar;
+import com.google.android.material.slider.Slider;
+
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -150,25 +152,21 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
 
 
+        com.aaindia.prodocscanner.utils.Utils.checkOpenCV(this);
+
+
         originalImageFilename = getIntent().getExtras().getString(FileNav.ORIGINAL_IMAGE_FILE);
         processedImageFilename = getIntent().getExtras().getString(FileNav.PROCESSED_IMAGE_FILE);
 
-        if (originalBitmap == null || originalImageFilename == null) {
 
-            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
-
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-            startActivity(intent);
-
-        }
+        checkIfBitmapInMemory();
 
 
         globalRotation = 0;
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_image_crop);
 
-        binding.colorTuneSK.setProgress(colorTune);
+        binding.colorTuneSK.setValue(colorTune);
         binding.colorGrayCheck.setChecked(colorGray);
 
         binding.root.post(new Runnable() {
@@ -188,23 +186,19 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         binding.retakeRL.setOnClickListener(this::onClick);
 
 
-        binding.colorTuneSK.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
+        binding.colorTuneSK.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
-            public void onProgressChanged(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat, boolean fromUser) {
+            public void onStartTrackingTouch(@NonNull Slider slider) {
 
             }
 
             @Override
-            public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
+            public void onStopTrackingTouch(@NonNull Slider slider) {
 
-                colorTune = (int) progress;
+
+                colorTune = (int) slider.getValue();
 
                 processDisplayImage();
-            }
-
-            @Override
-            public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat, boolean fromUser) {
-
 
             }
         });
@@ -213,6 +207,10 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         binding.colorGrayCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
+                if (!compoundButton.isPressed())
+                    return;
+
 
                 colorGray = b;
 
@@ -227,15 +225,21 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         colorTune = MatFilter.getDefaultTune(colorCode);
 
 
-        if (colorCode == MatFilter.COLOR_WHITEBOARD) {
-            colorGray = true;
-            colorTune = MatFilter.getDefaultTune(colorCode);
-        } else {
-            colorGray = false;
+    }
 
+    private void checkIfBitmapInMemory() {
+
+
+        if (originalBitmap == null || originalImageFilename == null || processedMat == null || lastCroppedMat == null) {
+
+            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
+
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            startActivity(intent);
+            finish();
 
         }
-
     }
 
 
@@ -302,8 +306,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private Bitmap bitmapTemp = null;
+
     private void initAutoCrop() {
 
+       zoomageEnable(false);
         nextCropEnableDisable(true);
         cropStart = true;
 
@@ -317,7 +324,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     MatFilter.cropV1(displayMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
 
                     HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-                    Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat);
+                    Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(displayMat.width(), displayMat.height()));
 
                     for (int i = 0; i < sortedPoints.length; i++) {
                         cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
@@ -347,6 +354,101 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                             binding.protector.setVisibility(View.GONE);
 
 
+                            binding.polygonView.pointMove = new PolygonView.OnPointMove() {
+                                @Override
+                                public void onMove(double x, double y) {
+
+
+                                    x = x - 40;
+                                    y = y - 40;
+
+                                    int tempX, tempY;
+                                    binding.roi1IV.setVisibility(View.GONE);
+                                    if (bitmapTemp != null) {
+                                        bitmapTemp.recycle();
+                                    }
+
+                                    if (x >= 0 && x < (displayBitmap.getWidth() - 80) && y >= 0 && y < (displayBitmap.getHeight() - 80)) {
+
+
+                                        bitmapTemp = Bitmap.createBitmap(displayBitmap, (int) x, (int) y, 80, 80);
+
+                                    } else {
+
+                                        bitmapTemp = Bitmap.createBitmap(80, 80, Bitmap.Config.ARGB_8888);
+
+                                        for (int i = (int) x; i < (int) x + 80; i++) {
+
+
+                                            if (i >= 0 && i < displayBitmap.getWidth()) {
+                                                for (int j = (int) y; j < (int) y + 80; j++) {
+
+
+                                                    if (j >= 0 && j < displayBitmap.getHeight()) {
+
+                                                        tempX = (int) (i - x);
+                                                        tempY = (int) (j - y);
+
+                                                        if (tempX <= 79 && tempX <= 79)
+                                                            bitmapTemp.setPixel(tempX, tempY, displayBitmap.getPixel(i, j));
+
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    binding.roi1IV.setImageBitmap(bitmapTemp);
+
+                                    binding.roi1IV.setVisibility(View.VISIBLE);
+                                    binding.roi1IV.setRotation(binding.theImageParent.getRotation());
+
+                                }
+
+                                @Override
+                                public void onStop() {
+
+                                    ValueAnimator animator = ValueAnimator.ofFloat(1, 0);
+
+                                    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                        @Override
+                                        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                                            float val = (float) valueAnimator.getAnimatedValue();
+                                            binding.roitRoot.setAlpha(val);
+                                            if (val == 0) {
+                                                binding.roitRoot.setVisibility(View.GONE);
+                                            }
+                                        }
+                                    });
+
+                                    animator.setDuration(200);
+                                    animator.start();
+
+                                }
+
+                                @Override
+                                public void onStart() {
+
+                                    binding.roitRoot.setVisibility(View.VISIBLE);
+
+                                    ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+
+                                    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                        @Override
+                                        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                                            float val = (float) valueAnimator.getAnimatedValue();
+                                            binding.roitRoot.setAlpha(val);
+                                        }
+                                    });
+
+                                    animator.setDuration(200);
+                                    animator.start();
+
+                                }
+                            };
+
+
                         }
                     });
 
@@ -359,13 +461,19 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private void zoomageEnable(boolean b) {
+        binding.theImage.setZoomable(b);
+        binding.theImage.setDoubleTapToZoom(b);
+        binding.theImage.setTranslatable(b);
+    }
+
 
     private void processDisplayImage() {
 
 
         binding.processing.setVisibility(View.VISIBLE);
 
-        binding.colorTuneSK.setProgress(colorTune);
+        binding.colorTuneSK.setValue(colorTune);
 
         binding.colorGrayCheck.setChecked(colorGray);
 
@@ -509,8 +617,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                         nextCropEnableDisable(false);
 
-
-                        zoomageEnableDisable(true);
+                    zoomageEnable(true);
 
                     }
                 });
@@ -523,10 +630,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     }
 
-    private void zoomageEnableDisable(boolean enable) {
 
-
-    }
 
     private synchronized void processImage() {
 
@@ -584,9 +688,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         Menu menu = popupMenu.getMenu();
 
         SpannableString original = new SpannableString("Orignal");
-        SpannableString contrast = new SpannableString("Contrast");
-        SpannableString paperStyle = new SpannableString("Paper ");
-        SpannableString whiteBoardStyle = new SpannableString("Clean Text");
+        SpannableString contrast = new SpannableString("Photo");
+        SpannableString paperStyle = new SpannableString("Note");
+        SpannableString whiteBoardStyle = new SpannableString("Document");
 
         setSpanActionColor(original, colorCode, MatFilter.COLOR_ORIGINAL);
         setSpanActionColor(contrast, colorCode, MatFilter.COLOR_CONTRAST);
@@ -607,14 +711,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 colorCode = id;
 
                 colorTune = MatFilter.getDefaultTune(id);
-
-                if (colorCode == MatFilter.COLOR_WHITEBOARD) {
-                    colorGray = true;
-                    colorTune = MatFilter.getDefaultTune(id);
-                } else {
-                    colorGray = false;
-
-                }
 
 
                 processDisplayImage();
@@ -733,7 +829,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.noCropRL:
 
 
-                zoomageEnableDisable(false);
+               zoomageEnable(true);
+
                 if (displayBitmap != null)
                     displayBitmap.recycle();
 
@@ -797,8 +894,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.CropRL:
 
-
-                zoomageEnableDisable(false);
 
                 if (!binding.polygonView.autoCropped)
                     return;
@@ -865,9 +960,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         if (globalRotation >= 90)
             binding.theImageParent.setRotation(globalRotation - 90);
 
-        int width = binding.theImageParent.getWidth();
-        int height = binding.theImageParent.getHeight();
-
 
         double scale = 1.0;
 
@@ -875,62 +967,61 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         if (Math.abs(globalRotation) == 90 || Math.abs(globalRotation) == 270) {
 
 
-            int maxWidth = binding.theImageParentParent.getMeasuredWidth();
-            int maxHeight = binding.theImageParentParent.getMeasuredHeight();
+            int maxWidth = (int) ((int) (binding.theImageParentParent.getMeasuredWidth())*0.93);
+            int maxHeight = (int) ((int) (binding.theImageParentParent.getMeasuredHeight())*0.93);
 
-            int currentWidth = displayMat.height();
-            int currentHeight = displayMat.width();
-
-
-            // try scaling width
-
-            int newWidth = currentWidth * maxHeight / maxWidth;
-            int newHeight = newWidth * currentHeight / currentWidth;
+            int currentWidth = displayBitmap.getHeight();
+            int currentHeight = displayBitmap.getWidth();
 
 
-            if (newWidth > maxWidth) {
-                newHeight = currentHeight * maxWidth / maxHeight;
-                newWidth = newHeight * currentWidth / currentHeight;
+            int newWidth = maxWidth;
+
+            int newHeight = (int) (currentHeight * (newWidth) * 1.0 / currentWidth);
+
+            if (newHeight > maxHeight) {
+                //scale height
+
+                newHeight = maxHeight;
+                newWidth = (int) (currentWidth * 1.0 * (newHeight / currentHeight));
+
             }
 
-            scale = newHeight * 1.0 / newWidth;
+
+            scale = newHeight * 1.0f / currentHeight * 1.0f;
+
+
+
+
+        }
+        else if (Math.abs(globalRotation) == 0 || Math.abs(globalRotation) == 180){
+
+
+
 
 
         }
 
 
-        ValueAnimator anim = ValueAnimator.ofFloat(binding.theImageParent.getRotation(), globalRotation);
-
-
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                float val = (float) valueAnimator.getAnimatedValue();
-
-//                binding.theImageParent.setRotation(val);
-//
-//                if (val >= 350)
-//                    binding.theImageParent.setRotation(0);
-
-
-            }
-        });
-
-        anim.setInterpolator(new AccelerateInterpolator());
-        anim.setDuration(300);
-        anim.start();
 
         binding.theImageParent.setRotation(globalRotation);
 
 
         binding.theImageParent.setScaleX((float) scale);
         binding.theImageParent.setScaleY((float) scale);
+        binding.polygonView.scaleDrawing(scale);
 
 
     }
 
+    @Override
+    public void onResume() {
 
-    private native void cropV1(long nativeObjAddr, long nativeObjAddr1);
+
+        com.aaindia.prodocscanner.utils.Utils.checkOpenCV(this);
+
+        checkIfBitmapInMemory();
+        super.onResume();
 
 
+    }
 }

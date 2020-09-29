@@ -5,7 +5,7 @@
     android:layout_height="wrap_content">
 
 
-    <TextView
+    <com.google.android.material.textview.MaterialTextView
         android:textAlignment="center"
         android:id="@+id/itemText"
         android:layout_width="wrap_content"
@@ -23,6 +23,6 @@
         android:textColor="@color/colorWhite"
         android:textSize="15sp"
 
-        ></TextView>
+        ></com.google.android.material.textview.MaterialTextView>
 
 </RelativeLayout>

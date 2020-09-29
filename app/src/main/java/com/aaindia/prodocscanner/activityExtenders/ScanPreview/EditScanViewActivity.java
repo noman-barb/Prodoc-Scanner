@@ -1,36 +1,23 @@
 package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
 import android.animation.ValueAnimator;
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.text.SpannableString;
-import android.text.util.Linkify;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
-import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.ViewUtils;
+import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.wrappers.Effects;
-
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.File;
 import java.util.HashMap;
@@ -62,7 +49,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             if (processedImageFilepath.exists()) {
 
 
-                crop(holder, position);
+                crop(holder, position, false);
                 return;
             }
 
@@ -107,7 +94,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         setColorTuneListen(false);
         showHideColorRL(true);
         getBinding().colorGrayCheck.setChecked(colorGray);
-        getBinding().colorTuneSK.setProgress(colorTune);
+        getBinding().colorTuneSK.setValue(colorTune);
 
 
         PopupMenu popupMenu = new PopupMenu(this, binding.colorRL);
@@ -115,9 +102,9 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         Menu menu = popupMenu.getMenu();
 
         SpannableString original = new SpannableString("Orignal");
-        SpannableString contrast = new SpannableString("Contrast");
-        SpannableString paperStyle = new SpannableString("Paper ");
-        SpannableString whiteBoardStyle = new SpannableString("Clean Text");
+        SpannableString contrast = new SpannableString("Photo");
+        SpannableString paperStyle = new SpannableString("Note");
+        SpannableString whiteBoardStyle = new SpannableString("Document");
 
         setSpanActionColor(original, colorCode, MatFilter.COLOR_ORIGINAL);
         setSpanActionColor(contrast, colorCode, MatFilter.COLOR_CONTRAST);
@@ -151,22 +138,13 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
                 int colorTune = MatFilter.getDefaultTune(id);
 
-                binding.colorTuneSK.setProgress(colorTune);
+                binding.colorTuneSK.setValue(colorTune);
                 binding.colorGrayCheck.setChecked(finalColorGray);
 
                 Effects effects = getImageDetails().getEffects(getImageDetails().getAt(position));
 
                 effects.color = colorCode;
 
-
-                if (effects.color == MatFilter.COLOR_WHITEBOARD) {
-                    effects.isGray = true;
-
-                    setColorTuneListen(false);
-
-                    getBinding().colorGrayCheck.setChecked(effects.isGray);
-                    setColorTuneListen(true);
-                }
 
                 effects.colorTune = MatFilter.getDefaultTune(colorCode);
 
@@ -181,9 +159,10 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
     }
 
+    private Bitmap bitmapTemp = null;
 
     @Override
-    public void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void crop(ScanPreviewAdapter.ViewHolder holder, int position, boolean noCrop) {
 
 
         zoomageEnableDisable(holder, false);
@@ -207,7 +186,103 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                         holder.imageView.getLayoutParams().height = (int) holder.displayBitmap.getHeight();
                         holder.imageView.setImageBitmap(holder.displayBitmap);
                         holder.imageView.requestLayout();
-                        initCrop(position, holder);
+
+
+                        holder.polygonView.pointMove = new PolygonView.OnPointMove() {
+                            @Override
+                            public void onMove(double x, double y) {
+
+
+                                x = x - 40;
+                                y = y - 40;
+
+                                int tempX, tempY;
+                                binding.roi1IV.setVisibility(View.GONE);
+                                if (bitmapTemp != null) {
+                                    bitmapTemp.recycle();
+                                }
+
+                                if (x >= 0 && x < (holder.displayBitmap.getWidth() - 80) && y >= 0 && y < (holder.displayBitmap.getHeight() - 80)) {
+
+
+                                    bitmapTemp = Bitmap.createBitmap(holder.displayBitmap, (int) x, (int) y, 80, 80);
+
+                                } else {
+
+                                    bitmapTemp = Bitmap.createBitmap(80, 80, Bitmap.Config.ARGB_8888);
+
+                                    for (int i = (int) x; i < (int) x + 80; i++) {
+
+
+                                        if (i >= 0 && i < holder.displayBitmap.getWidth()) {
+                                            for (int j = (int) y; j < (int) y + 80; j++) {
+
+
+                                                if (j >= 0 && j < holder.displayBitmap.getHeight()) {
+
+                                                    tempX = (int) (i - x);
+                                                    tempY = (int) (j - y);
+
+                                                    if (tempX <= 79 && tempX <= 79)
+                                                        bitmapTemp.setPixel(tempX, tempY ,holder.displayBitmap.getPixel(i, j));
+
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                }
+
+                                binding.roi1IV.setImageBitmap(bitmapTemp);
+
+                                binding.roi1IV.setVisibility(View.VISIBLE);
+                                binding.roi1IV.setRotation(holder.imageViewParent.getRotation());
+
+                            }
+
+                            @Override
+                            public void onStop() {
+
+                                ValueAnimator animator = ValueAnimator.ofFloat(1, 0);
+
+                                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                    @Override
+                                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                                        float val = (float) valueAnimator.getAnimatedValue();
+                                        binding.roitRoot.setAlpha(val);
+                                        if (val == 0) {
+                                            binding.roitRoot.setVisibility(View.GONE);
+                                        }
+                                    }
+                                });
+
+                                animator.setDuration(200);
+                                animator.start();
+
+                            }
+
+                            @Override
+                            public void onStart() {
+
+                                binding.roitRoot.setVisibility(View.VISIBLE);
+
+                                ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+
+                                animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                    @Override
+                                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                                        float val = (float) valueAnimator.getAnimatedValue();
+                                        binding.roitRoot.setAlpha(val);
+                                    }
+                                });
+
+                                animator.setDuration(200);
+                                animator.start();
+
+                            }
+                        };
+
+                        initCrop(position, holder, noCrop);
 
                     }
                 });
@@ -219,7 +294,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     }
 
 
-    private void initCrop(int position, ScanPreviewAdapter.ViewHolder holder) {
+    private void initCrop(int position, ScanPreviewAdapter.ViewHolder holder, boolean noCrop) {
 
         holder.polygonView.setVisibility(View.VISIBLE);
 
@@ -289,13 +364,13 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         effects.colorTune = MatFilter.getDefaultTune(effects.color);
 
 
-        if (effects.color == MatFilter.COLOR_WHITEBOARD) {
-            effects.isGray = true;
-            setColorTuneListen(false);
-            getBinding().colorGrayCheck.setChecked(effects.isGray);
-            setColorTuneListen(true);
-        }
+        if (noCrop){
 
+            cropbounds.put(0, new PointF(0,0));
+            cropbounds.put(1, new PointF(holder.displayBitmap.getWidth(),0));
+            cropbounds.put(2, new PointF(0,holder.displayBitmap.getHeight()));
+            cropbounds.put(3, new PointF(holder.displayBitmap.getWidth(),holder.displayBitmap.getHeight()));
+        }
 
         holder.polygonView.setPoints(cropbounds);
         holder.polygonView.requestLayout();
@@ -329,33 +404,37 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (Math.abs(globalRotation) == 90 || Math.abs(globalRotation) == 270) {
 
 
-            int maxWidth = holder.imageViewParent.getMeasuredWidth();
-            int maxHeight = holder.imageViewParent.getMeasuredHeight();
+            int maxWidth = (int) (holder.imageViewParent.getMeasuredWidth()*0.93);
+            int maxHeight = (int) (holder.imageViewParent.getMeasuredHeight()*0.93);
 
             int currentWidth = holder.displayBitmap.getHeight();
             int currentHeight = holder.displayBitmap.getWidth();
 
+            int newWidth = maxWidth;
 
-            // try scaling width
+            int newHeight = (int) (currentHeight * (newWidth) * 1.0 / currentWidth);
 
-            int newWidth = currentWidth * maxHeight / maxWidth;
-            int newHeight = newWidth * currentHeight / currentWidth;
+            if (newHeight > maxHeight) {
+                //scale height
 
+                newHeight = maxHeight;
+                newWidth = (int) (currentWidth * 1.0 * (newHeight / currentHeight));
 
-            if (newWidth > maxWidth) {
-                newHeight = currentHeight * maxWidth / maxHeight;
-                newWidth = newHeight * currentWidth / currentHeight;
             }
 
-            scale = newHeight * 1.0 / newWidth;
+
+            scale = newHeight * 1.0f / currentHeight * 1.0f;
+
 
 
         }
 
 
         holder.imageViewParent.setRotation(globalRotation);
+
         holder.imageViewParent.setScaleX((float) scale);
         holder.imageViewParent.setScaleY((float) scale);
+
 
 
     }
@@ -395,7 +474,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             if (processedImageFilepath.exists()) {
 
 
-                crop(holder, position);
+                crop(holder, position, false);
                 return;
             }
 

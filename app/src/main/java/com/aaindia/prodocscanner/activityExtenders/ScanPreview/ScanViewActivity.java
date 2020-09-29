@@ -2,51 +2,45 @@ package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SnapHelper;
 
+import android.animation.ValueAnimator;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.InputType;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.TranslateAnimation;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.CompoundButton;
-import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
-import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.databinding.ActivityScanViewBinding;
+import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
-import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
-import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
-import com.xw.repo.BubbleSeekBar;
-
-import org.opencv.core.Mat;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.slider.Slider;
+import com.google.gson.internal.$Gson$Preconditions;
+import com.jsibbold.zoomage.ZoomageView;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -54,6 +48,7 @@ import java.util.ListIterator;
 
 public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface {
 
+    public static final String NEW_SCAN = "new_scan";
 
     public static final String SCAN_DIR_PATH = "scan_dir_path";
 
@@ -76,6 +71,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     private boolean isChange = true;
 
     private boolean colorTuneListen = true;
+    private BottomSheetBehavior<LinearLayout> sheetBehavior;
 
     public void setColorTuneListen(boolean b) {
         colorTuneListen = b;
@@ -100,6 +96,19 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     private int colorTuneLastProgress = -1;
 
+    private String outputPathPDFExport = null;
+
+    public String getPDFOutputPathExport() {
+
+        return outputPathPDFExport;
+    }
+
+    public void setPDFOutputPathExport(String path) {
+
+        this.outputPathPDFExport = path;
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,7 +120,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         activityCalledFromClassname = (String) getIntent().getExtras().get(GlobalConstants.CLASS_NAME);
 
 
-        adapter = new ScanPreviewAdapter(this, scanDirPath, this);
+        adapter = new ScanPreviewAdapter(this, scanDirPath, getRecyclerView(), this);
 
 
         loadInitialData();
@@ -133,54 +142,44 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
 
         binding.shareSinglePageRL.setOnClickListener(this::onClick);
-        binding.reorderRL.setOnClickListener(this);
+
         binding.deleteRL.setOnClickListener(this);
         binding.addPagesRL.setOnClickListener(this);
-        binding.deleteRL.setOnClickListener(this::onClick);
         binding.saveRL.setOnClickListener(this::onClick);
         binding.shareRL.setOnClickListener(this::onClick);
 
-        binding.exitRL.setOnClickListener(this);
 
         binding.renameRL.setOnClickListener(this);
 
-        binding.view.setOnClickListener(this::onClick);
+        binding.viewRL.setOnClickListener(this::onClick);
+        binding.moreRL.setOnClickListener(this);
+        binding.noCropRL.setOnClickListener(this::onClick);
+        binding.exportSinglePageRL.setOnClickListener(this::onClick);
+        binding.OcrRL.setOnClickListener(this::onClick);
 
-        binding.reorderRL.setOnClickListener(this::onClick);
 
-        binding.colorTuneSK.setOnProgressChangedListener(new BubbleSeekBar.OnProgressChangedListener() {
+        binding.colorTuneSK.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
             @Override
-            public void onProgressChanged(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat, boolean fromUser) {
-
+            public void onStartTrackingTouch(@NonNull Slider slider) {
 
             }
 
             @Override
-            public void getProgressOnActionUp(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat) {
+            public void onStopTrackingTouch(@NonNull Slider slider) {
 
+
+                int progress = (int) slider.getValue();
 
                 if (colorTuneLastProgress == progress) {
 
                     return;
                 }
 
-                colorTuneLastProgress = progress;
-
-                if (!colorTuneListen)
-                    return;
                 int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
                 ScanPreviewAdapter.ViewHolder holder = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(position);
 
 
                 colorTuneChanged(holder, position, progress);
-
-                binding.colorTuneSK.setProgress(progress);
-
-
-            }
-
-            @Override
-            public void getProgressOnFinally(BubbleSeekBar bubbleSeekBar, int progress, float progressFloat, boolean fromUser) {
 
 
             }
@@ -195,6 +194,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 if (!colorTuneListen)
                     return;
 
+                if (!compoundButton.isPressed())
+                    return;
+
 
                 int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
                 ScanPreviewAdapter.ViewHolder holder = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(position);
@@ -205,15 +207,41 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             }
         });
 
-        binding.recyclerView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
 
-                showHideColorRL(false);
-                return false;
+        bottomsheetBehaviour();
+
+    }
+
+    public BottomSheetBehavior getBottomMenu1() {
+        return sheetBehavior;
+    }
+
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (sheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED || sheetBehavior.getState() == BottomSheetBehavior.STATE_COLLAPSED || sheetBehavior.getState() == BottomSheetBehavior.STATE_HALF_EXPANDED) {
+
+                Rect outRect = new Rect();
+                binding.bottomSheet.getGlobalVisibleRect(outRect);
+
+                if (!outRect.contains((int) event.getRawX(), (int) event.getRawY()))
+                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
-        });
+        }
 
+
+        return super.dispatchTouchEvent(event);
+    }
+
+
+    private void bottomsheetBehaviour() {
+
+
+        sheetBehavior = BottomSheetBehavior.from(binding.bottomSheet);
+
+
+        sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
     }
 
@@ -415,13 +443,13 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public void chooseColor(ScanPreviewAdapter.ViewHolder holder, int position) {
     }
 
-    public void crop(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void crop(ScanPreviewAdapter.ViewHolder holder, int position, boolean noCrop) {
     }
 
     public void rotate(ScanPreviewAdapter.ViewHolder holder, int position) {
     }
 
-    public void shareSinglePage(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void shareSinglePage(ScanPreviewAdapter.ViewHolder holder, int position, boolean isExport) {
     }
 
     public void addPages(ScanPreviewAdapter.ViewHolder holder, int position) {
@@ -433,7 +461,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public void save() {
     }
 
-    public void share() {
+    public void share(boolean isExport) {
     }
 
 
@@ -442,6 +470,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public void viewPDF() {
+
 
     }
 
@@ -453,14 +482,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
-    public void reorder() {
-
-    }
 
     public void setSpanActionColor(SpannableString s, int compare1, int compare2) {
 
         if (compare1 == compare2)
             s.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSecondary)), 0, s.length(), 0);
+    }
+
+    public void shareFromArray(ArrayList<File> files, double size, boolean isExport) {
     }
 
 
@@ -490,7 +519,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                crop(holder, postion);
+                                crop(holder, postion, false);
                             }
                         });
 
@@ -498,7 +527,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 }, 350);
 
             } else {
-                crop(holder, postion);
+                crop(holder, postion, false);
             }
 
 
@@ -531,12 +560,20 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     }
 
+    @Override
+    public void processExit(int position, ScanPreviewAdapter.ViewHolder holder) {
+
+        zoomageEnableDisable(holder, true);
+    }
+
 
     @Override
     public void onClick(View view) {
 
 
         int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+
+
         ScanPreviewAdapter.ViewHolder holder = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(position);
 
 
@@ -548,42 +585,185 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         }
 
         if (id == R.id.cropRL) {
-            crop(holder, position);
+
+            if (position < 0)
+                return;
+            if (holder == null || holder.processing == null)
+                return;
+
+            crop(holder, position, false);
         } else if (id == R.id.colorRL) {
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
             chooseColor(holder, position);
         } else if (id == R.id.rotateRL) {
+            if (position < 0)
+                return;
+            if (holder == null || holder.processing == null)
+                return;
+
             rotate(holder, position);
         } else if (id == R.id.shareSinglePageRL) {
-            shareSinglePage(holder, position);
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            shareSinglePage(holder, position, false);
+        } else if (id == R.id.exportSinglePageRL) {
+
+            shareSinglePage(holder, position, true);
         } else if (id == R.id.addPagesRL) {
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
             addPages(holder, position);
         } else if (id == R.id.deleteRL) {
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
             deleteFile(holder, position);
         } else if (id == R.id.shareRL) {
-            share();
+            share(false);
         } else if (id == R.id.saveRL) {
             save();
         } else if (id == R.id.exitRL) {
-            finish();
+
+            onBackPressed();
         } else if (id == R.id.renameRL) {
             rename();
-        } else if (id == R.id.view) {
-            viewPDF();
-        } else if (id == R.id.reorderRL) {
-            reorder();
-        }
+        } else if (id == R.id.viewRL) {
 
+            viewPDF();
+        } else if (id == R.id.noCropRL) {
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            noCrop(holder, position);
+        } else if (id == R.id.moreRL) {
+
+            if (sheetBehavior != null && sheetBehavior.getState() == sheetBehavior.STATE_HIDDEN)
+                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        } else if (id == R.id.OcrRL) {
+
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            getBottomMenu1().setState(BottomSheetBehavior.STATE_HIDDEN);
+            ocrPage(holder, position);
+
+        }
 
     }
 
-    public void showHideColorRL(boolean show) {
+    private void ocrPage(ScanPreviewAdapter.ViewHolder holder, int position) {
 
-        if (show)
+
+        String imageFilename = new File(getOriginalFilepaths().get(position)).getName();
+
+        String bitmapPath = getOriginalFilepaths().get(position);
+
+
+        File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), imageFilename);
+
+        if (processedFile.exists()) {
+            bitmapPath = processedFile.getAbsolutePath();
+        }
+
+        Intent intent = new Intent(ScanViewActivity.this, OcrActivity.class);
+
+        ArrayList<String> bitmapPaths = new ArrayList<>();
+        bitmapPaths.add(bitmapPath);
+
+        Bundle args = new Bundle();
+        args.putSerializable(OcrActivity.IMAGE_PATHS, (Serializable) bitmapPaths);
+        intent.putExtra(OcrActivity.IMAGE_PATHS, args);
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        startActivity(intent);
+    }
+
+    private void noCrop(ScanPreviewAdapter.ViewHolder holder, int position) {
+
+        crop(holder, position, true);
+    }
+
+
+    private boolean showHideColorRLIsAnimating = false;
+
+    public synchronized void showHideColorRL(boolean show) {
+
+
+        if (showHideColorRLIsAnimating) {
+
+
+            binding.colorControlRL.setVisibility(show ? View.VISIBLE : View.GONE);
+
+
+            return;
+        }
+
+        binding.colorControlRL.clearAnimation();
+
+
+        showHideColorRLIsAnimating = true;
+
+        if (show && binding.colorControlRL.getVisibility() == View.GONE) {
+
+
             binding.colorControlRL.setVisibility(View.VISIBLE);
+            ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+            animator.setDuration(200);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
 
-        else {
+                    if ((float) valueAnimator.getAnimatedValue() == 1)
+                        showHideColorRLIsAnimating = false;
+                }
+            });
 
-            binding.colorControlRL.setVisibility(View.GONE);
+            animator.start();
+
+
+        } else if (!show && binding.colorControlRL.getVisibility() == View.VISIBLE) {
+
+            ValueAnimator animator = ValueAnimator.ofFloat(1, 0);
+            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+            animator.setDuration(200);
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
+
+                    if ((Float) valueAnimator.getAnimatedValue() == 0) {
+                        binding.colorControlRL.setVisibility(View.GONE);
+                        showHideColorRLIsAnimating = false;
+                    }
+                }
+            });
+
+            animator.start();
         }
 
 
@@ -591,8 +771,18 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     public void zoomageEnableDisable(ScanPreviewAdapter.ViewHolder holder, boolean enable) {
 
+        holder.imageView.reset(true);
+        ((ZoomageView) holder.imageView).setZoomable(enable);
+        holder.imageView.setDoubleTapToZoom(enable);
+        holder.imageView.setTranslatable(enable);
+
 
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
 
+        finish();
+    }
 }

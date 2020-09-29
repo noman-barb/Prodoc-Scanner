@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+
+    android:layout_margin="6dp"
+    android:background="@color/colorWhiteAlpha20"
+    android:clickable="true"
+    android:elevation="5dp"
+    android:foreground="?android:selectableItemBackgroundBorderless">
+
+
+    <ImageView
+
+
+        android:id="@+id/image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="0dp"
+        android:scaleType="centerCrop">
+
+    </ImageView>
+
+
+    <RelativeLayout
+        android:id="@+id/tint"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+
+        android:background="@color/colorSecondaryTransparent50"
+        android:elevation="5dp">
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/image"
+        android:layout_centerHorizontal="true"
+        android:layout_marginRight="3dp"
+        android:layout_marginBottom="3dp"
+        android:alpha="0.95"
+        android:background="@drawable/circular_full_xml_icon"
+        android:elevation="12dp"
+
+
+        android:minWidth="25dp"
+        android:minHeight="25dp">
+
+        <com.google.android.material.textview.MaterialTextView
+
+
+            android:id="@+id/pageNumberTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:fontFamily="sans-serif-condensed-medium"
+            android:maxLines="1"
+            android:padding="4dp"
+            android:text="1"
+            android:textColor="@color/colorWhite"
+            android:textSize="10sp"></com.google.android.material.textview.MaterialTextView>
+
+
+    </RelativeLayout>
+
+
+</RelativeLayout>

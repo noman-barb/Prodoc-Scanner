@@ -14,6 +14,9 @@
 
 
         <LinearLayout
+
+            android:id="@+id/imageOptionsRL"
+            android:transitionName="transition_camera"
             android:layout_width="wrap_content"
 
             android:layout_height="wrap_content"
@@ -152,21 +155,21 @@
 
                     </ImageView>
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/middle_options_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
                         android:layout_toRightOf="@id/arrow_down_toolbar"
 
-                        android:fontFamily="sans-serif-condensed-medium"
-                        android:text="Groupped"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Grouped"
                         android:textColor="@color/colorWhite"
                         android:textSize="16sp"
                         android:textStyle="normal">
 
 
-                    </TextView>
+                    </com.google.android.material.textview.MaterialTextView>
 
 
                 </RelativeLayout>
@@ -200,7 +203,7 @@
                 </RelativeLayout>
 
 
-                <TextView
+                <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/toolbarTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -212,7 +215,7 @@
                     android:textColor="@color/colorWhite"
                     android:textSize="22sp"
 
-                    android:textStyle="bold"></TextView>
+                    android:textStyle="bold"></com.google.android.material.textview.MaterialTextView>
 
 
                 <androidx.appcompat.widget.SearchView
@@ -239,15 +242,12 @@
         </androidx.appcompat.widget.Toolbar>
 
 
-        <androidx.core.widget.NestedScrollView
 
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/toolbar"
-            android:layout_marginTop="4dp">
 
 
             <RelativeLayout
+                android:layout_below="@id/toolbar"
+                android:layout_marginTop="4dp"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">
@@ -310,7 +310,7 @@
 
                         </LinearLayout>
 
-                        <TextView
+                        <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/emptyDocumentTV"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -318,7 +318,7 @@
                             android:layout_marginTop="20dp"
                             android:text="It's empty here. Start scanning."
                             android:textAlignment="center"
-                            android:textColor="@color/colorGray1"></TextView>
+                            android:textColor="@color/colorGray1"></com.google.android.material.textview.MaterialTextView>
 
 
                     </RelativeLayout>
@@ -326,9 +326,7 @@
                 </RelativeLayout>
 
 
-                <androidx.core.widget.NestedScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -339,6 +337,11 @@
 
                         <androidx.recyclerview.widget.RecyclerView
 
+
+
+                            android:clipToPadding="false"
+                            android:paddingBottom="100dp"
+
                             android:id="@+id/scanList"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
@@ -346,19 +349,13 @@
 
                         </androidx.recyclerview.widget.RecyclerView>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="150dp"
-                            android:orientation="vertical"></LinearLayout>
 
                     </LinearLayout>
 
-
-                </androidx.core.widget.NestedScrollView>
             </RelativeLayout>
 
 
-        </androidx.core.widget.NestedScrollView>
+
 
 
     </RelativeLayout>

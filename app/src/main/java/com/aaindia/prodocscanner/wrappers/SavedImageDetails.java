@@ -221,7 +221,7 @@ public class SavedImageDetails {
     }
 
 
-    public boolean sync() {
+    public synchronized boolean sync() {
 
         boolean done = false;
 

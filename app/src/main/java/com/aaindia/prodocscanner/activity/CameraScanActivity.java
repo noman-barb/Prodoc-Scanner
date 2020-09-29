@@ -1,72 +1,54 @@
 package com.aaindia.prodocscanner.activity;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 
-import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.media.AudioManager;
-import android.media.Image;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.JsonReader;
-import android.util.Log;
-import android.view.Surface;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
-import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ScanViewActivity;
 import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
+import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
-import com.aaindia.prodocscanner.views.TouchableReyclerView;
+import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
-import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
-import org.json.JSONArray;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class CameraScanActivity extends CameraPreviewActivity {
@@ -103,12 +85,24 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private boolean backpressReturnToDir = true;
     private boolean isAddPages = false;
     private boolean importImages = false;
+    boolean intentResult = false;
 
 
     MediaPlayer cameraShutterSound = null;
 
+    ExecutorService executorService;
+
+
     @Override
-    protected void onDestroy() {
+    protected void onPause() {
+//        if (imageDetails != null)
+//            imageDetails.sync();
+
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
         recycleImageCropActivityBitmap();
 
 
@@ -125,7 +119,24 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-        super.onDestroy();
+        if (!executorService.isTerminated()) {
+
+
+            if (!executorService.isShutdown())
+                executorService.shutdown();
+
+            while (!executorService.isTerminated()) {
+            }
+
+            if (imageDetails != null) {
+                imageDetails.sync();
+            }
+
+        }
+
+        executorService = null;
+        super.onStop();
+
     }
 
     @Override
@@ -140,7 +151,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 String processedImageFilename = (String) data.getExtras().get(FileNav.PROCESSED_IMAGE_FILE);
 
                 HashMap<Integer, PointF> cropBoundsOriginalMap = (HashMap<Integer, PointF>) data.getExtras().get(ImageCropActivity.CORNERS);
+
+
                 int colorCode = (int) data.getExtras().get(ImageCropActivity.COLOR_CODE);
+                colorCode = MatFilter.DEFAULT_COLOR_CODE;
                 int globalRotation = (int) data.getExtras().get(ImageCropActivity.GLOBAL_ROTATION);
                 boolean isColorGray = (boolean) data.getExtras().get(ImageCropActivity.COLOR_IS_GRAY);
 
@@ -148,11 +162,13 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                 Effects effects = new Effects(cropBoundsOriginalMap, colorCode, isColorGray, globalRotation, colorTune);
 
-                imageSaved(new File(originalImageFilename).getName(), effects);
+                imageSaved(null, new File(originalImageFilename).getName(), effects);
 
                 // newly added
 
-                if (importImages) {
+                if (importImages || intentResult) {
+
+                    imageDetails.sync();
                     goToDocViewer();
                     finish();
                 }
@@ -170,30 +186,37 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (requestCode == IMPORT_ACTIVITY_CODE
                 && resultCode == Activity.RESULT_OK) {
 
-
-            if (data.getClipData() != null) {
-
-                if (data.getClipData().getItemCount() == 1) {
-                    importSingleImage(data.getClipData().getItemAt(0).getUri());
-                } else {
-
-                    ArrayList<Uri> uris = new ArrayList<>();
-
-                    for (int i = 0; i < data.getClipData().getItemCount(); i++) {
-
-                        uris.add(data.getClipData().getItemAt(i).getUri());
-                    }
-
-                    importMultipleImages(uris);
-                }
-            } else if (data.getData() != null) {
-
-                importSingleImage(data.getData());
-            }
+            onExternalImport(data);
 
         }
 
     }
+
+    private void onExternalImport(Intent data) {
+
+        MainActivity.listingModified = true;
+
+        if (data.getClipData() != null) {
+
+            if (data.getClipData().getItemCount() == 1) {
+                importSingleImage(data.getClipData().getItemAt(0).getUri());
+            } else {
+
+                ArrayList<Uri> uris = new ArrayList<>();
+
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+
+                    uris.add(data.getClipData().getItemAt(i).getUri());
+                }
+
+                importMultipleImages(uris);
+            }
+        } else if (data.getData() != null) {
+
+            importSingleImage(data.getData());
+        }
+    }
+
 
     private void importMultipleImages(ArrayList<Uri> uris) {
 
@@ -246,7 +269,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                             out.close();
                             in.close();
 
-                            imageSaved(originalFile.getName(), null);
+                            imageSaved(null, originalFile.getName(), null);
 
                         } catch (Exception e) {
 
@@ -354,6 +377,23 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
 
+        Utils.checkOpenCV(this);
+
+
+        if (getIntent() != null && getIntent().getType() != null) {
+
+            intentResult = true;
+        }
+
+
+        importImages = getIntent().getExtras().getBoolean(IMPORT_IMAGES, false);
+
+
+        setRequestPermission(!(importImages || intentResult));
+
+        super.onCreate(savedInstanceState);
+
+
         try {
 
             cameraShutterSound = new MediaPlayer();
@@ -363,13 +403,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
         } catch (Exception e) {
 
         }
-
-
-        importImages = getIntent().getExtras().getBoolean(IMPORT_IMAGES, false);
-
-        setRequestPermission(!importImages);
-
-        super.onCreate(savedInstanceState);
 
 
         binding = getBinding();
@@ -386,6 +419,15 @@ public class CameraScanActivity extends CameraPreviewActivity {
             importImages();
         }
 
+        executorService = Executors.newFixedThreadPool(2);
+
+
+        if (intentResult) {
+
+            importImages = true;
+            onExternalImport(getIntent());
+        }
+
 
     }
 
@@ -397,9 +439,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            currentDir = extras.getString(CURRENT_DIR_KEY);
+            currentDir = extras.getString(CURRENT_DIR_KEY, FileNav.getBaseDir(this).getAbsolutePath());
             scanDirPath = extras.getString(SCAN_PATH_KEY);
             isAddPages = extras.getBoolean(ADD_PAGES, false);
+
 
             if (scanDirPath != null) {
                 insertAt = extras.getInt(INSERT_AT, 0);
@@ -418,9 +461,16 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     @Override
     public void onBackPressed() {
+
+        if (imageDetails != null) {
+            imageDetails.sync();
+        }
+
         super.onBackPressed();
 
+
         recycleImageCropActivityBitmap();
+
 
         if (backpressReturnToDir) {
 
@@ -428,6 +478,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             if (numPages == 0 && scanDirPath != null) {
 
                 FileUtils.deleteQuietly(new File(scanDirPath));
+                MainActivity.listingModified = false;
             }
             finish();
 
@@ -449,12 +500,42 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void next(Button view) {
         super.next(view);
 
+        if (isCapturing)
+            return;
 
         if (numPages == 0)
             return;
 
-        goToDocViewer();
-        finish();
+
+        ProgressDialog pd = new ProgressDialog(this);
+        pd.setTitle("Just a moment");
+        pd.setMessage("Detecting document edges");
+        pd.setCancelable(false);
+
+
+        executorService.shutdown();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                while (!executorService.isTerminated()) {
+
+                }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        imageDetails.sync();
+                        pd.dismiss();
+                        goToDocViewer();
+                        finish();
+                    }
+                });
+            }
+        }).start();
+
 
     }
 
@@ -463,7 +544,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, scanDirPath);
         intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
         intent.putExtra(ScanPreviewActivity.SCROLL_TO, insertAt);
-
+        intent.putExtra(ScanViewActivity.NEW_SCAN, true);
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -586,7 +667,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
-                    imageSaved(imageFile.getName(), null);
+                    imageSaved(imageFile, imageFile.getName(), null);
                     cameraShutterAnimation();
 
 
@@ -702,7 +783,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         });
     }
 
-    private void imageSaved(String filename, Effects effects) {
+    private void imageSaved(File filepath, String filename, Effects effects) {
 
 
         runOnUiThread(new Runnable() {
@@ -712,7 +793,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                 binding.next.setAlpha(1);
 
-                isCapturing = false;
+
                 binding.cameraCapture.setAlpha(1.0f);
 
 
@@ -724,13 +805,80 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 imageDetails.getDocType().put(filename, getDocumentType());
                 imageDetails.getOrdering().add(insertAt, filename);
 
-                imageDetails.sync();
-
 
                 incrementPageCounters();
+
+
+                if (filepath != null) {
+
+                    executorService.execute(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            autocropThis(filepath.getAbsolutePath(), imageDetails);
+                        }
+                    });
+
+                }
+
+                isCapturing = false;
+
+
             }
         });
 
+
+    }
+
+
+    public void autocropThis(String path, SavedImageDetails imageDetails) {
+
+        Mat originalMat = Imgcodecs.imread(path);
+
+        if (originalMat.channels() == 4)
+            Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
+
+        MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
+
+
+        MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+
+
+        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
+        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
+
+
+        for (int i = 0; i < 4; i++) {
+
+
+            cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
+        }
+
+
+        Effects effects1 = new Effects(cropBoundsMap, MatFilter.DEFAULT_COLOR_CODE, false, 0, 0);
+
+        imageDetails.putEffects(new File(path).getName(), effects1);
+
+
+        originalMat.release();
+        cropBoundsMat.release();
+
+
+    }
+
+
+    @Override
+    public void onResume() {
+
+
+        Utils.checkOpenCV(this);
+
+        super.onResume();
+
+
+        if (executorService == null) {
+            executorService = Executors.newFixedThreadPool(2);
+        }
 
     }
 

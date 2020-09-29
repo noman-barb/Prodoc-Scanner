@@ -8,6 +8,7 @@
 
     <color name="colorSecondary">#2962FF</color>
 
+    <color name="colorSecondaryTransparent50">#802962FF</color>
 
 
     <color name="colorSecondaryDark">#0F1643</color>
@@ -26,8 +27,11 @@
 
     <color name="colorBlackAlpha80">#C90F1643</color>
 
+    <color name="colorWhiteTransparent">#7EFFFFFF</color>
 
 
+    <color name="gray_cool">#6E6E6E</color>
+    <color name="text">#323232</color>
 
     <color name="colorGray1">#424242</color>
 

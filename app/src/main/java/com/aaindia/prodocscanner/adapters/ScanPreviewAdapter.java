@@ -6,10 +6,16 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -33,12 +39,14 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import com.jsibbold.zoomage.ZoomageView;
 
 
 import org.opencv.core.Mat;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -57,10 +65,30 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
     private AdapterInterface adapterInterface;
 
-    public ScanPreviewAdapter(Context context, String scanDirName, AdapterInterface adapterInterface) {
+    private TouchableReyclerView reyclerView;
+
+    private float x1, x2;
+    int deltaX = 0, deltaSum = 0;
+    private int THRESH_DISTANCE = 100;
+    private boolean touchLock = false;
+
+
+    public ScanPreviewAdapter(Activity context, String scanDirName, TouchableReyclerView reyclerView, AdapterInterface adapterInterface) {
         this.context = context;
         this.scanDirName = scanDirName;
+        this.reyclerView = reyclerView;
         this.adapterInterface = adapterInterface;
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        context.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        int width = displayMetrics.widthPixels;
+
+        THRESH_DISTANCE = (int) (width * 0.10);
+
+
+
+
+
     }
 
     @NonNull
@@ -97,82 +125,43 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         File processedFile = FileNav.getProcessedFileFromName(scanDirName, imageFilename);
 
 
-        String imageShowPath = originalFilepaths.get(position);
+        final String[] imageShowPath = {originalFilepaths.get(position)};
 
         holder.processing.setVisibility(View.GONE);
 
         holder.nextAction.setVisibility(View.GONE);
 
+        holder.imageView.clearAnimation();
 
         Glide.with(context).clear(holder.imageView);
-        if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
 
 
-            holder.nextAction.setVisibility(View.GONE);
-
-            imageShowPath = processedFile.getAbsolutePath();
-
-            Glide.with(context)
-
-                    .load(imageShowPath)
-                    .skipMemoryCache(true)
-                    .transition(DrawableTransitionOptions.withCrossFade())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+        holder.imageView.post(new Runnable() {
+            @Override
+            public void run() {
 
 
-                            ((Activity) context).runOnUiThread(new Runnable() {
+                if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
+
+
+                    holder.nextAction.setVisibility(View.GONE);
+
+                    imageShowPath[0] = processedFile.getAbsolutePath();
+
+                    Glide.with(context)
+
+                            .load(imageShowPath[0])
+                            .skipMemoryCache(true)
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .listener(new RequestListener<Drawable>() {
                                 @Override
-                                public void run() {
-
-
-                                    holder.processing.setVisibility(View.GONE);
-
-
-                                    holder.imageViewParent.setScaleX(1.0f);
-                                    holder.imageViewParent.setScaleY(1.0f);
-                                    holder.imageViewParent.setRotation(0);
-
-                                    holder.imageView.setImageDrawable(resource);
-
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                    return false;
                                 }
-                            });
 
-
-                            return true;
-                        }
-                    })
-                    .into(holder.imageView);
-
-        } else {
-
-
-            Glide.with(context)
-
-                    .load(originalFilepaths.get(position))
-                    .skipMemoryCache(true)
-                    .transition(DrawableTransitionOptions.withCrossFade())
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .listener(new RequestListener<Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-
-                            ((Activity) context).runOnUiThread(new Runnable() {
                                 @Override
-                                public void run() {
-                                    holder.processing.setVisibility(View.GONE);
+                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
 
 
                                     ((Activity) context).runOnUiThread(new Runnable() {
@@ -187,50 +176,173 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                                             holder.imageViewParent.setScaleY(1.0f);
                                             holder.imageViewParent.setRotation(0);
 
+
                                             holder.imageView.setImageDrawable(resource);
-                                            adapterInterface.notProcessed(position, holder);
+
 
                                         }
                                     });
+
+
+                                    return true;
                                 }
-                            });
+                            })
+                            .into(holder.imageView);
 
-                            return false;
-                        }
-                    })
-                    .into(holder.imageView);
+                } else {
 
 
-        }
+                    Glide.with(context)
+
+                            .load(originalFilepaths.get(position))
+                            .skipMemoryCache(true)
+                            .transition(DrawableTransitionOptions.withCrossFade())
+                            .diskCacheStrategy(DiskCacheStrategy.NONE)
+                            .listener(new RequestListener<Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                                    return false;
+                                }
+
+                                @Override
+                                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+
+                                    ((Activity) context).runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            holder.processing.setVisibility(View.GONE);
 
 
-        holder.pageNumber.setText("Page " + (position + 1) + "/" + originalFilepaths.size());
+                                            ((Activity) context).runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
 
-        holder.polygonView.setVisibility(View.GONE);
 
-        holder.processImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                adapterInterface.process(position, holder);
+                                                    holder.processing.setVisibility(View.GONE);
+
+
+                                                    holder.imageViewParent.setScaleX(1.0f);
+                                                    holder.imageViewParent.setScaleY(1.0f);
+                                                    holder.imageViewParent.setRotation(0);
+
+                                                    holder.imageView.setImageDrawable(resource);
+
+
+                                                    adapterInterface.notProcessed(position, holder);
+
+                                                }
+                                            });
+                                        }
+                                    });
+
+                                    return false;
+                                }
+                            })
+                            .into(holder.imageView);
+
+
+                }
+
+
+                holder.pageNumber.setText("Page " + (position + 1) + "/" + originalFilepaths.size());
+
+                holder.polygonView.setVisibility(View.GONE);
+
+                holder.processImage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        adapterInterface.process(position, holder);
+                    }
+                });
+
+
+                holder.clearAction.setOnClickListener(new View.OnClickListener() {
+
+
+                    @Override
+                    public void onClick(View view) {
+
+
+                        notifyItemChanged(position);
+
+                        holder.nextAction.setVisibility(View.GONE);
+
+                        adapterInterface.processExit(position, holder);
+                    }
+                });
             }
         });
 
 
-        holder.clearAction.setOnClickListener(new View.OnClickListener() {
-
-
+        holder.imageView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onTouch(View view, MotionEvent event) {
 
 
-                notifyItemChanged(position);
+                switch (event.getAction()) {
 
-                holder.nextAction.setVisibility(View.GONE);
+
+                    case MotionEvent.ACTION_DOWN:
+
+                        touchLock = false;
+                        deltaX = 0;
+                        deltaSum = 0;
+                        x1 = event.getX();
+
+
+
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+
+
+                        Log.d("aaaaaaa", "translation "+holder.imageView.getLeft());
+
+                        if (!touchLock && holder.imageView.getCurrentScaleFactor()<1.1) {
+                            touchLock = event.getPointerCount() > 1;
+                            x2 = event.getX();
+
+                            deltaX = (int) (x2 - x1);
+                            deltaSum += deltaX;
+
+                            // reyclerView.smoothScrollBy(-deltaX,0);
+                            reyclerView.scrollBy(-deltaX, -0);
+                        }
+
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+
+
+                        if (!touchLock && holder.imageView.getCurrentScaleFactor()<1.1) {
+
+                            if (Math.abs(deltaSum) > THRESH_DISTANCE) {
+
+
+                                if (deltaSum < 0) {
+                                    reyclerView.smoothScrollToPosition(Math.min(position + 1, getItemCount()));
+                                } else {
+                                    reyclerView.smoothScrollToPosition(Math.max(position - 1, 0));
+                                }
+
+                            } else {
+                                reyclerView.smoothScrollToPosition(position);
+                            }
+                        }
+
+                        touchLock = false;
+
+
+                        break;
+                }
+
+
+                return false;
             }
         });
 
 
     }
+
 
     @Override
     public int getItemCount() {
@@ -242,11 +354,14 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         return 0;
     }
 
+
+
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public TextView pageNumber;
         public PolygonView polygonView;
-        public ImageView imageView;
+        public ZoomageView imageView;
         public RelativeLayout imageViewParent;
         public ProgressBar processing;
         public RelativeLayout nextAction;
@@ -284,5 +399,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         void process(int postion, ViewHolder holder);
 
         void notProcessed(int postion, ViewHolder holder);
+
+        void processExit(int position, ViewHolder holder);
     }
 }

@@ -131,7 +131,6 @@ public class BitmapUtils {
     public static void setExifRotationDegrees(String path, int rotationDegrees) {
 
 
-
         try {
             ExifInterface exif = new ExifInterface(path);
 
@@ -147,28 +146,23 @@ public class BitmapUtils {
 
     }
 
-    public static int exifRotationFromDegrees(int rotationDegrees){
+    public static int exifRotationFromDegrees(int rotationDegrees) {
 
 
-        if (rotationDegrees == 90){
+        if (rotationDegrees == 90) {
 
             return ExifInterface.ORIENTATION_ROTATE_90;
-        }
-        else if (rotationDegrees == 180){
+        } else if (rotationDegrees == 180) {
 
             return ExifInterface.ORIENTATION_ROTATE_180;
-        }
-        else if (rotationDegrees == 270){
+        } else if (rotationDegrees == 270) {
 
             return ExifInterface.ORIENTATION_ROTATE_270;
-        }
-        else if (rotationDegrees == -90){
+        } else if (rotationDegrees == -90) {
             return ExifInterface.ORIENTATION_ROTATE_270;
-        }
-        else if (rotationDegrees == -180){
+        } else if (rotationDegrees == -180) {
             return ExifInterface.ORIENTATION_ROTATE_180;
-        }
-        else if (rotationDegrees == -270){
+        } else if (rotationDegrees == -270) {
             return ExifInterface.ORIENTATION_ROTATE_90;
         }
 
@@ -326,7 +320,7 @@ public class BitmapUtils {
 
 //
 
-    public static Point[] sortMatofPoints2f(MatOfPoint2f approx) {
+    public static Point[] sortMatofPoints2f(MatOfPoint2f approx, Size size) {
         //calculate the center of mass of our contour image using moments
         Moments moment = Imgproc.moments(approx);
 
@@ -336,26 +330,63 @@ public class BitmapUtils {
 
         Point[] sortedPoints = new Point[4];
 
+        Point[] sortedPoints2 = new Point[4];
+
+        sortedPoints2[0] = new Point(0, 0);
+        sortedPoints2[1] = new Point(size.width, 0);
+        sortedPoints2[2] = new Point(0, size.height);
+        sortedPoints2[3] = new Point(size.width, size.height);
+
+
         double[] data;
         int count = 0;
         for (int i = 0; i < approx.rows(); i++) {
             data = approx.get(i, 0);
             double datax = data[0];
             double datay = data[1];
+
+
             if (datax < x && datay < y) {
                 sortedPoints[0] = new Point(datax, datay);
                 count++;
-            } else if (datax > x && datay < y) {
+            }
+            if (datax > x && datay < y) {
                 sortedPoints[1] = new Point(datax, datay);
                 count++;
-            } else if (datax < x && datay > y) {
+            }
+            if (datax < x && datay > y) {
                 sortedPoints[2] = new Point(datax, datay);
                 count++;
-            } else if (datax > x && datay > y) {
+            }
+            if (datax > x && datay > y) {
                 sortedPoints[3] = new Point(datax, datay);
                 count++;
             }
         }
+
+        for (int i = 0; i < 4; i++) {
+
+            if (sortedPoints[i] == null) {
+                return sortedPoints2;
+            }
+        }
+
+
+        int x10 = (int) (size.width*0.02);
+        int y10 = (int) (size.height*0.02);
+
+        sortedPoints[0].x = Math.max( sortedPoints[0].x - x10, 0 );
+        sortedPoints[0].y = Math.max( sortedPoints[0].y - y10, 0 );
+
+
+        sortedPoints[1].x = Math.min( sortedPoints[1].x + x10, size.width );
+        sortedPoints[1].y = Math.max( sortedPoints[1].y - y10, 0 );
+
+        sortedPoints[2].x = Math.max( sortedPoints[2].x - x10, 0 );
+        sortedPoints[2].y = Math.min( sortedPoints[2].y + y10, size.height );
+
+        sortedPoints[3].x = Math.min( sortedPoints[3].x + x10, size.width );
+        sortedPoints[3].y = Math.min( sortedPoints[3].y + y10, size.height );
 
         return sortedPoints;
     }
@@ -482,7 +513,6 @@ public class BitmapUtils {
 //
 //
 //    }
-
 
 
 //    public static HashMap<Integer, PointF> rotateCorners90(HashMap<Integer, PointF> map, boolean clockwise){

@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorWhite"
+    tools:context=".ocr.OcrActivity">
+
+
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:background="@color/colorBackground">
+
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="10dp"
+            android:scrollbars="vertical">
+
+
+            <com.google.android.material.textview.MaterialTextView
+
+                android:id="@+id/ocrTxt"
+
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textIsSelectable="true"
+                android:textSize="18sp"></com.google.android.material.textview.MaterialTextView>
+
+
+        </ScrollView>
+
+
+    </RelativeLayout>
+
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:layout_margin="0dp"
+        android:background="@color/colorPrimary"
+        android:contentInsetLeft="0dp"
+        android:contentInsetRight="0dp"
+
+        android:elevation="3dp"
+        app:contentInsetEnd="0dp"
+        app:contentInsetLeft="0dp"
+        app:contentInsetRight="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <RelativeLayout
+
+            android:id="@+id/toolbarRL"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+
+            android:minHeight="?attr/actionBarSize">
+
+
+            <ImageView
+                android:id="@+id/backIV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="0dp"
+                android:clickable="true"
+                android:rotation="90"
+                android:src="@drawable/baseline_keyboard_arrow_down_white_24"></ImageView>
+
+
+            <RelativeLayout
+                android:id="@+id/shareRL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:layout_centerVertical="true"
+                android:layout_marginRight="15dp"
+                android:layout_toLeftOf="@id/saveRL"
+
+
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/shareIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:padding="4dp"
+                    android:src="@drawable/baseline_share_white_24">
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_below="@id/shareIV"
+                    android:layout_centerHorizontal="true"
+                    android:maxLines="1"
+                    android:text="Share"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="12sp">
+
+                </com.google.android.material.textview.MaterialTextView>
+
+
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/saveRL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="15dp"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/saveIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:padding="4dp"
+                    android:src="@drawable/baseline_save_white_24">
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_below="@id/saveIV"
+                    android:layout_centerHorizontal="true"
+                    android:maxLines="1"
+                    android:text="Export"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="12sp">
+
+                </com.google.android.material.textview.MaterialTextView>
+
+
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/langRL"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="15dp"
+                android:layout_toLeftOf="@id/shareRL"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/langIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:padding="4dp"
+                    android:src="@drawable/baseline_language_white_24">
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_below="@id/langIV"
+                    android:layout_centerHorizontal="true"
+                    android:maxLines="1"
+                    android:text="Language"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="12sp">
+
+                </com.google.android.material.textview.MaterialTextView>
+
+
+            </RelativeLayout>
+
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/toolbarTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="15dp"
+                android:layout_toRightOf="@id/backIV"
+                android:maxLines="1"
+                android:text="Extract text"
+                android:textColor="@color/colorWhite"
+                android:textSize="18sp"
+
+                android:textStyle="bold"></com.google.android.material.textview.MaterialTextView>
+
+
+        </RelativeLayout>
+
+
+    </androidx.appcompat.widget.Toolbar>
+
+
+</RelativeLayout>

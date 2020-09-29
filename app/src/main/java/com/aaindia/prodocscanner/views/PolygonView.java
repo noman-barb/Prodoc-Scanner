@@ -2,9 +2,11 @@ package com.aaindia.prodocscanner.views;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -51,11 +53,16 @@ public class PolygonView extends FrameLayout {
     private PolygonView polygonView;
     private Paint circleFillPaint;
 
+
+    public OnPointMove pointMove = null;
+
     private int circleSize = 0;
 
     public int ballSize = 0;
 
     public boolean autoCropped = false;
+
+
 
     public PolygonView(Context context) {
         super(context);
@@ -84,6 +91,8 @@ public class PolygonView extends FrameLayout {
         circleSize = drawable.getIntrinsicWidth() / 2;
         circleSize -= circleSize / 3;
 
+
+
         getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
@@ -97,12 +106,15 @@ public class PolygonView extends FrameLayout {
 
     private void drawCorners() {
 
+        if (polygonView!=null)
+            return;
+
         polygonView = this;
         pointer1 = getImageView(0, 0);
         pointer2 = getImageView(getWidth(), 0);
         pointer3 = getImageView(0, getHeight());
-
         pointer4 = getImageView(getWidth(), getHeight());
+
         midPointer13 = getImageViewTransparent(0, getHeight() / 2);
         midPointer13.setOnTouchListener(new MidPointTouchListenerImpl(pointer1, pointer3));
 
@@ -114,6 +126,7 @@ public class PolygonView extends FrameLayout {
 
         midPointer24 = getImageViewTransparent(0, getHeight() / 2);
         midPointer24.setOnTouchListener(new MidPointTouchListenerImpl(pointer2, pointer4));
+
 
         addView(pointer1);
         addView(pointer2);
@@ -136,14 +149,24 @@ public class PolygonView extends FrameLayout {
     private void initPaint() {
         paint = new Paint();
         paint.setColor(getResources().getColor(R.color.colorSecondary));
-        paint.setStrokeWidth(7);
+        paint.setStrokeWidth(3);
         paint.setAntiAlias(true);
 
         circleFillPaint = new Paint();
         circleFillPaint.setStyle(Paint.Style.STROKE);
-        circleFillPaint.setStrokeWidth(ballSize/15);
-        circleFillPaint.setColor(getResources().getColor(R.color.colorWhite));
+        circleFillPaint.setStrokeWidth(ballSize / 15);
+        circleFillPaint.setColor(getResources().getColor(R.color.colorTransparent));
         circleFillPaint.setAntiAlias(true);
+    }
+
+    public void scaleDrawing(double scale) {
+
+        if (1 == 1)
+            return;
+
+        paint.setStrokeWidth((float) (3 * (1.0 / scale)));
+
+
     }
 
     public Map<Integer, PointF> getPoints() {
@@ -212,10 +235,7 @@ public class PolygonView extends FrameLayout {
     }
 
     public void resetPoints(PolygonPoints polygonPoints) {
-        Log.v(TAG, "P1:" + pointer1.getX() + "," + pointer1.getY()
-                + "\n" + "P2:" + pointer2.getX() + "," + pointer2.getY()
-                + "\n" + "P3:" + pointer3.getX() + "," + pointer3.getY()
-                + "\n" + "P4:" + pointer4.getX() + "," + pointer4.getY());
+
         pointer1.setX(polygonPoints.getTopLeftPoint().x);
         pointer1.setY(polygonPoints.getTopLeftPoint().y);
 
@@ -226,18 +246,22 @@ public class PolygonView extends FrameLayout {
         pointer3.setY(polygonPoints.getBottomLeftPoint().y);
 
         pointer4.setX(polygonPoints.getBottomRightPoint().x);
+
         pointer4.setY(polygonPoints.getBottomRightPoint().y);
 
         polygonView.invalidate();
-        Log.v(TAG, "P1:" + pointer1.getX() + "," + pointer1.getY()
-                + "\n" + "P2:" + pointer2.getX() + "," + pointer2.getY()
-                + "\n" + "P3:" + pointer3.getX() + "," + pointer3.getY()
-                + "\n" + "P4:" + pointer4.getX() + "," + pointer4.getY());
+
     }
+
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);
+
+
+        if (pointer1==null){
+            return;
+        }
 
         Paint bgPaint = new Paint();
         bgPaint.setColor(getResources().getColor(R.color.colorSecondaryDarkLightAlpha));
@@ -279,7 +303,9 @@ public class PolygonView extends FrameLayout {
         canvas.drawCircle(midPointer34.getX() + (midPointer34.getWidth() / 2), midPointer34.getY() + (midPointer34.getHeight() / 2), radius, circleFillPaint);
         canvas.drawCircle(midPointer12.getX() + (midPointer12.getWidth() / 2), midPointer12.getY() + (midPointer12.getHeight() / 2), radius, circleFillPaint);
 
+
     }
+
 
     private Path drawOutBottomRect(Canvas canvas) {
         Path path = new Path();
@@ -330,20 +356,44 @@ public class PolygonView extends FrameLayout {
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         imageView.setLayoutParams(layoutParams);
         imageView.setImageResource(R.drawable.circle_border_action_transparent);
+
+
         imageView.setX(x);
         imageView.setY(y);
         imageView.setOnTouchListener(new TouchListenerImpl());
         return imageView;
     }
 
+    private int clipBoundsX(int xPos) {
+
+
+        xPos = Math.max(xPos, 0);
+        xPos = Math.min(xPos, polygonView.getWidth() - ballSize);
+
+
+        return xPos;
+    }
+
+
+    private int clipBoundsY(int yPos) {
+
+
+        yPos = Math.max(0, yPos);
+        yPos = Math.min(yPos, polygonView.getHeight() - ballSize);
+
+        return yPos;
+    }
+
+
     private ImageView getImageViewTransparent(int x, int y) {
         ImageView imageView = new ImageView(context);
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         imageView.setLayoutParams(layoutParams);
         imageView.setImageResource(R.drawable.circle_border_action_transparent);
+
         imageView.setX(x);
         imageView.setY(y);
-//        imageView.setOnTouchListener(new MidPointTouchListenerImpl());
+        //  imageView.setOnTouchListener(new MidPointTouchListenerImpl());
         return imageView;
     }
 
@@ -370,28 +420,21 @@ public class PolygonView extends FrameLayout {
                 case MotionEvent.ACTION_MOVE:
                     PointF mv = new PointF(event.getX() - DownPT.x, event.getY() - DownPT.y);
 
+
                     if (Math.abs(mainPointer1.getX() - mainPointer2.getX()) > Math.abs(mainPointer1.getY() - mainPointer2.getY())) {
-                        if (((mainPointer2.getY() + mv.y + v.getHeight() < polygonView.getHeight()) && (mainPointer2.getY() + mv.y > 0))) {
-                            v.setX((int) (StartPT.y + mv.y));
-                            StartPT = new PointF(v.getX(), v.getY());
-                            mainPointer2.setY((int) (mainPointer2.getY() + mv.y));
-                        }
-                        if (((mainPointer1.getY() + mv.y + v.getHeight() < polygonView.getHeight()) && (mainPointer1.getY() + mv.y > 0))) {
-                            v.setX((int) (StartPT.y + mv.y));
-                            StartPT = new PointF(v.getX(), v.getY());
-                            mainPointer1.setY((int) (mainPointer1.getY() + mv.y));
-                        }
+
+                        v.setX((int) (clipBoundsY((int) (StartPT.y + mv.y))));
+                        StartPT = new PointF(v.getX(), v.getY());
+
+                        mainPointer2.setY((int) (clipBoundsY((int) (mainPointer2.getY() + mv.y))));
+                        mainPointer1.setY((int) (clipBoundsY((int) (mainPointer1.getY() + mv.y))));
+
                     } else {
-                        if ((mainPointer2.getX() + mv.x + v.getWidth() < polygonView.getWidth()) && (mainPointer2.getX() + mv.x > 0)) {
-                            v.setX((int) (StartPT.x + mv.x));
-                            StartPT = new PointF(v.getX(), v.getY());
-                            mainPointer2.setX((int) (mainPointer2.getX() + mv.x));
-                        }
-                        if ((mainPointer1.getX() + mv.x + v.getWidth() < polygonView.getWidth()) && (mainPointer1.getX() + mv.x > 0)) {
-                            v.setX((int) (StartPT.x + mv.x));
-                            StartPT = new PointF(v.getX(), v.getY());
-                            mainPointer1.setX((int) (mainPointer1.getX() + mv.x));
-                        }
+                        v.setX((int) (clipBoundsX((int) (StartPT.x + mv.x))));
+                        StartPT = new PointF(v.getX(), v.getY());
+                        mainPointer2.setX((int) (clipBoundsX((int) (mainPointer2.getX() + mv.x))));
+
+                        mainPointer1.setX((int) (clipBoundsX((int) (mainPointer1.getX() + mv.x))));
                     }
 
                     break;
@@ -408,8 +451,12 @@ public class PolygonView extends FrameLayout {
                     latestPoint = new PointF(v.getX(), v.getY());
                     latestPoint1 = new PointF(mainPointer1.getX(), mainPointer1.getY());
                     latestPoint2 = new PointF(mainPointer2.getX(), mainPointer2.getY());
+
+
                     break;
                 case MotionEvent.ACTION_UP:
+
+
                     int color = 0;
                     if (isValidShape(getPoints()) && isValidPointer1() && isValidPointer2() && isValidPointer3() && isValidPointer4()) {
                         color = getResources().getColor(R.color.colorSecondary);
@@ -492,17 +539,32 @@ public class PolygonView extends FrameLayout {
                     int yPos = (int) (StartPT.y + mv.y);
 
                     xPos = Math.max(xPos, 0);
-                    xPos = Math.min(xPos, polygonView.getWidth()-ballSize);
+                    xPos = Math.min(xPos, polygonView.getWidth() - ballSize);
 
                     yPos = Math.max(0, yPos);
-                    yPos = Math.min(yPos, polygonView.getHeight()-ballSize);
+                    yPos = Math.min(yPos, polygonView.getHeight() - ballSize);
 
                     v.setX((int) (xPos));
                     v.setY((int) (yPos));
                     StartPT = new PointF(v.getX(), v.getY());
 
+
+                    if (pointMove != null) {
+
+                        pointMove.onMove(v.getX(), v.getY());
+                    }
+
                     break;
                 case MotionEvent.ACTION_DOWN:
+
+
+                    if (pointMove != null) {
+
+                        pointMove.onStart();
+                        pointMove.onMove(v.getX(), v.getY());
+                    }
+
+
 //                    ScanActivity.allDraggedPointsStack.push(new PolygonPoints(new PointF(pointer1.getX(), pointer1.getY()),
 //                            new PointF(pointer2.getX(), pointer2.getY()),
 //                            new PointF(pointer3.getX(), pointer3.getY()),
@@ -513,8 +575,25 @@ public class PolygonView extends FrameLayout {
                     DownPT.y = event.getY();
                     StartPT = new PointF(v.getX(), v.getY());
                     latestPoint = new PointF(v.getX(), v.getY());
+
+
+                    if (pointMove != null) {
+
+                        pointMove.onMove(latestPoint.x, latestPoint.y);
+
+                    }
+
                     break;
                 case MotionEvent.ACTION_UP:
+
+
+                    if (pointMove != null) {
+
+                        pointMove.onStop();
+
+                    }
+
+
                     int color = 0;
                     if (isValidShape(getPoints()) && isValidPointer4() && isValidPointer3() && isValidPointer2() && isValidPointer1()) {
                         color = getResources().getColor(R.color.colorSecondary);
@@ -534,5 +613,14 @@ public class PolygonView extends FrameLayout {
             polygonView.invalidate();
             return true;
         }
+    }
+
+    public interface OnPointMove {
+
+        void onMove(double x, double y);
+
+        void onStop();
+
+        void onStart();
     }
 }

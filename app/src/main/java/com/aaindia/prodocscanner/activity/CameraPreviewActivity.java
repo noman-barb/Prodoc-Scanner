@@ -30,6 +30,9 @@ import androidx.recyclerview.widget.SnapHelper;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.app.Activity;
+import android.app.SharedElementCallback;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -73,6 +76,9 @@ import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.Prefs;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.transition.MaterialContainerTransform;
+import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.io.FileUtils;
@@ -95,13 +101,12 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-
 public class CameraPreviewActivity extends AppCompatActivity implements View.OnClickListener {
 
 
     private static final int PERMISION_REQUEST_CODE = 313;
     private ActivityCameraScanBinding binding;
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture = null;
     private Camera camera;
     private Preview preview;
     private CameraSelector cameraSelector;
@@ -119,6 +124,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
     private String documentType = Constants.DEFAULT_DOCUMENT_TYPE;
 
+
     public String getDocumentType() {
         return documentType;
     }
@@ -128,31 +134,25 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            if (status == LoaderCallbackInterface.SUCCESS) {
-
-                // Load native library after(!) OpenCV initialization
-                System.loadLibrary("native-lib");
-
-
-            } else {
-                super.onManagerConnected(status);
-            }
-        }
-    };
-
-
     @Override
     public void onResume() {
         super.onResume();
-        if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mLoaderCallback);
-        } else {
 
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_CANCELED && cameraProviderFuture == null) {
+
+
+            finish();
+
+
         }
+
     }
 
 
@@ -165,8 +165,13 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
         super.onCreate(savedInstanceState);
 
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_camera_scan);
+
+        setEnterSharedElementCallback(new MaterialContainerTransformSharedElementCallback());
+
 
         CameraManager cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
+
 
         try {
             String[] cameraList = cameraManager.getCameraIdList();
@@ -197,7 +202,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             // nearest resolution search
 
-            long targetResolution = 3000l * 4000l;
+            long targetResolution = 2900l * 3900l;
 
             // find which is nearest
 
@@ -222,7 +227,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             targetHeight = targetSize.getHeight();
             targetWidth = targetSize.getWidth();
 
-            if (targetWidth * targetHeight < (2500 * 3200)) {
+            if (targetWidth * targetHeight < (2500 * 3100)) {
                 targetHeight = -1;
                 targetWidth = -1;
             }
@@ -232,7 +237,29 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         }
 
 
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_camera_scan);
+        checkCameraPermission();
+
+
+        binding.cameraCapture.setOnClickListener(this);
+        binding.flashIV.setOnClickListener(this);
+        binding.scanModeIV.setOnClickListener(this);
+        binding.importIV.setOnClickListener(this::onClick);
+        binding.next.setOnClickListener(this::onClick);
+        binding.backArrow.setOnClickListener(this::onClick);
+        binding.torchIV.setOnClickListener(this::onClick);
+
+        setViews();
+
+        Drawable drawable = getResources().getDrawable(R.drawable.baseline_crop_free_white_48);
+
+        focusDrawableMarginOffset = drawable.getIntrinsicHeight() / 2;
+
+
+        documentTypeChooser();
+
+    }
+
+    private void checkCameraPermission() {
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -254,25 +281,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             startCamera();
 
         }
-
-
-        binding.cameraCapture.setOnClickListener(this);
-        binding.flashIV.setOnClickListener(this);
-        binding.scanModeIV.setOnClickListener(this);
-        binding.importIV.setOnClickListener(this::onClick);
-        binding.next.setOnClickListener(this::onClick);
-        binding.backArrow.setOnClickListener(this::onClick);
-        binding.torchIV.setOnClickListener(this::onClick);
-
-        setViews();
-
-        Drawable drawable = getResources().getDrawable(R.drawable.baseline_crop_free_white_48);
-
-        focusDrawableMarginOffset = drawable.getIntrinsicHeight() / 2;
-
-
-        documentTypeChooser();
-
     }
 
     private void documentTypeChooser() {
@@ -381,7 +389,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
 
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
             builder.setTitle("Permission Needed");
             builder.setMessage("Camera permission is required to capture images");
             builder.setCancelable(false);
@@ -621,7 +629,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     startCamera();
                 } else {
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
                     builder.setTitle("Permission not granted");
                     builder.setMessage("Cannot capture images as permission to use the camera was denied");
 
@@ -671,8 +679,13 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
     public void captureImage(ImageView view) {
 
+
+
         if (imageCapture == null)
             return;
+
+
+        MainActivity.listingModified = true;
 
     }
 

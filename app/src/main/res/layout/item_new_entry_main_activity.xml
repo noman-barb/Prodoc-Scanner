@@ -92,7 +92,7 @@
                         android:minWidth="20dp"
                         android:minHeight="20dp">
 
-                        <TextView
+                        <com.google.android.material.textview.MaterialTextView
                             android:id="@+id/numPages"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -103,12 +103,12 @@
                             android:padding="4dp"
                             android:text="1"
                             android:textColor="@color/colorWhite"
-                            android:textSize="10sp"></TextView>
+                            android:textSize="10sp"></com.google.android.material.textview.MaterialTextView>
 
                     </RelativeLayout>
 
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
 
                         android:id="@+id/dateCreated"
                         android:layout_width="match_parent"
@@ -124,9 +124,9 @@
                         android:text="02/05/19"
                         android:textAlignment="center"
                         android:textColor="@color/colorWhite"
-                        android:textSize="10sp"></TextView>
+                        android:textSize="10sp"></com.google.android.material.textview.MaterialTextView>
 
-                    <TextView
+                    <com.google.android.material.textview.MaterialTextView
 
                         android:id="@+id/fileName"
                         android:layout_width="match_parent"
@@ -142,7 +142,7 @@
                         android:text="Folder 1 Important Files dont delete"
                         android:textAlignment="center"
                         android:textColor="@color/colorWhite"
-                        android:textSize="12sp"></TextView>
+                        android:textSize="12sp"></com.google.android.material.textview.MaterialTextView>
 
 
                 </RelativeLayout>
@@ -190,7 +190,7 @@
                 android:layout_alignTop="@id/thumbnail_folder"
                 android:layout_alignRight="@id/thumbnail_folder"
                 android:layout_alignBottom="@id/thumbnail_folder"
-                android:padding="2dp"
+                android:padding="0dp"
                 android:scaleType="centerCrop">
 
 

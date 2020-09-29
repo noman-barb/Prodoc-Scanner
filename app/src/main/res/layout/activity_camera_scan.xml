@@ -24,13 +24,14 @@
 
 
             <ImageView
+                android:rotation="90"
                 android:id="@+id/backArrow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="12dp"
                 android:clickable="true"
-                android:src="@drawable/round_keyboard_backspace_white_24"></ImageView>
+                android:src="@drawable/baseline_keyboard_arrow_down_white_24"></ImageView>
 
             <RelativeLayout
 
@@ -66,7 +67,7 @@
 
             </RelativeLayout>
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/scanModeTV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -74,7 +75,7 @@
                 android:layout_centerVertical="true"
                 android:alpha="0.8"
                 android:text="Batch Mode"
-                android:textColor="@color/colorWhite"></TextView>
+                android:textColor="@color/colorWhite"></com.google.android.material.textview.MaterialTextView>
 
 
         </RelativeLayout>
@@ -131,7 +132,6 @@
             <androidx.constraintlayout.widget.ConstraintLayout
 
 
-
                 android:id="@+id/cameraPreviewCL"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -175,10 +175,10 @@
 
             android:id="@+id/bottom"
 
-            android:background="@color/colorSecondaryDark"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
+            android:background="@color/colorSecondaryDark"
 
 
             android:elevation="10dp">
@@ -191,9 +191,9 @@
 
 
                 <RelativeLayout
-                    android:layout_marginBottom="10dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp">
 
 
                     <androidx.recyclerview.widget.RecyclerView
@@ -217,16 +217,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
 
-                    android:layout_marginBottom="10dp"
-                    >
+                    android:layout_marginBottom="10dp">
 
                     <ImageView
-                        android:layout_marginTop="10dp"
                         android:id="@+id/cameraCapture"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
                         android:layout_centerVertical="true"
+                        android:layout_marginTop="10dp"
                         android:clickable="true"
                         android:foreground="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/click_photo">
@@ -235,11 +234,11 @@
 
                     <LinearLayout
 
-                        android:layout_marginTop="10dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
                         android:layout_centerVertical="true"
+                        android:layout_marginTop="10dp"
                         android:layout_toLeftOf="@id/cameraCapture"
                         android:orientation="horizontal"
                         android:paddingLeft="3dp"
@@ -333,15 +332,21 @@
 
 
                     <RelativeLayout
-                        android:layout_marginTop="10dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
+                        android:layout_marginTop="10dp"
                         android:layout_toRightOf="@id/cameraCapture">
 
                         <Button
 
+
+
                             android:id="@+id/next"
+                            android:theme="@style/AppTheme"
+
+
+
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_below="@id/numPagesRl"
@@ -353,6 +358,7 @@
                             android:textColor="@color/colorWhite">
 
                         </Button>
+
 
 
                         <RelativeLayout
@@ -368,7 +374,7 @@
                             android:minWidth="20dp"
                             android:minHeight="20dp">
 
-                            <TextView
+                            <com.google.android.material.textview.MaterialTextView
 
                                 android:id="@+id/numPagesTV"
                                 android:layout_width="wrap_content"
@@ -380,7 +386,7 @@
                                 android:padding="4dp"
                                 android:text="0"
                                 android:textColor="@color/colorSecondaryDark"
-                                android:textSize="10sp"></TextView>
+                                android:textSize="10sp"></com.google.android.material.textview.MaterialTextView>
 
                         </RelativeLayout>
 

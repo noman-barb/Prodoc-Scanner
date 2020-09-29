@@ -247,8 +247,8 @@ public class FileNav {
     }
 
 
-    public static File getOutputDir(String scanDirPath, int quality) {
-        File f = new File(scanDirPath + File.separator + OUTPUT_DIR + File.separator + quality);
+    public static File getOutputDir(String scanDirPath) {
+        File f = new File(scanDirPath + File.separator + OUTPUT_DIR);
         f.mkdirs();
         return f;
     }
@@ -345,8 +345,12 @@ public class FileNav {
             }
 
 
-            if (numPages == 0 && isScan)
+            if (numPages == 0 && isScan) {
+
+                FileUtils.deleteQuietly(new File(filepath));
                 continue;
+
+            }
 
             fIlesInfos.add(new ListFIlesInfo(filepath, filename, dateModified, numPages, isScan, thumbnailPath));
 
@@ -373,6 +377,7 @@ public class FileNav {
         if (from.exists()) {
             from.renameTo(to);
         }
+
 
         return true;
 
@@ -542,6 +547,10 @@ public class FileNav {
             }
 
 
+            if (numPages==0){
+                FileUtils.deleteQuietly(new File(filepath));
+                continue;
+            }
             fIlesInfos.add(new ListFIlesInfo(filepath, filename, dateModified, numPages, isScan, thumbnailPath));
 
         }

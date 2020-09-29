@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
 
@@ -16,10 +15,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,52 +28,61 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.GridScanViewActivity;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ListFilesAdapter;
-import com.aaindia.prodocscanner.behaviours.PDFCreator;
+import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
+import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.utils.pdf.DocMaker;
+import com.aaindia.prodocscanner.utils.share.ShareDialog;
+import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.aaindia.prodocscanner.wrappers.Clipboard;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
-import com.tom_roush.pdfbox.pdfparser.PDFParser;
-import com.tom_roush.pdfbox.pdmodel.PDDocument;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.tom_roush.pdfbox.contentstream.operator.state.Save;
+
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.CameraActivity;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.ListIterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipOutputStream;
+
+import angtrim.com.fivestarslibrary.FiveStarsDialog;
+import angtrim.com.fivestarslibrary.NegativeReviewListener;
+import angtrim.com.fivestarslibrary.ReviewListener;
 
 public class MainActivity extends AppCompatActivity implements ListFilesAdapter.OnScanClickListener, View.OnClickListener {
 
@@ -134,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     public static final int MENU_ITEM_ID_DESELECT_ALL = 7;
     public static final int MENU_ITEM_ID_MORE_OPTIONS_RENAME = 8;
 
-    public static final int MENU_ITEM_ID_EXPORT = 10;
+    public static final int MENU_ITEM_ID_MODIFY = 10;
 
     public static final int GROUPPED_ITEM_ID = 1;
     public static final int ALL_DOCS_ITEM_ID = 2;
@@ -154,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private static final int MENU_ITEM_ID_SHARE_MED_RES = 13;
 
     private static final int MENU_ITEM_ID_SHARE_LOW_RES = 14;
+    private static final int MENU_ITEM_ID_OCR = 15;
 
     public ActivityMainBinding binding;
     public ListFilesAdapter adapter;
@@ -168,55 +177,104 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     public int selectedFilesNos = 0;
 
     public static boolean listingModified = false;
+    private FirebaseAnalytics firebaseInstance;
 
-
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            if (status == LoaderCallbackInterface.SUCCESS) {
-
-                System.loadLibrary("native-lib");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                });
-
-
-            } else {
-                super.onManagerConnected(status);
-            }
-        }
-    };
-
+    ExecutorService executor;
 
     @Override
     public void onResume() {
+
+
+        Utils.checkOpenCV(this);
+
         super.onResume();
 
-        if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, mLoaderCallback);
-        } else {
 
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        if (executor != null) {
+
+
+            try {
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        ArrayList<ListFIlesInfo> x = FileNav.getDirInfo(currentPath, null);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                if (listingModified || x.size() != adapter.data.size()) {
+
+                                    nagivateTo(currentPath);
+
+                                    listingModified = false;
+                                }
+                            }
+                        });
+                    }
+                });
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        try {
+            executor.shutdown();
+
+            while (!executor.isTerminated()) {
+            }
+        } catch (Exception e) {
         }
 
 
-        File[] f = new File(currentPath).listFiles();
-
-
-        if (f.length != adapter.data.size() || listingModified) {
-
-            nagivateTo(currentPath);
-        }
-
-
+        super.onDestroy();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
+
+        Utils.checkOpenCV(this);
+
+        executor = Executors.newFixedThreadPool(1);
+
+        firebaseInstance = FirebaseAnalytics.getInstance(MainActivity.this);
+
+        FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(this, "");
+        fiveStarsDialog.setRateText("How was your experience with this app?")
+                .setTitle("Rate us")
+                .setForceMode(false)
+                .setUpperBound(4)
+                .setNegativeReviewListener(new NegativeReviewListener() {
+                    @Override
+                    public void onNegativeReview(int i) {
+
+                        Bundle params = new Bundle();
+                        params.putString("star_rating", String.valueOf(i));
+
+                        firebaseInstance.logEvent("negative_rating", params);
+
+
+                    }
+                })
+                .setReviewListener(new ReviewListener() {
+                    @Override
+                    public void onReview(int i) {
+
+                        Bundle params = new Bundle();
+                        params.putString("star_rating", String.valueOf(i));
+
+                        firebaseInstance.logEvent("positive_rating", params);
+
+                    }
+                })
+                .showAfter(5);
 
 
         FileNav.createBaseDir(this);
@@ -267,8 +325,45 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         searchHandle(binding.searchView);
 
+        nagivateTo(currentPath);
+
+
+        if (getIntent() != null && getIntent().getType() != null) {
+
+
+            importPdf(getIntent());
+        }
+
 
     }
+
+    private void importPdf(Intent intent) {
+
+
+        if (intent.getClipData() != null) {
+
+
+            ArrayList<Uri> uris = new ArrayList<>();
+
+            for (int i = 0; i < intent.getClipData().getItemCount(); i++) {
+
+                uris.add(intent.getClipData().getItemAt(i).getUri());
+            }
+
+            processImportLocalPdf(uris);
+
+
+        } else if (intent.getData() != null) {
+
+            ArrayList<Uri> uris = new ArrayList<>();
+
+            uris.add(intent.getData());
+            processImportLocalPdf(uris);
+        }
+
+
+    }
+
 
     public void searchHandle(SearchView searchView) {
 
@@ -503,7 +598,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    pd.setMessage("" + String.format("%.2f", (float) doneSize[0] * 100.0f / totalSize * 1.0f) + "% complete");
+                                    pd.setMessage("" + String.format("%.2f", Math.min(100, (float) doneSize[0] * 100.0f / totalSize * 1.0f)) + "% complete");
                                 }
                             });
                         }
@@ -650,6 +745,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
         intent.setType("application/pdf");
 
         startActivityForResult(intent, REQUEST_CODE_IMPORT_LOCAL_PDF);
@@ -745,11 +842,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void newDir() {
 
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Folder name");
 
 // Set up the input
-        final EditText input = new EditText(this);
+        TextInputEditText input = new TextInputEditText(this);
 // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -977,7 +1074,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         currentPath = path;
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -1012,7 +1109,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1069,17 +1166,21 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     return;
 
 
-                Intent intent = new Intent(MainActivity.this, ScanPreviewActivity.class);
-                intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, adapter.data.get(position).filepath);
-                intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                startActivity(intent);
+                openScan(position);
             }
 
         }
 
 
+    }
+
+    private void openScan(int position) {
+        Intent intent = new Intent(MainActivity.this, ScanPreviewActivity.class);
+        intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, adapter.data.get(position).filepath);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+
+        startActivity(intent);
     }
 
     @Override
@@ -1130,8 +1231,16 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             if (adapter.data.get(position).is_scan) {
-                SpannableString export = new SpannableString(ITEM_OPTIONS_EXPORT);
-                menu.add(0, MENU_ITEM_ID_EXPORT, 0, export);
+//                SpannableString export = new SpannableString(ITEM_OPTIONS_EXPORT);
+//                menu.add(0, MENU_ITEM_ID_MODIFY, 0, export);
+
+                SpannableString export = new SpannableString("Modify Scan");
+                menu.add(0, MENU_ITEM_ID_MODIFY, 0, export);
+
+
+                SpannableString ocr = new SpannableString("OCR");
+                menu.add(0, MENU_ITEM_ID_OCR, 0, ocr);
+
 
             }
 
@@ -1151,12 +1260,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             if (showShare) {
 
 
-                //  menu.add(0, MENU_ITEM_ID_SHARE, 0, share);
+                menu.add(0, MENU_ITEM_ID_SHARE, 0, share);
 
-                SubMenu sMenu = menu.addSubMenu(share);
-                sMenu.add(0, MENU_ITEM_ID_SHARE_HIGH_RES, 0, "Original");
-                sMenu.add(0, MENU_ITEM_ID_SHARE_MED_RES, 0, "Medium Resolution");
-                sMenu.add(0, MENU_ITEM_ID_SHARE_LOW_RES, 0, "Low Resolution");
+                //todo  share here
 
             }
 
@@ -1184,35 +1290,22 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 switch (itemId) {
 
-                    case MENU_ITEM_ID_SHARE_HIGH_RES:
+
+                    case MENU_ITEM_ID_OCR:
+
+                        ocr(position);
+
+
+                        break;
+                    case MENU_ITEM_ID_SHARE:
 
                         if (!adapter.getItem(position).isSelected) {
 
                             selectDeselect(position);
                         }
-                        sharePDFChooser(PDFCreator.QUALITY_FULL);
+                        shareDocs();
+
                         break;
-
-
-                    case MENU_ITEM_ID_SHARE_MED_RES:
-
-                        if (!adapter.getItem(position).isSelected) {
-
-                            selectDeselect(position);
-                        }
-                        sharePDFChooser(PDFCreator.QUALITY_MEDIUM);
-                        break;
-
-
-                    case MENU_ITEM_ID_SHARE_LOW_RES:
-
-                        if (!adapter.getItem(position).isSelected) {
-
-                            selectDeselect(position);
-                        }
-                        sharePDFChooser(PDFCreator.QUALITY_LOW);
-                        break;
-
 
                     case MENU_ITEM_ID_SELECT_MULTIPLE:
 
@@ -1274,13 +1367,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         break;
 
-                    case MENU_ITEM_ID_EXPORT:
-                        if (!adapter.getItem(position).isSelected) {
+                    case MENU_ITEM_ID_MODIFY:
 
-                            selectDeselect(position);
-                        }
-
-                        export(position);
+                        openScan(position);
 
                         break;
                 }
@@ -1291,6 +1380,275 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         });
 
         popupMenu.show();
+
+
+    }
+
+    private void ocr(int position) {
+
+        SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(adapter.data.get(position).filepath));
+
+        ArrayList<String> paths = new ArrayList<>();
+
+        ListIterator<String> iterator = imageDetails.getOrdering().listIterator();
+
+        while (iterator.hasNext()) {
+
+            String name = iterator.next();
+
+            String bmpPath = adapter.data.get(position).filepath + File.separator + FileNav.ORIGINAL_IMAGE_DIR + File.separator + name;
+
+            String processedPath = adapter.data.get(position).filepath + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + name;
+
+            if (new File(processedPath).exists()) {
+                bmpPath = processedPath;
+            }
+            paths.add(bmpPath);
+
+
+        }
+
+
+        Bundle args = new Bundle();
+
+        Intent intent = new Intent(MainActivity.this, OcrActivity.class);
+        args.putSerializable(OcrActivity.IMAGE_PATHS, (Serializable) paths);
+        intent.putExtra(OcrActivity.IMAGE_PATHS, args);
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        startActivity(intent);
+
+
+    }
+
+    private void shareDocs() {
+
+        File outputDir = null;
+
+
+        ArrayList<String> selectedDocs = new ArrayList<>();
+
+        ArrayList<SavedImageDetails> imageDetailsArrayList = new ArrayList<>();
+
+        double size = 0;
+
+        for (ListFIlesInfo fIlesInfo : adapter.data) {
+
+            if (fIlesInfo.isSelected && fIlesInfo.is_scan) {
+
+                outputDir = FileNav.getOutputDir(fIlesInfo.filepath);
+
+                outputDir.mkdirs();
+
+                SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(fIlesInfo.filepath));
+
+                Utils.copyNotProcessedOriginals(imageDetails, fIlesInfo.filepath);
+
+                imageDetailsArrayList.add(imageDetails);
+
+                selectedDocs.add(fIlesInfo.filepath);
+
+                File[] fs = new File(fIlesInfo.filepath + File.separator + FileNav.PROCESSED_IMAGE_DIR).listFiles();
+
+                for (File f : fs) {
+
+                    size += f.length() / 1024.0;
+                }
+
+            }
+
+
+        }
+
+        ProgressDialog pd = new ProgressDialog(MainActivity.this);
+        pd.setTitle("Making PDF 1");
+        pd.setMessage("Page 1");
+        pd.setCancelable(false);
+
+
+        new ShareDialog(MainActivity.this, size, new ShareDialog.OnShareDialogListener() {
+            @Override
+            public void share(boolean isPDF, double quality) {
+
+                quality = (quality) / 200.0;
+
+
+                pd.show();
+                double finalQuality = quality;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF);
+                    }
+                }).start();
+
+
+            }
+        }).build(false).show();
+
+        deselectAll();
+    }
+
+
+    private static boolean isComplete = false;
+
+    private void makeAllPDFs(ArrayList<String> selectedDocs, ArrayList<SavedImageDetails> imageDetailsArrayList, double quality, ProgressDialog pd, boolean isPDF) {
+
+
+        ArrayList<File> arrayList = new ArrayList<>();
+
+        for (int i = 0; i < selectedDocs.size(); i++) {
+
+            int finalI = i;
+
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    if (isPDF) {
+                        pd.setTitle("Making PDF " + (finalI + 1) + "/" + selectedDocs.size());
+                    } else {
+                        pd.setTitle("Preparing Doc " + (finalI + 1) + "/" + selectedDocs.size());
+                    }
+                }
+            });
+
+
+            String scanDirPath = selectedDocs.get(i);
+
+            File outputDir = FileNav.getOutputDir(scanDirPath);
+            String pdfName = FileNav.getPDFName(scanDirPath);
+
+            File outputFile = new File(outputDir, pdfName);
+
+
+            ArrayList<File> files = new ArrayList<>();
+            ListIterator listIterator = imageDetailsArrayList.get(i).getOrdering().listIterator();
+
+            while (listIterator.hasNext()) {
+
+                String s = scanDirPath + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + listIterator.next();
+
+                File f = new File(s);
+
+                files.add(f);
+
+            }
+
+
+            if (isPDF) {
+
+                try {
+                    new DocMaker(MainActivity.this, files, quality).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                        @Override
+                        public void onUpdate(int currentPage, int totalPage) {
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    pd.setMessage("Page " + currentPage + "/" + totalPage);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onComplete(String output) {
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    arrayList.add(new File(output));
+
+
+                                }
+                            });
+
+                        }
+
+                        @Override
+                        public void onComplete(ArrayList<File> output) {
+
+                        }
+                    });
+                } catch (IOException e) {
+
+
+                }
+
+            } else {
+
+
+                isComplete = false;
+                try {
+                    new DocMaker(MainActivity.this, files, quality).makeImages(outputDir.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                        @Override
+                        public void onUpdate(int currentPage, int totalPage) {
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    pd.setMessage("Page " + currentPage + "/" + totalPage);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onComplete(String output) {
+
+                        }
+
+                        @Override
+                        public void onComplete(ArrayList<File> output) {
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    arrayList.addAll(output);
+
+                                    isComplete = true;
+
+                                }
+                            });
+
+                        }
+                    });
+
+
+                    while (!isComplete) {
+
+                        Thread.sleep(400);
+                    }
+
+                } catch (Exception e) {
+
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pd.dismiss();
+                        }
+                    });
+                }
+
+
+            }
+
+
+        }
+
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                pd.dismiss();
+
+                new Sharer(MainActivity.this, arrayList).share();
+            }
+        });
 
 
     }
@@ -1306,186 +1664,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         startActivityForResult(intent, EXPORT_REQUEST_CODE);
     }
 
-    private void sharePDFChooser(int quality) {
-
-        sharePDFs(quality, null);
-    }
-
-
-    private void sharePDFs(int quality, Uri saveURI) {
-
-
-        ProgressDialog pd = new ProgressDialog(this);
-        pd.setMessage("Preparing");
-
-        pd.setCancelable(false);
-        pd.show();
-
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-
-
-                File outputDir = null;
-
-                ArrayList<Uri> uris = new ArrayList<>();
-
-                for (ListFIlesInfo fIlesInfo : adapter.data) {
-
-                    if (fIlesInfo.isSelected) {
-
-                        outputDir = FileNav.getOutputDir(fIlesInfo.filepath, quality);
-
-                        outputDir.mkdirs();
-
-                        if (outputDir.listFiles().length > 0) {
-
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                                uris.add(FileProvider.getUriForFile(getApplicationContext(), getPackageName() + ".provider", outputDir.listFiles()[0]));
-
-
-                            } else {
-                                uris.add(Uri.parse(outputDir.listFiles()[0].getAbsolutePath()));
-
-
-                            }
-
-                        } else {
-
-
-                            String pdfName = FileNav.getPDFName(fIlesInfo.filepath);
-                            String outputPath = outputDir.getAbsolutePath() + File.separator + pdfName;
-
-                            Utils.copyNotProcessedOriginals(new SavedImageDetails(FileNav.getEffectsFile(fIlesInfo.filepath)), fIlesInfo.filepath);
-
-
-                            PDFCreator pdfCreator = new PDFCreator(MainActivity.this, fIlesInfo.filepath, outputPath);
-                            File finalOutputDir1 = outputDir;
-                            pdfCreator.setOnCompleteListener(new PDFCreator.OnCompleteListener() {
-                                @Override
-                                public void onComplete(int error) {
-
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                                        uris.add(FileProvider.getUriForFile(getApplicationContext(), getPackageName() + ".provider", finalOutputDir1.listFiles()[0]));
-
-
-                                    } else {
-                                        uris.add(Uri.parse(finalOutputDir1.listFiles()[0].getAbsolutePath()));
-
-
-                                    }
-                                }
-
-                                @Override
-                                public void onProgress(int page, int total) {
-
-                                }
-                            });
-
-
-                            pdfCreator.setQuality(quality);
-                            pdfCreator.create(false);
-
-                        }
-                    }
-                }
-
-
-                File finalOutputDir = outputDir;
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        deselectAll();
-
-
-                        if (saveURI != null && finalOutputDir != null) {
-
-
-                            try {
-                                OutputStream outputStream = getContentResolver().openOutputStream(uris.get(0));
-
-                                InputStream inputStream = new FileInputStream(finalOutputDir.listFiles()[0]);
-
-
-                                try {
-                                    IOUtils.copy(inputStream, outputStream);
-                                } catch (Exception e) {
-                                }
-
-
-                                if (inputStream != null)
-                                    inputStream.close();
-                                if (outputStream != null)
-                                    outputStream.close();
-
-
-                            } catch (FileNotFoundException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-
-                            pd.dismiss();
-                            return;
-                        }
-
-
-                        if (uris.size() == 1) {
-                            Intent intent = new Intent(Intent.ACTION_SEND);
-                            //      intent.setData(uris.get(0));
-                            intent.setType("*/*");
-                            intent.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
-
-                            intent.putExtra(Intent.EXTRA_STREAM, uris.get(0));
-
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                            }
-
-
-                            startActivity(Intent.createChooser(intent, "Share"));
-
-
-                        } else if (uris.size() > 1) {
-
-
-                            Intent share = new Intent(Intent.ACTION_SEND_MULTIPLE);
-
-                            share.setType("*/*");
-                            share.putExtra(Intent.EXTRA_TEXT, "Scanned using ProDoc Scanner");
-                            share.putExtra(Intent.EXTRA_SUBJECT, "Scans from Prodoc Scanner");
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                share.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                            }
-
-                            share.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-
-                            startActivity(Intent.createChooser(share, "Share"));
-
-
-                        }
-
-
-                        pd.dismiss();
-                    }
-                });
-
-            }
-        }).start();
-
-
-    }
 
     private void copyToClipBoard(boolean deleteAfter) {
 
@@ -1513,11 +1691,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         setSpanActionColor(spannableString, 1, 1);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Rename");
 
         String fromNameAtomic = adapter.getItem(position).filename;
-        final EditText input = new EditText(this);
+        final TextInputEditText input = new TextInputEditText(this);
 
         input.setText(fromNameAtomic);
         input.setSelectAllOnFocus(true);
@@ -1551,6 +1729,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 String fromName = fromNameAtomic + (adapter.getItem(position).is_scan ? FileNav.SCAN_IDENTIFIER : FileNav.DIR_IDENTIFIER);
 
 
+                //TODO RENAME FILE INSTEAD OF DELETING
+
+                FileUtils.deleteQuietly(FileNav.getOutputDir(adapter.getItem(position).filepath));
                 boolean renamed = FileNav.rename(adapter.getItem(position).filepath, fromName, toName);
 
 
@@ -1624,8 +1805,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         SpannableString cancel = new SpannableString("Cancel");
         setSpanActionColor(cancel, 1, 1);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Are you sure you want to delete " + selectedFilesNos + " items ?");
+        AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Delete");
+        builder.setMessage("Are you sure you want to delete " + selectedFilesNos + " items ?");
 
 
         builder.setPositiveButton("Delete", (dialog, which) -> {
@@ -1693,7 +1875,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         SpannableString cancel = new SpannableString("Cancel");
         setSpanActionColor(cancel, 1, 1);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Delete");
         builder.setMessage("Are you sure you want to delete?");
 
@@ -1753,7 +1935,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.setMessage("Importing " + (finalI + 1) + "/" + pageCount);
+                        pd.setMessage("Page " + (finalI + 1) + "/" + pageCount);
                     }
                 });
 
@@ -1768,17 +1950,35 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 String filename = i + ".jpg";
                 String filepath = originalImageDir.getAbsolutePath() + File.separator + filename;
 
+                File processedFileDir = new File(scanDir + File.separator + FileNav.PROCESSED_IMAGE_DIR);
+
+                processedFileDir.mkdirs();
+
+                File processedFile = new File(processedFileDir, filename);
+
                 try (FileOutputStream out = new FileOutputStream(filepath)) {
 
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
 
                     imageDetails.getOrdering().add(filename);
 
+                    HashMap<Integer, PointF> pointMap = new HashMap<>();
+
+                    pointMap.put(0, new PointF(0, 0));
+                    pointMap.put(1, new PointF(width, 0));
+                    pointMap.put(2, new PointF(0, height));
+                    pointMap.put(3, new PointF(width, height));
+
+                    Effects effects = new Effects(pointMap, MatFilter.COLOR_ORIGINAL, false, 0, 0);
+                    imageDetails.putEffects(filename, effects);
+
                     out.close();
 
                 } catch (IOException e) {
 
                 }
+
+                FileUtils.copyFile(new File(filepath), processedFile);
 
                 imageDetails.sync();
 
@@ -1794,11 +1994,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     }
 
-    private void processImportLocalPdf(Uri uri) {
+    private void processImportLocalPdf(ArrayList<Uri> uris) {
 
 
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
-        pd.setMessage("Importing PDF...");
+        pd.setTitle("Importing PDF");
+        pd.setMessage("Page");
         pd.setCancelable(false);
         pd.show();
 
@@ -1808,56 +2009,67 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             public void run() {
 
 
-                try {
+                int pdfCount = 0;
+                for (Uri uri : uris) {
 
-                    File temp = FileNav.getTempFile(getApplicationContext(), "temp1.pdf");
+                    pdfCount++;
 
-
-                    InputStream in = getContentResolver().openInputStream(uri);
-                    OutputStream out = new FileOutputStream(temp);
-
-
-                    try {
-                        IOUtils.copy(in, out);
-                    } catch (Exception e) {
-                    }
-
-
-                    try {
-                        out.close();
-                    } catch (Exception e) {
-
-                    }
-                    try {
-                        in.close();
-                    } catch (Exception e) {
-
-                    }
-
-
-                    pdfToBitmapSave(temp, pd);
-
+                    int finalPdfCount = pdfCount;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            pd.dismiss();
-                            simpleToast("Imported");
-                            nagivateTo(currentPath);
+                            pd.setTitle("Importing PDF " + finalPdfCount + "/" + uris.size());
                         }
                     });
 
 
-                } catch (Exception e) {
+                    try {
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            pd.dismiss();
-                            simpleToast("Could not import");
+                        File temp = FileNav.getTempFile(getApplicationContext(), "temp1.pdf");
+
+
+                        InputStream in = getContentResolver().openInputStream(uri);
+                        OutputStream out = new FileOutputStream(temp);
+
+
+                        try {
+                            IOUtils.copy(in, out);
+                        } catch (Exception e) {
                         }
-                    });
+
+
+                        try {
+                            out.close();
+                        } catch (Exception e) {
+
+                        }
+                        try {
+                            in.close();
+                        } catch (Exception e) {
+
+                        }
+
+
+                        pdfToBitmapSave(temp, pd);
+
+                        FileUtils.forceDelete(temp);
+
+                    } catch (Exception e) {
+
+
+                    }
+
 
                 }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        pd.dismiss();
+                        nagivateTo(currentPath);
+                        simpleToast("Done");
+                    }
+                });
 
 
             }
@@ -1887,6 +2099,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 break;
 
             case R.id.cameraCapture:
+
+
+                binding.imageOptionsRL.setTransitionName("reveal");
 
 
                 Intent intent = new Intent(MainActivity.this, CameraScanActivity.class);
@@ -1957,8 +2172,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 && resultCode == Activity.RESULT_OK) {
             Uri uri = null;
             if (resultData != null) {
-                uri = resultData.getData();
-                processImportLocalPdf(uri);
+
+                importPdf(resultData);
 
             }
         } else if (requestCode == EXPORT_REQUEST_CODE
@@ -1994,7 +2209,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private void processExport(Uri uri) {
 
-        sharePDFs(PDFCreator.QUALITY_FULL, uri);
+
     }
 
 

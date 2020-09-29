@@ -4,6 +4,8 @@ import android.app.ActivityManager;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 
@@ -86,6 +88,8 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Map<Integer, PointF> cropBoundsMap = holder.polygonView.getPoints();
 
 
+
+
                 if (!colorOnly) {
 
                     for (int i = 0; i < 4; i++) {
@@ -107,6 +111,8 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 }
 
 
+
+
                 Point point1 = new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y);
                 Point point2 = new Point(cropBoundsMap.get(1).x, cropBoundsMap.get(1).y);
                 Point point3 = new Point(cropBoundsMap.get(3).x, cropBoundsMap.get(3).y);
@@ -126,11 +132,13 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Imgproc.warpPerspective(holder.originalMat, processedMat, transform, holder.originalMat.size());
 
 
+
+
                 Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
 
 
                 setColorTuneListen(false);
-                getBinding().colorTuneSK.setProgress(colorTune);
+                getBinding().colorTuneSK.setValue(colorTune);
                 getBinding().colorGrayCheck.setChecked(colorGray);
                 setColorTuneListen(true);
 
@@ -155,6 +163,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                     BitmapUtils.rotateMatDegrees(processedMat, rot);
                     Imgcodecs.imwrite(processedImageFilepath, processedMat, new MatOfInt(parameters));
 
+
                 }
 
 
@@ -172,13 +181,16 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                         holder.polygonView.setVisibility(View.GONE);
                         holder.processing.setVisibility(View.GONE);
-                        getRecyclerView().getAdapter().notifyDataSetChanged();
+
 
                         zoomageEnableDisable(holder, true);
                         setDocumentChanged(true);
 
 
                         getBinding().protector.setVisibility(View.GONE);
+
+                      //  getRecyclerView().getAdapter().notifyDataSetChanged();
+                        onProcessed(holder,position);
 
                     }
                 });
@@ -204,34 +216,11 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
         HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat);
+        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
 
 
         for (int i = 0; i < 4; i++) {
 
-
-            if (sortedPoints[i] == null) {
-
-                sortedPoints[0] = new Point();
-                sortedPoints[1] = new Point();
-                sortedPoints[2] = new Point();
-                sortedPoints[3] = new Point();
-
-
-                sortedPoints[0].x = 0;
-                sortedPoints[0].y = 0;
-
-                sortedPoints[1].x = originalMat.width();
-                sortedPoints[1].y = 0;
-
-                sortedPoints[2].x = 0;
-                sortedPoints[2].y = originalMat.height();
-
-                sortedPoints[3].x = originalMat.width();
-                sortedPoints[3].y = originalMat.height();
-
-
-            }
 
             cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
         }
@@ -247,6 +236,26 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     }
 
+    public void onProcessed(ScanPreviewAdapter.ViewHolder holder, int position){
+
+
+
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getRecyclerView().getAdapter().notifyItemChanged(position);
+
+                    }
+                });
+            }
+        }, 10);
+
+
+    }
 
     public void prepareMat(ScanPreviewAdapter.ViewHolder holder, int position) {
 

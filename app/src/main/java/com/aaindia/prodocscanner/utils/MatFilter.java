@@ -24,9 +24,9 @@ public class MatFilter {
 
 
     public static final int DEFAULT_TUNE_COLOR_ORIGINAL = 0;
-    public static final int DEFAULT_TUNE_COLOR_CONTRAST = 20;
+    public static final int DEFAULT_TUNE_COLOR_CONTRAST = 10;
     public static final int DEFAULT_TUNE_COLOR_PAPER = 20;
-    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 40;
+    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 60;
 
 
     public static final int DEFAULT_TUNE_COLOR_ORIGINAL_GRAY = 0;
@@ -35,17 +35,59 @@ public class MatFilter {
     public static final int DEFAULT_TUNE_COLOR_WHITEBOARD_GRAY = 60;
 
 
-    public static final int DEFAULT_COLOR_CODE = COLOR_PAPER;
+    public static final int DEFAULT_COLOR_CODE = COLOR_WHITEBOARD;
     public static final boolean DEFAULT_IS_GRAY = false;
 
 
-    private static native void brightnessContrast(long nativeObjAddr, long percentage);
+    private static native void brightnessContrastNative(long nativeObjAddr, long percentage);
 
-    private static native void paperize(long nativeObjAddr, float percentage);
+    private static native void paperizeNative(long nativeObjAddr, float percentage);
 
-    private static native void adjustGamma(long nativeObjAddr, float gamma);
+    private static native void cleanTextNative(long nativeObjAddr, float percentage);
 
-    private static native void cleanText(long nativeObjAddr, float percentage);
+    public static native void cropV1Native(long nativeObjAddr, long nativeObjAddr1);
+
+    private static native void doNothing();
+
+
+    private static void brightnessContrast(long nativeObjAddr, long percentage) {
+        MatFilter.loadLibrary();
+        brightnessContrastNative(nativeObjAddr, percentage);
+    }
+
+    private static void paperize(long nativeObjAddr, float percentage) {
+        MatFilter.loadLibrary();
+        paperizeNative(nativeObjAddr, percentage);
+
+    }
+
+
+    private static void cleanText(long nativeObjAddr, float percentage) {
+        MatFilter.loadLibrary();
+        cleanTextNative(nativeObjAddr, percentage);
+
+
+    }
+
+    public static void cropV1(long nativeObjAddr, long nativeObjAddr1) {
+
+        loadLibrary();
+
+        cropV1Native(nativeObjAddr, nativeObjAddr1);
+
+    }
+
+
+    public static void loadLibrary() {
+
+        try {
+            doNothing();
+        } catch (UnsatisfiedLinkError error) {
+             System.loadLibrary("native-lib");
+        }
+
+
+    }
 
 
     private static void whiteboard(Mat mat, float control) {
@@ -103,8 +145,6 @@ public class MatFilter {
 
         if (gray) {
 
-            if (color == COLOR_WHITEBOARD)
-                tune += 20;
 
             if (mat.channels() == 4)
                 Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGRA2GRAY);
@@ -137,6 +177,7 @@ public class MatFilter {
 
             case COLOR_WHITEBOARD:
 
+
                 whiteboard(mat, tune);
 
         }
@@ -150,7 +191,7 @@ public class MatFilter {
         int colorCode = DEFAULT_COLOR_CODE;
 
         if (documentType == null) {
-            Log.d("aaaaaaaaa", "null");
+
             return colorCode;
         }
 
@@ -168,5 +209,5 @@ public class MatFilter {
 
     }
 
-    public static native void cropV1(long nativeObjAddr, long nativeObjAddr1);
+
 }

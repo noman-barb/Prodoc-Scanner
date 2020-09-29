@@ -40,6 +40,36 @@ public class Prefs {
 
     }
 
+
+    public static class OCRPreference {
+
+        public static final String OCR_PREFS = "ocr_prefs";
+
+        public static final String OCR_LANG = "ocr_lang";
+
+        public static String getLang(Context context) {
+
+            SharedPreferences prefs = context.getSharedPreferences(OCR_PREFS, context.MODE_PRIVATE);
+
+            return prefs.getString(OCR_LANG, null);
+
+
+        }
+
+
+        public static void setLang(Context context, String language) {
+
+            SharedPreferences.Editor editor = context.getSharedPreferences(OCR_PREFS, context.MODE_PRIVATE).edit();
+            editor.putString(OCR_LANG, language);
+
+
+            editor.commit();
+        }
+
+
+    }
+
+
     public static class CameraPreference {
 
         public static final String CAMERA_PREFS = "camera_prefs";

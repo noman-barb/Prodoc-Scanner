@@ -468,6 +468,10 @@ void normalize_image(Mat &image, Mat &result) {
         }
 
         merge(image_planes, result);
+
+        image_planes[0].release();
+        image_planes[1].release();
+        image_planes[2].release();
     } else {
 
 
@@ -810,7 +814,7 @@ void gamma_correction(Mat &src, Mat &dst, float fGamma) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1(JNIEnv *env, jobject thiz,
+Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1Native(JNIEnv *env, jobject thiz,
                                                                  jlong matAddr,
                                                                  jlong native_obj_addr1) {
 
@@ -856,7 +860,7 @@ Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1(JNIEnv *env, jo
 }
 
 
-void paperize(jlong matAddr, jfloat colorVal) {
+void paperizeNative(jlong matAddr, jfloat colorVal) {
 
     Mat &image_original = *(Mat *) matAddr;
 
@@ -868,9 +872,19 @@ void paperize(jlong matAddr, jfloat colorVal) {
 }
 
 
+void paperizeNative2(Mat &image_original, jfloat colorVal) {
+
+
+    normalize_image(image_original, image_original);
+
+    colorVal = colorVal >= 50 ? colorVal - 49 : colorVal / 50;
+
+    BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrast(JNIEnv *env, jclass clazz,
+Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrastNative(JNIEnv *env, jclass clazz,
                                                                   jlong matAddr, jlong colorVal) {
 
     Mat &image_original = *(Mat *) matAddr;
@@ -883,10 +897,10 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrast(JNIEnv *env, j
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_paperize(JNIEnv *env, jclass clazz,
+Java_com_aaindia_prodocscanner_utils_MatFilter_paperizeNative(JNIEnv *env, jclass clazz,
                                                         jlong matAddr, jfloat colorVal) {
 
-    paperize(matAddr, colorVal);
+    paperizeNative(matAddr, colorVal);
 
 
 }extern "C"
@@ -903,7 +917,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_adjustGamma(JNIEnv *env, jclass c
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1(JNIEnv *env, jclass clazz,
+Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1Native(JNIEnv *env, jclass clazz,
                                                       jlong matAddr,
                                                       jlong native_obj_addr1) {
 
@@ -947,162 +961,148 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1(JNIEnv *env, jclass clazz,
 
 
 }
+
+
+void cleanTextNativeGray(Mat &mat, jfloat colorVal) {
+
+
+    Mat mat1 = mat.clone();
+
+    blur(mat1, mat1, Size(3, 3));
+    Mat binary(mat.rows, mat.cols, CV_8U);
+    adaptiveThreshold(mat1, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
+    mat1.release();
+
+    erode(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
+
+
+    paperizeNative2(mat, 0);
+    bitwise_or(mat, binary, mat);
+
+
+    double thresh = threshold(mat, binary, 0, 255, THRESH_OTSU);
+
+    double control = colorVal;
+    control += 1;
+    control = control >= 50 ? control / 5.0 : control / 20.0;
+
+    gamma_correction(mat, mat, (float) ((thresh + 55) * 1.0 / 255) * 0.8 * control);
+
+
+    bitwise_not(binary, binary);
+    bitwise_xor(mat, mat, mat, binary);
+
+
+    binary.release();
+
+
+}
+
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_cleanText(JNIEnv *env, jclass clazz,
+Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jclass clazz,
                                                          jlong matAddr, jfloat colorVal) {
 
 
     Mat &mat = *(Mat *) matAddr;
 
+
     if (mat.channels() > 1) {
 
 
-        Mat gray(mat.rows, mat.cols, CV_8U);
-        Mat binary(mat.rows, mat.cols, CV_8U);
+        Mat mat_original = mat.clone();
 
         if (mat.channels() == 3) {
-            cvtColor(mat, gray, COLOR_BGR2GRAY);
+            cvtColor(mat, mat, COLOR_BGR2GRAY);
+
         } else if (mat.channels() == 4) {
-            cvtColor(mat, gray, COLOR_BGRA2GRAY);
+            cvtColor(mat, mat, COLOR_BGRA2GRAY);
+            // cvtColor(mat_original, mat_original, COLOR_BGRA2BGR);
         }
 
-        blur(gray, gray, Size(3, 3));
 
-        adaptiveThreshold(gray, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
+        cleanTextNativeGray(mat, colorVal);
 
-        bitwise_not(binary, binary);
 
-        dilate(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
 
-        bitwise_not(binary, binary);
+        vector<Mat> original_mats;
+        split(mat_original, original_mats);
 
-        paperize(matAddr, 0);
+        vector<Mat> final_mats;
+        split(mat_original, final_mats);
 
-        vector<Mat> mats;
-        split(mat, mats);
 
-        bitwise_or(mats[0], binary, mats[0]);
+        mat.copyTo(final_mats[0]);
+        mat.copyTo(final_mats[1]);
+        mat.copyTo(final_mats[2]);
 
-        bitwise_or(mats[1], binary, mats[1]);
 
-        bitwise_or(mats[2], binary, mats[2]);
+        threshold(mat, mat, 1, 255, THRESH_BINARY);
 
-        merge(mats, mat);
+        bitwise_not(mat, mat);
 
-        cvtColor(mat, gray, COLOR_BGR2GRAY);
 
-        double control = colorVal;
-        double thresh = threshold(gray, binary, 0, 255, THRESH_OTSU);
+        original_mats[0].copyTo(final_mats[0], mat);
+        original_mats[1].copyTo(final_mats[1], mat);
+        original_mats[2].copyTo(final_mats[2], mat);
 
-        gamma_correction(mat, mat, (float) (thresh / 255.0f) * (control / 100) * 3);
 
-        bitwise_not(binary, binary);
+        original_mats[0].release();
+        original_mats[1].release();
+        original_mats[2].release();
 
-        cvtColor(mat, mat, COLOR_BGR2HSV);
+
+        merge(final_mats, mat_original);
+
+        final_mats[0].release();
+        final_mats[1].release();
+        final_mats[2].release();
+
+
+        cvtColor(mat_original, mat_original, COLOR_BGR2HSV);
 
 
         vector<Mat> mats2;
 
-        split(mat, mats2);
+        split(mat_original, mats2);
 
-        add(mats2[1], Scalar(80), mats2[1], binary);
 
-        merge(mats2, mat);
+        add(mats2[2], mats2[2] * ((colorVal-50)/50)*3, mats2[2], mat);
 
-        cvtColor(mat, mat, COLOR_HSV2BGR);
 
-        gray.release();
-        binary.release();
+        merge(mats2, mat_original);
+
+        mats2[0].release();
+        mats2[1].release();
+        mats2[2].release();
+
+
+        cvtColor(mat_original, mat, COLOR_HSV2BGR);
+
+        BrightnessAndContrastAuto(mat, mat, 2);
+
+        mat_original.release();
 
 
     } else {
 
-        double begin = now_ms();
 
-        // __android_log_print(ANDROID_LOG_INFO, TAG, "START %f", now_ms() - begin);
+//        int shallBlur = 0;
+//        if ((mat.rows / 1000.0) * (mat.cols / 1000.0) > 6) {
+//            shallBlur = 1;
+//        }
 
+        cleanTextNativeGray(mat, colorVal);
 
-        Mat mat1 = mat.clone();
-
-        blur(mat1, mat1, Size(3, 3));
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BLUR %f", now_ms() - begin);
-
-
-        Mat binary(mat.rows, mat.cols, CV_8U);
-
-
-        adaptiveThreshold(mat1, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
-
-        mat1.release();
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "ADAPTIVE THRESH %f", now_ms() - begin);
-
-
-        bitwise_not(binary, binary);
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
-
-        dilate(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "DILATE %f", now_ms() - begin);
-
-
-        bitwise_not(binary, binary);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
-
-        paperize(matAddr, 0);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "PAPERIZE %f", now_ms() - begin);
-
-
-        bitwise_or(mat, binary, mat);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE OR %f", now_ms() - begin);
-
-
-        double thresh = threshold(mat, binary, 0, 255, THRESH_OTSU);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "OTSU %f", now_ms() - begin);
-
-
-        double control = colorVal;
-
-        control += 1;
-
-        control = control >= 50 ? control / 5.0 : control / 200.0;
-
-        gamma_correction(mat, mat, (float) ((thresh + 55) * 1.0 / 255) * 0.8 * control);
-
-        //threshold(mat, mat, thresh + control, 255, THRESH_TOZERO);
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "GAMMA %f", now_ms() - begin);
-
-
-        bitwise_not(binary, binary);
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE NOT %f", now_ms() - begin);
-
-        bitwise_xor(mat, mat, mat, binary);
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BITWISE XOR %f", now_ms() - begin);
-
-
-        binary.release();
-
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "BINARY RELEASE %f", now_ms() - begin);
+//        if (shallBlur)
+//            blur(mat, mat, Size(2, 2));
 
 
     }
 
 
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_aaindia_prodocscanner_utils_MatFilter_doNothing(JNIEnv *env, jclass clazz) {
+    // TODO: implement doNothing()
 }

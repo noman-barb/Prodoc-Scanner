@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+
+        <com.google.android.material.textview.MaterialTextView
+
+            android:id="@+id/shareTxt"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:text="Share as:">
+
+        </com.google.android.material.textview.MaterialTextView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+
+                android:id="@+id/pdfRadio"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true">
+
+
+            </com.google.android.material.radiobutton.MaterialRadioButton>
+
+
+            <com.google.android.material.textview.MaterialTextView
+
+                android:clickable="true"
+
+                android:id="@+id/sharePDFTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PDF">
+
+
+            </com.google.android.material.textview.MaterialTextView>
+
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/imgRadioParent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+
+
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+
+                android:id="@+id/imageRadio"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+
+            </com.google.android.material.radiobutton.MaterialRadioButton>
+
+
+            <com.google.android.material.textview.MaterialTextView
+
+                android:clickable="true"
+
+                android:id="@+id/shareImageTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Image">
+
+
+            </com.google.android.material.textview.MaterialTextView>
+
+
+        </LinearLayout>
+
+
+
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_marginBottom="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:alpha="0.2"
+        android:background="@color/gray_cool">
+
+    </RelativeLayout>
+
+
+
+    <LinearLayout
+
+        android:id="@+id/qualityControl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <com.google.android.material.textview.MaterialTextView
+
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:text="Quality: "></com.google.android.material.textview.MaterialTextView>
+
+
+            <com.google.android.material.textview.MaterialTextView
+
+                android:id="@+id/qualityTxt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Good"
+                android:textStyle="bold">
+
+            </com.google.android.material.textview.MaterialTextView>
+
+
+
+        </LinearLayout>
+
+
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/qualitySlider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:value="51"
+            android:valueFrom="2"
+            android:valueTo="100">
+
+        </com.google.android.material.slider.Slider>
+
+
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:layout_marginBottom="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:alpha="0.2"
+        android:background="@color/gray_cool">
+
+    </RelativeLayout>
+
+
+
+    <LinearLayout
+
+        android:layout_margin="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Expected Size: ">
+
+        </com.google.android.material.textview.MaterialTextView>
+
+        <com.google.android.material.textview.MaterialTextView
+
+            android:id="@+id/expectedSize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4.5 mb"
+            android:textStyle="bold">
+
+        </com.google.android.material.textview.MaterialTextView>
+
+
+    </LinearLayout>
+
+
+
+</LinearLayout>
+
+
+

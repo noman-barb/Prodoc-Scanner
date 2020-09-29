@@ -109,7 +109,7 @@
 
         </RelativeLayout>
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/pageNumberTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -130,13 +130,16 @@
             android:textColor="@color/colorWhite"
             android:textSize="15sp">
 
-        </TextView>
+        </com.google.android.material.textview.MaterialTextView>
 
 
     </RelativeLayout>
 
 
     <RelativeLayout
+
+        android:clipToPadding="false"
+        android:clipChildren="false"
         android:id="@+id/theImageParentParent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -155,8 +158,12 @@
             android:elevation="10dp"></ProgressBar>
 
 
+
+
         <RelativeLayout
 
+            android:clipToPadding="false"
+            android:clipChildren="false"
             android:id="@+id/theImageParent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -165,7 +172,22 @@
             android:background="@color/colorSecondaryDarkLight">
 
 
-            <ImageView
+            <com.jsibbold.zoomage.ZoomageView
+
+                android:clipToPadding="false"
+                android:clipChildren="false"
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+
+                app:zoomage_restrictBounds="false"
+                app:zoomage_animateOnReset="true"
+                app:zoomage_autoCenter="true"
+                app:zoomage_zoomable="true"
+                app:zoomage_translatable="true"
+                app:zoomage_minScale="0.6"
+                app:zoomage_maxScale="8"
+                app:zoomage_doubleTapToZoom ="true"
+
 
                 android:id="@+id/theImage"
                 android:layout_width="match_parent"
@@ -175,7 +197,7 @@
                 android:elevation="2dp"
                 android:src="@drawable/empty">
 
-            </ImageView>
+            </com.jsibbold.zoomage.ZoomageView>
 
 
             <com.aaindia.prodocscanner.views.PolygonView
@@ -184,7 +206,7 @@
                 android:id="@+id/polygonView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:elevation="3dp"></com.aaindia.prodocscanner.views.PolygonView>
+                android:elevation="7dp"></com.aaindia.prodocscanner.views.PolygonView>
 
 
         </RelativeLayout>

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class Constants {
 
 
-    public static final String OCR_MODELS = "http://static.awessamapps.com/prodoc/ocr-train-data.json";
+    public static final String OCR_MODELS = "http://prodocstatic.awessamapps.com/ocr/tessdataindex.json";
     public static final String SHARE_SINGLE_PAGE_MSG = "Shared from ProDoc Scanner";
 
     public static String singlePageShareMessage(int position) {

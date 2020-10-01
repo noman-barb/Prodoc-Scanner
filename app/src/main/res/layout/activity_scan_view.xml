@@ -217,11 +217,11 @@
                     android:id="@+id/ocrIV"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/baseline_view_module_white_24"
+                    android:background="@drawable/baseline_text_format_white_24"
                     android:backgroundTint="@color/gray_cool"
                     android:foregroundTint="@color/gray_cool"
 
-                    android:rotation="90">
+                   >
 
                 </ImageView>
 

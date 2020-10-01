@@ -45,6 +45,7 @@ import com.googlecode.tesseract.android.TessBaseAPI;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
 import com.koushikdutta.ion.ProgressCallback;
+import com.koushikdutta.ion.future.ResponseFuture;
 
 import org.opencv.core.Mat;
 
@@ -70,6 +71,8 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
     private SpannableStringBuilder extractedText = null;
 
     ProgressDialog progressDialog = null;
+    private Thread ocrThread = null;
+    private boolean threadEnd = false;
 
 
     @Override
@@ -114,8 +117,6 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
 
         list = new LanguageDataMap().getLangOptions();
-
-
 
 
         languageSelect(Prefs.OCRPreference.getLang(this));
@@ -223,12 +224,13 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
             AlertDialog.Builder builder = new MaterialAlertDialogBuilder(OcrActivity.this);
 
             builder.setTitle("Download language pack")
-                    .setMessage("The selected language pack has to be downloaded once to perform OCR. Once downloaded, it need not to be downloaded again.")
+                    .setMessage(language + " language pack has to be downloaded once to perform OCR in " + language + ".\nOnce downloaded, it need not to be downloaded again for future OCR tasks in " + language)
+                    .setCancelable(false)
                     .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int idd) {
 
-                            OcrActivity.this.finish();
+
                         }
                     })
                     .setPositiveButton("Download", new DialogInterface.OnClickListener() {
@@ -240,12 +242,12 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                                 public void run() {
 
 
-                                    ProgressDialog pd = new ProgressDialog(OcrActivity.this);
+                                    ProgressDialog
+                                            pd = new ProgressDialog(OcrActivity.this);
                                     pd.setTitle("Downloading language pack");
                                     pd.setMessage("It may take a while");
                                     pd.setCancelable(false);
                                     pd.show();
-
 
                                     Ion.with(OcrActivity.this)
                                             .load(Constants.OCR_MODELS)
@@ -338,18 +340,47 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
             }
 
 
-            progressDialog = new ProgressDialog(OcrActivity.this);
-            progressDialog.setTitle("Extracting texts");
-            progressDialog.setMessage("It will take a while");
-            progressDialog.setCancelable(false);
-            progressDialog.show();
-
-            mTess.init(testDataRoot.getAbsolutePath(), langCode);
-
-
-            new Thread(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+
+                    ((TextView) findViewById(R.id.toolbarTitle)).setText("OCR " + language);
+                    progressDialog = new ProgressDialog(OcrActivity.this);
+                    progressDialog.setTitle("OCR " + language);
+                    progressDialog.setMessage("It will take a while");
+                    progressDialog.setButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i22) {
+
+
+                            try {
+
+                                mTess.stop();
+
+                            } catch (Exception e) {
+                            }
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    progressDialog.dismiss();
+                                }
+                            });
+
+                        }
+                    });
+                    progressDialog.setCancelable(false);
+                    progressDialog.show();
+                }
+            });
+
+
+            ocrThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    mTess.init(testDataRoot.getAbsolutePath(), langCode);
+
 
                     if (extractedText == null) {
                         extractedText = new SpannableStringBuilder("");
@@ -367,6 +398,10 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                     }
 
                     for (int i = 0; i < size; i++) {
+
+                        if (threadEnd){
+                            break;
+                        }
 
 
                         Spannable spannable = new SpannableString("<br><br><b>Page " + (i + 1) + "<br>__________<br><br></b>");
@@ -434,8 +469,16 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                                         }
                                     }).submit().get();
 
+                            if (threadEnd){
+                                break;
+                            }
+
 
                         } catch (Exception e) {
+                            if (threadEnd){
+                                break;
+                            }
+
                         }
 
 
@@ -449,6 +492,8 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                         public void run() {
                             progressDialog.dismiss();
 
+                            if (extractedText==null)
+                                return;
 
                             ((TextView) (OcrActivity.this.findViewById(R.id.ocrTxt))).setText(Html.fromHtml(extractedText.toString()));
 
@@ -458,7 +503,9 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
 
                 }
-            }).start();
+            });
+
+            ocrThread.start();
 
 
         }
@@ -468,14 +515,38 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
     private void downloadPack(String langCode, File tessDataFile, int i, String link) {
 
 
+        ResponseFuture<File> futureDownload = null;
         ProgressDialog pd = new ProgressDialog(OcrActivity.this);
         pd.setTitle("Downloading language pack");
         pd.setMessage("It may take a while");
+        ResponseFuture<File> finalFutureDownload = futureDownload;
+        pd.setButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i23) {
+
+                try {
+                    if (finalFutureDownload != null) {
+                        finalFutureDownload.cancel();
+                    }
+                } catch (Exception e) {
+                }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        pd.dismiss();
+                    }
+                });
+            }
+        });
+        pd.show();
+
         pd.setCancelable(false);
         pd.show();
 
-        Ion.with(OcrActivity.this)
+        futureDownload = Ion.with(OcrActivity.this)
                 .load(link)
+
                 .progress(new ProgressCallback() {
                     @Override
                     public void onProgress(long downloaded, long total) {
@@ -490,28 +561,29 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
                     }
                 })
-                .write(tessDataFile)
-                .setCallback(new FutureCallback<File>() {
-                    @Override
-                    public void onCompleted(Exception e, File file) {
+                .write(tessDataFile);
 
-                        if (e != null) {
+        futureDownload.setCallback(new FutureCallback<File>() {
+            @Override
+            public void onCompleted(Exception e, File file) {
 
-                            handleError();
-                        } else {
+                if (e != null) {
 
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
+                    handleError();
+                } else {
 
-                                    pd.dismiss();
-                                    getDataOnline(i);
-                                }
-                            });
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
 
+                            pd.dismiss();
+                            getDataOnline(i);
                         }
-                    }
-                });
+                    });
+
+                }
+            }
+        });
     }
 
     private void handleError() {
@@ -523,8 +595,40 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
     @Override
     public void onDestroy() {
-        if (mTess != null) mTess.end();
+        shutdownOCR();
         super.onDestroy();
+    }
+
+    public void shutdownOCR() {
+
+
+        if (ocrThread != null) {
+
+
+            try {
+
+                mTess.stop();
+            } catch (Exception e) {
+            }
+
+            try {
+                mTess.end();
+            } catch (Exception e) {
+            }
+
+            threadEnd = true;
+
+
+            try {
+                ocrThread.interrupt();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+
     }
 
     @Override

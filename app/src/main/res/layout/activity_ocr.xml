@@ -203,16 +203,18 @@
 
 
             <com.google.android.material.textview.MaterialTextView
+                android:layout_toLeftOf="@id/langRL"
                 android:id="@+id/toolbarTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="15dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="5dp"
                 android:layout_toRightOf="@id/backIV"
-                android:maxLines="1"
-                android:text="Extract text"
+                android:maxLines="2"
+                android:text="OCR"
                 android:textColor="@color/colorWhite"
-                android:textSize="18sp"
+                android:textSize="16sp"
 
                 android:textStyle="bold"></com.google.android.material.textview.MaterialTextView>
 

@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.SpannableString;
 import android.util.Log;
@@ -21,6 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.utils.FileNav;
+import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -43,12 +46,45 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     public static final int EXPORT_TO_DEVICE_CODE = 826;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         Utils.checkOpenCV(this);
+
+
+
+
+        if (getIntent()!=null && getIntent().getExtras()!=null){
+
+            int scrollTo = getIntent().getExtras().getInt(SCROLL_TO,0);
+
+
+            getBinding().recyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    getBinding().recyclerView.scrollToPosition(scrollTo);
+                                //    getBinding().recyclerView.getLayoutManager().scrollToPosition(scrollTo);
+                                }
+                            });
+                        }
+                    },200);
+
+                }
+            });
+          //  getBinding().recyclerView.smoothScrollToPosition(scrollTo);
+        }
+
 
 
     }
@@ -58,6 +94,8 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         Utils.checkOpenCV(this);
         super.onResume();
+
+
     }
 
     @Override

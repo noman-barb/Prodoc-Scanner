@@ -137,10 +137,17 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
 
 
-                setColorTuneListen(false);
-                getBinding().colorTuneSK.setValue(colorTune);
-                getBinding().colorGrayCheck.setChecked(colorGray);
-                setColorTuneListen(true);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        setColorTuneListen(false);
+                        getBinding().colorTuneSK.setValue(colorTune);
+                        getBinding().colorGrayCheck.setChecked(colorGray);
+                        setColorTuneListen(true);
+                    }
+                });
+
 
                 MatFilter.colorize(processedMat, colorCode, colorTune, colorGray);
 

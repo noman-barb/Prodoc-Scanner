@@ -3,6 +3,8 @@ package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -19,6 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.aaindia.prodocscanner.R;
@@ -28,6 +31,7 @@ import com.aaindia.prodocscanner.adapters.GridScanViewAdapter;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
+import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -40,6 +44,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
 
 public class GridScanViewActivity extends EditScanViewActivity implements GridScanViewAdapter.ItemPressHelper {
 
@@ -119,7 +128,18 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
             singlePageViewModeToggle(true, null, 0);
+        } else {
+
+            if (!adapter.firstTime) {
+
+                adapter.firstTime = true;
+
+                if (adapter.originalFilepaths.size() > 0)
+                    adapter.notifyItemChanged(0);
+
+            }
         }
+
 
     }
 
@@ -221,6 +241,9 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         adapter.notifyItemChanged(position);
     }
 
+
+    private boolean singleModeFirstTime = true;
+
     public void singlePageViewModeToggle(boolean showSIngleMode, GridScanViewAdapter.ViewHolder holde, int position) {
 
 
@@ -229,6 +252,11 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         int yTrans = 70;
         if (showSIngleMode) {
+
+
+            if (singleModeFirstTime) {
+                singleModeFirstTime = !Prefs.firstTimeSeenScreen(GridScanViewActivity.this, "grid_scan_3");
+            }
 
 
             ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
@@ -271,6 +299,56 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                         binding.imageOptionsRL.setVisibility(View.GONE);
 
                         binding.gridRecyclerView.setAlpha(1);
+
+
+                        if (singleModeFirstTime) {
+
+                            singleModeFirstTime = false;
+
+                            new GuideView.Builder(GridScanViewActivity.this)
+                                    .setTitle("Edit options")
+                                    .setContentSpan((Spannable) Html.fromHtml("<b>Add images</b>, <b>Crop</b>, <b>Apply Filter</b> and more.<br><b>Tap</b> on <b>More</b> for more options like <b>Delete</b> and <b>OCR</b>."))
+                                    .setGravity(Gravity.auto) //optional
+                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                    .setTargetView(binding.foote)
+                                    .setGuideListener(new GuideListener() {
+                                        @Override
+                                        public void onDismiss(View view) {
+
+
+                                            int pos = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+
+                                            if (pos < 0)
+                                                return;
+
+
+                                            ScanPreviewAdapter.ViewHolder hold = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(pos);
+
+                                            if (hold == null)
+                                                return;
+
+
+                                            if (hold.nextAction.getVisibility() == View.GONE)
+                                                return;
+
+
+                                            new GuideView.Builder(GridScanViewActivity.this)
+                                                    .setTitle("Crop Image")
+
+                                                    .setGravity(Gravity.auto) //optional
+                                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                                    .setTargetView(hold.processImage)
+                                                    .build().show();
+
+
+                                        }
+                                    })
+                                    .build().show();
+
+
+                        }
+
+
                     }
                 }
             });
@@ -279,6 +357,14 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             animator.start();
         } else {
 
+            if (!adapter.firstTime) {
+
+                adapter.firstTime = true;
+
+                if (adapter.originalFilepaths.size() > 0)
+                    adapter.notifyItemChanged(0);
+
+            }
 
             ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
             animator.setInterpolator(new DecelerateInterpolator());
@@ -320,11 +406,37 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
     }
 
+
+    private boolean firstTime = true;
+
     @Override
     public void onLongPress(GridScanViewAdapter.ViewHolder holder, int position) {
 
 
+        if (firstTime) {
+
+            firstTime = !Prefs.firstTimeSeenScreen(GridScanViewActivity.this, "grid_scan_view");
+        }
+
+
         if (!selectActive) {
+
+
+            if (firstTime) {
+
+                firstTime = false;
+
+                new GuideView.Builder(GridScanViewActivity.this)
+                        .setTitle("Tip")
+                        .setContentSpan((Spannable) Html.fromHtml("You can <b>change the order</b> of pages by <b>holding and moving</b>."))
+                        .setGravity(Gravity.auto) //optional
+                        .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                        .setTargetView(holder.itemView)
+                        .build().show();
+
+
+            }
+
 
             Utils.vibrate(this, 20);
 

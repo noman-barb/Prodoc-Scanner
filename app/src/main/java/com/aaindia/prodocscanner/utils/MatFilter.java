@@ -26,13 +26,10 @@ public class MatFilter {
     public static final int DEFAULT_TUNE_COLOR_ORIGINAL = 0;
     public static final int DEFAULT_TUNE_COLOR_CONTRAST = 10;
     public static final int DEFAULT_TUNE_COLOR_PAPER = 20;
-    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 60;
+    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 55;
 
 
-    public static final int DEFAULT_TUNE_COLOR_ORIGINAL_GRAY = 0;
-    public static final int DEFAULT_TUNE_COLOR_CONTRAST_GRAY = 20;
-    public static final int DEFAULT_TUNE_COLOR_PAPER_GRAY = 60;
-    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD_GRAY = 60;
+
 
 
     public static final int DEFAULT_COLOR_CODE = COLOR_WHITEBOARD;

@@ -15,6 +15,8 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
@@ -50,6 +52,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
 
 public class CameraScanActivity extends CameraPreviewActivity {
 
@@ -92,6 +98,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     ExecutorService executorService;
 
+
+    private boolean showGuide = false;
 
     @Override
     protected void onPause() {
@@ -379,6 +387,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         Utils.checkOpenCV(this);
 
+        showGuide = !Prefs.firstTimeSeenScreen(CameraScanActivity.this, "camera_scan_act");
+
 
         if (getIntent() != null && getIntent().getType() != null) {
 
@@ -540,14 +550,22 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
     private void goToDocViewer() {
+
+        int scrollTo = 0;
+
+        if (getIntent().getExtras() != null) {
+
+            scrollTo = getIntent().getExtras().getInt(CameraScanActivity.INSERT_AT, 0);
+        }
+
         Intent intent = new Intent(CameraScanActivity.this, ScanPreviewActivity.class);
         intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, scanDirPath);
         intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
-        intent.putExtra(ScanPreviewActivity.SCROLL_TO, insertAt);
+        intent.putExtra(ScanPreviewActivity.SCROLL_TO, scrollTo);
         intent.putExtra(ScanViewActivity.NEW_SCAN, true);
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
 
 
@@ -783,12 +801,34 @@ public class CameraScanActivity extends CameraPreviewActivity {
         });
     }
 
+
+
+
     private void imageSaved(File filepath, String filename, Effects effects) {
 
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
+
+
+                if (showGuide){
+
+                    showGuide = false;
+
+
+
+                    new GuideView.Builder(CameraScanActivity.this)
+                            .setTitle("Next")
+                            .setContentSpan((Spannable) Html.fromHtml("<b>Proceed next</b> if you are <b>done</b> with the scan otherwise <b>continue scanning</b>."))
+                            .setGravity(Gravity.auto) //optional
+                            .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                            .setTargetView(binding.next)
+                            .build()
+                            .show();
+
+                }
 
 
                 binding.next.setAlpha(1);

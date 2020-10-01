@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.text.Html;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -83,6 +84,10 @@ import java.util.zip.ZipOutputStream;
 import angtrim.com.fivestarslibrary.FiveStarsDialog;
 import angtrim.com.fivestarslibrary.NegativeReviewListener;
 import angtrim.com.fivestarslibrary.ReviewListener;
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
 
 public class MainActivity extends AppCompatActivity implements ListFilesAdapter.OnScanClickListener, View.OnClickListener {
 
@@ -335,6 +340,56 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         }
 
 
+        showcase();
+
+
+    }
+
+    private void showcase() {
+
+
+        if (!Prefs.firstTimeSeenScreen(MainActivity.this, "main_activity")) {
+            new GuideView.Builder(this)
+                    .setTitle("Camera")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Capture</b> images using camera."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(binding.cameraCapture)
+
+                    .setGuideListener(new GuideListener() {
+                        @Override
+                        public void onDismiss(View view) {
+                            new GuideView.Builder(MainActivity.this)
+                                    .setTitle("Import photos")
+
+                                    .setContentSpan((Spannable) Html.fromHtml("<b>Import</b> images from the device."))
+                                    .setGravity(Gravity.auto) //optional
+                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                    .setTargetView(binding.addPhotos)
+                                    .setGuideListener(new GuideListener() {
+                                        @Override
+                                        public void onDismiss(View view) {
+                                            new GuideView.Builder(MainActivity.this)
+                                                    .setTitle("More options")
+
+                                                    .setContentSpan((Spannable) Html.fromHtml("<b>More options</b> includes Create a <b>New folder</b>, <b>Import PDF</b> and Create or Import <b>Backup</b> of your data."))
+                                                    .setGravity(Gravity.auto) //optional
+                                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                                    .setTargetView(binding.moreOptionsRl)
+
+
+                                                    .build()
+                                                    .show();
+                                        }
+                                    })
+
+                                    .build()
+                                    .show();
+                        }
+                    })
+                    .build()
+                    .show();
+        }
     }
 
     private void importPdf(Intent intent) {
@@ -560,7 +615,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-        intent.setType("application/zip");
+        intent.setType("*/*");
 
 
         startActivityForResult(intent, IMPORT_BACKUP_REQUEST_CODE);
@@ -1096,7 +1151,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                             if (!currentPath.equals(baseDirPath))
                                 binding.emptyDocumentTV.setText("Folder is empty.");
                             else {
-                                binding.emptyDocumentTV.setText("It's empty here. Start scanning.");
+                                binding.emptyDocumentTV.setText("It's empty here.\nStart scanning now.");
                             }
                         }
 

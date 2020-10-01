@@ -2,6 +2,8 @@ package com.aaindia.prodocscanner.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.Html;
+import android.text.Spannable;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,7 +16,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.GridScanViewActivity;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ScanViewActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
+import com.aaindia.prodocscanner.utils.Prefs;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
@@ -23,6 +29,10 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
 
 public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapter.ViewHolder> {
 
@@ -68,11 +78,31 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
 
     }
 
+    public boolean firstTime = false;
+
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
 
+        if (firstTime) {
+            firstTime = !Prefs.firstTimeSeenScreen(context, "grid_scan_2");
+        }
+
+        if (position == 0 && firstTime) {
+
+            firstTime = false;
+
+            new GuideView.Builder(context)
+                    .setTitle("Page options")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Tap</b> the page to <b>edit</b> it.<br><b>Press and Hold</b> the image for <b>more options</b>."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(holder.itemView)
+                    .build().show();
+
+
+        }
 
 
         holder.itemView.setVisibility(View.VISIBLE);
@@ -141,7 +171,7 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
         if (originalFilepaths != null) {
 
             if (originalFilepaths.size() != 0) {
-                return originalFilepaths.size() ;
+                return originalFilepaths.size();
             } else {
                 return 0;
             }

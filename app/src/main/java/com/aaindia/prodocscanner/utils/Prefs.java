@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import androidx.camera.core.ImageCapture;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class Prefs {
 
@@ -205,6 +206,29 @@ public class Prefs {
             editor.putInt(DISPLAY_STYLE_KEY, displayStyleValue);
             editor.commit();
         }
+
+
+    }
+
+
+    private static SharedPreferences firstTimePrefs = null;
+
+    public static boolean firstTimeSeenScreen(Context context, String id) {
+
+        String FIRST_TIME = "first_time_view_screen";
+
+        if (firstTimePrefs == null)
+            firstTimePrefs = context.getSharedPreferences(FIRST_TIME, context.MODE_PRIVATE);
+
+
+        boolean a = firstTimePrefs.getBoolean(id, false);
+
+        if (!a) {
+            firstTimePrefs.edit().putBoolean(id, true).commit();
+
+        }
+
+        return a;
 
 
     }

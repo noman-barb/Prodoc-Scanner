@@ -32,6 +32,7 @@ import com.aaindia.prodocscanner.databinding.ActivityScanViewBinding;
 import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
+import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -109,9 +110,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_scan_view);
@@ -571,7 +574,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View view) {
 
 
-        int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+        int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
 
 
         ScanPreviewAdapter.ViewHolder holder = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(position);

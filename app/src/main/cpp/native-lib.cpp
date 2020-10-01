@@ -815,8 +815,8 @@ void gamma_correction(Mat &src, Mat &dst, float fGamma) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1Native(JNIEnv *env, jobject thiz,
-                                                                 jlong matAddr,
-                                                                 jlong native_obj_addr1) {
+                                                                       jlong matAddr,
+                                                                       jlong native_obj_addr1) {
 
     // get Mat from raw address
     Mat &image_original = *(Mat *) matAddr;
@@ -885,7 +885,8 @@ void paperizeNative2(Mat &image_original, jfloat colorVal) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrastNative(JNIEnv *env, jclass clazz,
-                                                                  jlong matAddr, jlong colorVal) {
+                                                                        jlong matAddr,
+                                                                        jlong colorVal) {
 
     Mat &image_original = *(Mat *) matAddr;
 
@@ -898,7 +899,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrastNative(JNIEnv *
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_utils_MatFilter_paperizeNative(JNIEnv *env, jclass clazz,
-                                                        jlong matAddr, jfloat colorVal) {
+                                                              jlong matAddr, jfloat colorVal) {
 
     paperizeNative(matAddr, colorVal);
 
@@ -918,8 +919,8 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_adjustGamma(JNIEnv *env, jclass c
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1Native(JNIEnv *env, jclass clazz,
-                                                      jlong matAddr,
-                                                      jlong native_obj_addr1) {
+                                                            jlong matAddr,
+                                                            jlong native_obj_addr1) {
 
     // get Mat from raw address
     Mat &image_original = *(Mat *) matAddr;
@@ -1001,7 +1002,7 @@ void cleanTextNativeGray(Mat &mat, jfloat colorVal) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jclass clazz,
-                                                         jlong matAddr, jfloat colorVal) {
+                                                               jlong matAddr, jfloat colorVal) {
 
 
     Mat &mat = *(Mat *) matAddr;
@@ -1022,7 +1023,6 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
 
 
         cleanTextNativeGray(mat, colorVal);
-
 
 
         vector<Mat> original_mats;
@@ -1059,6 +1059,10 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         final_mats[2].release();
 
 
+
+
+        BrightnessAndContrastAuto(mat_original, mat_original, 2);
+
         cvtColor(mat_original, mat_original, COLOR_BGR2HSV);
 
 
@@ -1067,8 +1071,11 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         split(mat_original, mats2);
 
 
-        add(mats2[2], mats2[2] * ((colorVal-50)/50)*3, mats2[2], mat);
 
+        add(mats2[1], mats2[1] * ((colorVal-50)/50)*1, mats2[1], mat);
+
+
+        add(mats2[2], mats2[2] * ((colorVal-50)/50)*3, mats2[2], mat);
 
         merge(mats2, mat_original);
 
@@ -1079,7 +1086,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
 
         cvtColor(mat_original, mat, COLOR_HSV2BGR);
 
-        BrightnessAndContrastAuto(mat, mat, 2);
+
 
         mat_original.release();
 

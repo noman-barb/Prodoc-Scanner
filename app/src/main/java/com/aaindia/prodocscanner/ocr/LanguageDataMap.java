@@ -1,5 +1,7 @@
 package com.aaindia.prodocscanner.ocr;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 public class LanguageDataMap {
@@ -117,6 +119,7 @@ public class LanguageDataMap {
         list.add(new KeyValuePair("Vietnamese", "vie"));
         list.add(new KeyValuePair("Yiddish", "yid"));
 
+        Log.d("aaaaaaaa", list.size()+"");
         return list;
 
     }

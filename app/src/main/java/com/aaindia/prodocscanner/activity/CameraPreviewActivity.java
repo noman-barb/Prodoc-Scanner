@@ -49,6 +49,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Html;
+import android.text.Spannable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
@@ -100,6 +102,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
+
 
 public class CameraPreviewActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -134,9 +141,12 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
 
+
     @Override
     public void onResume() {
         super.onResume();
+
+
 
 
     }
@@ -365,6 +375,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     private void startCamera() {
 
 
+        showCase();
+
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         cameraProviderFuture.addListener(new Runnable() {
@@ -378,6 +390,57 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 }
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void showCase() {
+
+
+
+        if (!Prefs.firstTimeSeenScreen(CameraPreviewActivity.this, "camera_preview")){
+            new GuideView.Builder(this)
+                    .setTitle("Scan Mode")
+                    .setContentSpan((Spannable) Html.fromHtml("Switch between <b>batch</b> mode and <b>single</b> mode."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(binding.scanModeIV)
+
+                    .setGuideListener(new GuideListener() {
+                        @Override
+                        public void onDismiss(View view) {
+
+
+
+                            new GuideView.Builder(CameraPreviewActivity.this)
+                                    .setTitle("Select scan type")
+
+                                    .setContentSpan((Spannable) Html.fromHtml("<b>Pre-select filter</b> based on the <b>scan type</b>."))
+                                    .setGravity(Gravity.auto) //optional
+                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                    .setTargetView(binding.horizontalPicker)
+                                    .setGuideListener(new GuideListener() {
+                                        @Override
+                                        public void onDismiss(View view) {
+                                            new GuideView.Builder(CameraPreviewActivity.this)
+                                                    .setTitle("Import images")
+
+                                                    .setContentSpan((Spannable) Html.fromHtml("<b>Tap</b> here to <b>import images</b> from the <b>device</b>."))
+                                                    .setGravity(Gravity.auto) //optional
+                                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                                    .setTargetView(binding.importIV)
+
+
+                                                    .build()
+                                                    .show();
+                                        }
+                                    })
+
+                                    .build()
+                                    .show();
+                        }
+                    })
+                    .build()
+                    .show();
+        }
     }
 
     private void requestCameraPermision() {
@@ -686,6 +749,14 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
 
         MainActivity.listingModified = true;
+
+
+
+
+
+
+
+
 
     }
 

@@ -54,6 +54,7 @@ import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.aaindia.prodocscanner.wrappers.Clipboard;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
+import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -305,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         adapter = new ListFilesAdapter(this, new ArrayList<ListFIlesInfo>(), this);
         binding.scanList.setHasFixedSize(true);
-        binding.scanList.setLayoutManager(new GridLayoutManager(this, 3));
+        binding.scanList.setLayoutManager(new MyGridLayoytManager(this, 3));
         binding.scanList.setAdapter(adapter);
 
 

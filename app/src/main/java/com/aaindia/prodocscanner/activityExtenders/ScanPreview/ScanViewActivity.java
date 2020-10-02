@@ -34,6 +34,7 @@ import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
+import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.slider.Slider;
@@ -128,7 +129,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         loadInitialData();
 
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        binding.recyclerView.setLayoutManager(new MyLinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
 
         SnapHelper helper = new PagerSnapHelper();

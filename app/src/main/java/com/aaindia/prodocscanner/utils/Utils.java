@@ -90,19 +90,17 @@ public class Utils {
     }
 
 
-    public static void checkOpenCV(Activity activity){
-
-
+    public static void checkOpenCV(Activity activity) {
 
 
         if (!OpenCVLoader.initDebug()) {
-           OpenCVLoader.initDebug();
+            OpenCVLoader.initDebug();
+            System.loadLibrary("native-lib");
         }
 
         MatFilter.loadLibrary();
 
     }
-
 
 
     public static void vibrate(Activity context, long millis) {

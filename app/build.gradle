@@ -20,10 +20,12 @@ android {
 
     defaultConfig {
         applicationId "com.aaindia.prodocscanner"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 30
-        versionCode 9
-        versionName "2.0"
+        versionCode 10
+        versionName "2.0.1"
+
+
 
        // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {

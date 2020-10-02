@@ -72,6 +72,19 @@ public class SavedImageDetails {
             }
 
 
+            if (this.imageEffects == null) {
+                this.imageEffects = new HashMap<>();
+            }
+
+            if (this.docType == null) {
+                this.docType = new HashMap<>();
+            }
+
+            if (this.order == null) {
+                this.order = new LinkedList<>();
+            }
+
+
         } catch (Exception e1) {
 
 
@@ -108,18 +121,31 @@ public class SavedImageDetails {
                 }
 
                 if (imageDetails.order == null) {
-                    order = new LinkedList<>();
+                    this.order = new LinkedList<>();
                 } else {
                     this.order = imageDetails.order;
+                }
+
+
+                if (this.imageEffects == null) {
+                    this.imageEffects = new HashMap<>();
+                }
+
+                if (this.docType == null) {
+                    this.docType = new HashMap<>();
+                }
+
+                if (this.order == null) {
+                    this.order = new LinkedList<>();
                 }
 
 
             } catch (Exception e2) {
 
 
-                order = new LinkedList<>();
-                imageEffects = new HashMap<>();
-                docType = new HashMap<>();
+                this.order = new LinkedList<>();
+                this.imageEffects = new HashMap<>();
+                this.docType = new HashMap<>();
 
             }
 

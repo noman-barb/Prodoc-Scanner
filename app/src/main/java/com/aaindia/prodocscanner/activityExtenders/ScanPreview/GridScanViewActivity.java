@@ -33,6 +33,8 @@ import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
+import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -77,7 +79,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         adapter = new GridScanViewAdapter(this, getScanDirPath(), getOriginalFilepaths(), this);
 
-        binding.gridRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        binding.gridRecyclerView.setLayoutManager(new MyGridLayoytManager(this, 2));
         getBinding().gridRecyclerView.setAdapter(adapter);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -316,7 +318,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                                         public void onDismiss(View view) {
 
 
-                                            int pos = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+                                            int pos = ((MyLinearLayoutManager) binding.recyclerView.getLayoutManager()).findLastVisibleItemPosition();
 
                                             if (pos < 0)
                                                 return;

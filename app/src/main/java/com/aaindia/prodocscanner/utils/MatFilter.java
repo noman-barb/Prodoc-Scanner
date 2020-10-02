@@ -79,8 +79,11 @@ public class MatFilter {
 
         try {
             doNothing();
-        } catch (UnsatisfiedLinkError error) {
+        } catch (Error error) {
              System.loadLibrary("native-lib");
+        }
+        catch (Exception e){
+            System.loadLibrary("native-lib");
         }
 
 

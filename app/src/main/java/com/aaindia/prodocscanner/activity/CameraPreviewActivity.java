@@ -78,6 +78,7 @@ import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.Prefs;
+import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.transition.MaterialContainerTransform;
 import com.google.android.material.transition.platform.MaterialContainerTransformSharedElementCallback;
@@ -301,7 +302,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         binding.horizontalPicker.setPadding(width / 3, 0, width / 3, 0);
         binding.horizontalPicker.requestLayout();
 
-        binding.horizontalPicker.setLayoutManager(new LinearLayoutManager(
+        binding.horizontalPicker.setLayoutManager(new MyLinearLayoutManager(
                 this,
                 LinearLayoutManager.HORIZONTAL,
                 false));

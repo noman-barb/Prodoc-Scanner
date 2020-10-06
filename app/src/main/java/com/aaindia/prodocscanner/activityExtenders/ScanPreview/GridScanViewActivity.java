@@ -255,6 +255,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         int yTrans = 70;
         if (showSIngleMode) {
 
+            getRecyclerView().getAdapter().notifyDataSetChanged();
 
             if (singleModeFirstTime) {
                 singleModeFirstTime = !Prefs.firstTimeSeenScreen(GridScanViewActivity.this, "grid_scan_3");
@@ -359,6 +360,9 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             animator.start();
         } else {
 
+
+            adapter.notifyDataSetChanged();
+
             if (!adapter.firstTime) {
 
                 adapter.firstTime = true;
@@ -367,6 +371,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                     adapter.notifyItemChanged(0);
 
             }
+
 
             ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
             animator.setInterpolator(new DecelerateInterpolator());
@@ -705,10 +710,11 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                 if (set.contains(i)) {
                     pathDelete.add(adapter.originalFilepaths.get(i));
                     fileDelete.add(getImageDetails().getOrdering().get(i));
-                    adapter.notifyItemRemoved(i);
+                    //adapter.notifyItemRemoved(i);
                 }
             }
 
+            adapter.notifyDataSetChanged();
             getOriginalFilepaths().removeAll(pathDelete);
             getImageDetails().getOrdering().removeAll(fileDelete);
 
@@ -735,5 +741,16 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         builder.show();
     }
 
+
+    @Override
+    public void onScanDirPathChange(String path) {
+
+        if (adapter!=null){
+            adapter.scanDirName = getScanDirPath();
+            adapter.originalFilepaths = getOriginalFilepaths();
+            adapter.notifyDataSetChanged();
+        }
+
+    }
 
 }

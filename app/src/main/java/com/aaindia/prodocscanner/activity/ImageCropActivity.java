@@ -23,12 +23,13 @@ import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,6 +45,7 @@ import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.EditScanViewActivity;
 import com.aaindia.prodocscanner.databinding.ActivityImageCropBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
@@ -91,6 +93,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
 
 public class ImageCropActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -331,6 +337,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     }
 
 
+
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -465,12 +473,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         binding.theImage.setZoomable(b);
         binding.theImage.setDoubleTapToZoom(b);
         binding.theImage.setTranslatable(b);
+
     }
 
 
     private void processDisplayImage() {
 
 
+        nextClickec = true;
         binding.processing.setVisibility(View.VISIBLE);
 
         binding.colorTuneSK.setValue(colorTune);
@@ -485,7 +495,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             try {
                 displayImageProcessThread.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+               // e.printStackTrace();
             }
 
             processedDisplayImageThreadStop = false;
@@ -506,6 +516,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                     Map<Integer, PointF> cropBoundsMap = binding.polygonView.getPoints();
 
+
+                    if (cropBoundsMap==null || cropBoundsMap.get(0)==null){
+                        cropStart = false;
+                        return;
+                    }
 
                     if (cropBoundsOriginalMap == null)
                         cropBoundsOriginalMap = new HashMap<>();
@@ -618,6 +633,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                         nextCropEnableDisable(false);
 
                     zoomageEnable(true);
+                    nextClickec = false;
 
                     }
                 });
@@ -914,8 +930,20 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.colorRL:
 
-                if (cropStart)
+                if (cropStart) {
+
+
+                    new GuideView.Builder(ImageCropActivity.this)
+                            .setTitle("Crop")
+                            .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                            .setGravity(Gravity.auto) //optional
+                            .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                            .setTargetView(binding.nextCropIB)
+                            .build().show();
                     return;
+
+
+                }
 
                 chooseColor();
 
@@ -932,8 +960,20 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.rotateRL:
 
 
-                if (cropStart)
+                if (cropStart) {
+
+
+                    new GuideView.Builder(ImageCropActivity.this)
+                            .setTitle("Crop")
+                            .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                            .setGravity(Gravity.auto) //optional
+                            .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                            .setTargetView(binding.nextCropIB)
+                            .build().show();
                     return;
+
+
+                }
 
                 rotate(90);
 

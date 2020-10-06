@@ -2,6 +2,7 @@ package com.aaindia.prodocscanner.wrappers;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,7 +28,11 @@ public class MyGridLayoytManager extends GridLayoutManager {
             super.onLayoutChildren(recycler, state);
         } catch (Exception e) {
 
+            Log.d("aaaaaaaaaaa", e.getMessage());
         }
-        catch (Error e1){}
+        catch (Error e1){
+
+            Log.d("aaaaaaaaaaa", e1.getMessage());
+        }
     }
 }

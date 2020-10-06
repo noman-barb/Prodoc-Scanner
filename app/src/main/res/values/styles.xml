@@ -33,22 +33,6 @@
     </style>
 
 
-    <style name="MainActivityTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
-
-
-        <item name="android:windowBackground">@drawable/main_activity_theme_bg</item>
-        <item name="android:statusBarColor">@color/colorWhite</item>
-
-
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowFullscreen">false</item>
-
-
-
-    </style>
-
-
-
     <string name="search_hint">Search</string>
 
 

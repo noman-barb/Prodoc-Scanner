@@ -21,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
+import com.aaindia.prodocscanner.adapters.GridScanViewAdapter;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.Prefs;
@@ -169,6 +170,12 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         getOriginalFilepaths().remove(position);
 
+        ((ScanPreviewAdapter)getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
+
+        ((GridScanViewAdapter)getBinding().gridRecyclerView.getAdapter()).originalFilepaths = getOriginalFilepaths();
+
+
+
         getImageDetails().removePage(position);
         getImageDetails().sync();
         FileNav.deleteDirectoryQuietely(new File(originalFilePath));
@@ -194,7 +201,14 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         } else {
 
+
+
             getRecyclerView().getAdapter().notifyDataSetChanged();
+
+            if (position<=getRecyclerView().getAdapter().getItemCount()){
+
+                getRecyclerView().scrollToPosition(  Math.max(position-1,0));
+            }
         }
     }
 
@@ -261,6 +275,8 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
                 if (renamed) {
 
                     setScanDirPath(getScanDirPath().replace(finalFromName, newName));
+
+
 
 
                     loadInitialData();
@@ -362,7 +378,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                pd.dismiss();
+                                try {
+                                    pd.dismiss();
+                                } catch (Exception e) {
+
+                                }
 
                                 Toast.makeText(getApplicationContext(), "Saved to device", Toast.LENGTH_SHORT).show();
                             }

@@ -76,7 +76,9 @@ import com.aaindia.prodocscanner.adapters.HorizontalDocumentChooserAdapter;
 import com.aaindia.prodocscanner.constants.Constants;
 import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
+import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
+import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -90,6 +92,8 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,12 +146,9 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     }
 
 
-
     @Override
     public void onResume() {
         super.onResume();
-
-
 
 
     }
@@ -213,7 +214,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             // nearest resolution search
 
-            long targetResolution = 2900l * 3900l;
+            long targetResolution = 4000l * 3000l;
 
             // find which is nearest
 
@@ -238,7 +239,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             targetHeight = targetSize.getHeight();
             targetWidth = targetSize.getWidth();
 
-            if (targetWidth * targetHeight < (2500 * 3100)) {
+            if (targetWidth * targetHeight < (2500 * 3200)) {
                 targetHeight = -1;
                 targetWidth = -1;
             }
@@ -396,8 +397,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     private void showCase() {
 
 
-
-        if (!Prefs.firstTimeSeenScreen(CameraPreviewActivity.this, "camera_preview")){
+        if (!Prefs.firstTimeSeenScreen(CameraPreviewActivity.this, "camera_preview")) {
             new GuideView.Builder(this)
                     .setTitle("Scan Mode")
                     .setContentSpan((Spannable) Html.fromHtml("Switch between <b>batch</b> mode and <b>single</b> mode."))
@@ -408,7 +408,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     .setGuideListener(new GuideListener() {
                         @Override
                         public void onDismiss(View view) {
-
 
 
                             new GuideView.Builder(CameraPreviewActivity.this)
@@ -464,7 +463,11 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISION_REQUEST_CODE);
 
-                dialog.dismiss();
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //
+                }
             });
 
 
@@ -475,6 +478,9 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISION_REQUEST_CODE);
         }
     }
+
+
+    Bitmap bitmap = null;
 
     private void setViews() {
 
@@ -515,15 +521,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     private void bindPreview(ProcessCameraProvider cameraProvider) {
 
 
-        preview = new Preview.Builder()
-                .build();
-
-
-        cameraSelector = new CameraSelector.Builder()
-                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                .build();
-
-
         if (targetWidth > targetHeight) {
 
             int temp = targetWidth;
@@ -531,6 +528,21 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             targetWidth = targetHeight;
             targetHeight = temp;
         }
+
+
+        Preview.Builder previewBuilder = new Preview.Builder();
+
+        if (targetWidth > 0 || targetHeight > 0) {
+
+            previewBuilder.setTargetResolution(new Size(targetWidth, targetHeight));
+        }
+
+        preview = previewBuilder.build();
+
+
+        cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
 
 
         ImageCapture.Builder imageCaptureBuilder = new ImageCapture.Builder()
@@ -547,9 +559,15 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             imageCaptureBuilder.setTargetResolution(new Size(targetWidth, targetHeight));
         }
+
+
         imageCapture = imageCaptureBuilder.build();
 
         preview.setSurfaceProvider(binding.cameraPreview.createSurfaceProvider());
+
+
+
+
         camera = cameraProvider.bindToLifecycle(CameraPreviewActivity.this, cameraSelector, preview, imageCapture);
 
 
@@ -702,7 +720,13 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     builder.setPositiveButton("OK", (dialog, which) -> {
 
                         finish();
-                        dialog.dismiss();
+
+
+                        try {
+                            dialog.dismiss();
+                        } catch (Exception e) {
+                            //e.printStackTrace();
+                        }
                     });
 
 
@@ -744,19 +768,11 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     public void captureImage(ImageView view) {
 
 
-
         if (imageCapture == null)
             return;
 
 
         MainActivity.listingModified = true;
-
-
-
-
-
-
-
 
 
     }

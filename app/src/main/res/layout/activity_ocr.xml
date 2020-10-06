@@ -24,14 +24,14 @@
             android:scrollbars="vertical">
 
 
-            <com.google.android.material.textview.MaterialTextView
+            <com.google.android.material.textfield.TextInputEditText
 
                 android:id="@+id/ocrTxt"
 
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:textIsSelectable="true"
-                android:textSize="18sp"></com.google.android.material.textview.MaterialTextView>
+                android:textSize="18sp"></com.google.android.material.textfield.TextInputEditText>
 
 
         </ScrollView>

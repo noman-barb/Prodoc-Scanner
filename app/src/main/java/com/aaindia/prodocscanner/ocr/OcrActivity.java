@@ -21,6 +21,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.gson.JsonObject;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.koushikdutta.async.future.FutureCallback;
@@ -265,7 +267,11 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                                                     runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            pd.dismiss();
+                                                            try {
+                                                                pd.dismiss();
+                                                            } catch (Exception ex) {
+
+                                                            }
                                                         }
                                                     });
 
@@ -363,7 +369,11 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    progressDialog.dismiss();
+                                    try {
+                                        progressDialog.dismiss();
+                                    } catch (Exception e) {
+
+                                    }
                                 }
                             });
 
@@ -490,12 +500,16 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            progressDialog.dismiss();
+                            try {
+                                progressDialog.dismiss();
+                            } catch (Exception e) {
+
+                            }
 
                             if (extractedText==null)
                                 return;
 
-                            ((TextView) (OcrActivity.this.findViewById(R.id.ocrTxt))).setText(Html.fromHtml(extractedText.toString()));
+                            ((TextInputEditText) (OcrActivity.this.findViewById(R.id.ocrTxt))).setText(Html.fromHtml(extractedText.toString()));
 
 
                         }
@@ -534,7 +548,11 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
                     }
                 });
             }
@@ -576,7 +594,11 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                         @Override
                         public void run() {
 
-                            pd.dismiss();
+                            try {
+                                pd.dismiss();
+                            } catch (Exception ex) {
+
+                            }
                             getDataOnline(i);
                         }
                     });
@@ -673,7 +695,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
         sharingIntent.setType("text/plain");
 
         String shareBody =
-                ((TextView) (OcrActivity.this.findViewById(R.id.ocrTxt))).getText().toString();
+                ((TextInputEditText) (OcrActivity.this.findViewById(R.id.ocrTxt))).getText().toString();
 
         sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "OCR extracted using Prodoc Scanner");
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
@@ -707,7 +729,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                     PrintWriter printWriter = new PrintWriter(outputStream);
 
                     printWriter.print(
-                            ((TextView) (OcrActivity.this.findViewById(R.id.ocrTxt))).getText());
+                            ((TextInputEditText) (OcrActivity.this.findViewById(R.id.ocrTxt))).getText());
                     printWriter.flush();
                     printWriter.close();
 

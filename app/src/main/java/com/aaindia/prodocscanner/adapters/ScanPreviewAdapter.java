@@ -103,6 +103,14 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
 
+        Log.d("aaaaaaaaaaaaa","pos "+ position);
+
+        Log.d("aaaaaaaaaaaaa","size "+ getItemCount());
+
+        if (position>=(originalFilepaths.size())){
+            return;
+        }
+
         holder.imageViewParent.clearAnimation();
         holder.imageViewParent.setScaleX(1.0f);
         holder.imageViewParent.setScaleY(1.0f);
@@ -126,6 +134,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
 
         final String[] imageShowPath = {originalFilepaths.get(position)};
+
+
 
         holder.processing.setVisibility(View.GONE);
 
@@ -192,9 +202,10 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                 } else {
 
 
+
                     Glide.with(context)
 
-                            .load(originalFilepaths.get(position))
+                            .load(imageShowPath[0])
                             .skipMemoryCache(true)
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -295,7 +306,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                     case MotionEvent.ACTION_MOVE:
 
 
-                        Log.d("aaaaaaa", "translation "+holder.imageView.getLeft());
+                    //
 
                         if (!touchLock && holder.imageView.getCurrentScaleFactor()<1.1) {
                             touchLock = event.getPointerCount() > 1;

@@ -28,7 +28,7 @@ public class SavedImageDetails {
 
     private HashMap<String, String> docType = null;
 
-    private File storageLocation = null;
+    public File storageLocation = null;
 
 
     public HashMap<String, String> getDocType() {

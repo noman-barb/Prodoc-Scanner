@@ -67,6 +67,43 @@ public class FileNav {
     public static final String ORIGINAL_IMAGE_FILE = "original_image_file";
 
 
+
+
+
+    public static boolean isChild(File parent, File maybeChild ){
+
+
+
+        Log.d("aaaaaaaa", "parent "+parent.getAbsolutePath());
+
+        try {
+
+            File testFile = new File (maybeChild.getCanonicalPath());
+
+            File possibleParent = new File(parent.getCanonicalPath());
+
+            while ( testFile != null ) {
+
+
+
+                Log.d("aaaaaaaa", "test "+testFile.getAbsolutePath());
+
+
+                if (possibleParent.equals(testFile))
+                    return true;
+
+                testFile = testFile.getParentFile();
+            }
+
+        }
+
+        catch (Exception e){}
+
+
+        return false;
+    }
+
+
     public static void unZipAll(InputStream inputStream, File destination, OnZipProgress OnZipProgress) throws IOException {
 
 

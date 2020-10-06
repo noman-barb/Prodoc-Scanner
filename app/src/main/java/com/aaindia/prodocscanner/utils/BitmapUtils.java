@@ -372,8 +372,8 @@ public class BitmapUtils {
         }
 
 
-        int x10 = (int) (size.width*0.025);
-        int y10 = (int) (size.height*0.025);
+        int x10 = (int) (size.width*0.005);
+        int y10 = (int) (size.height*0.005);
 
         sortedPoints[0].x = Math.max( sortedPoints[0].x - x10, 0 );
         sortedPoints[0].y = Math.max( sortedPoints[0].y - y10, 0 );

@@ -82,6 +82,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     private SavedImageDetails imageDetails;
 
+    private int capturedImages = 0;
 
     int getScanMode = 0;
     public int CROP_ACTIVITY_CODE = 821;
@@ -290,7 +291,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            progressDialog.dismiss();
+                            try {
+                                progressDialog.dismiss();
+                            } catch (Exception e) {
+
+                            }
 
                             // newly added
 
@@ -420,7 +425,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         fetchFromIntent(savedInstanceState);
 
-        if (numPages == 0) {
+        if (capturedImages == 0) {
             binding.next.setAlpha(0.4f);
         }
 
@@ -460,6 +465,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 pageInsertStartFrom = insertAt;
 
                 backpressReturnToDir = false;
+
+                binding.numPagesTV.setText(numPages + "");
             }
 
 
@@ -485,7 +492,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (backpressReturnToDir) {
 
 
-            if (numPages == 0 && scanDirPath != null) {
+            if (capturedImages == 0 && scanDirPath != null) {
 
                 FileUtils.deleteQuietly(new File(scanDirPath));
                 MainActivity.listingModified = false;
@@ -537,8 +544,14 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     @Override
                     public void run() {
 
-                        imageDetails.sync();
-                        pd.dismiss();
+                        if (imageDetails != null)
+                            imageDetails.sync();
+
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+                            //
+                        }
                         goToDocViewer();
                         finish();
                     }
@@ -802,8 +815,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
 
-
-
     private void imageSaved(File filepath, String filename, Effects effects) {
 
 
@@ -812,11 +823,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
             public void run() {
 
 
-
-                if (showGuide){
+                if (showGuide) {
 
                     showGuide = false;
-
 
 
                     new GuideView.Builder(CameraScanActivity.this)
@@ -926,7 +935,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private void incrementPageCounters() {
         numPages++;
         insertAt++;
-
+        capturedImages++;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

@@ -4,6 +4,8 @@ import android.animation.ValueAnimator;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,6 +24,10 @@ import com.aaindia.prodocscanner.wrappers.Effects;
 import java.io.File;
 import java.util.HashMap;
 
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+
 
 public class EditScanViewActivity extends ProcessScanViewActivity {
 
@@ -39,6 +45,23 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     @Override
     public void chooseColor(ScanPreviewAdapter.ViewHolder holder, int position) {
 
+
+        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+
+
+
+            new GuideView.Builder(EditScanViewActivity.this)
+                    .setTitle("Crop")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(holder.processImage)
+                    .build().show();
+
+            return;
+
+
+        }
 
         if (getImageDetails().getEffects(getImageDetails().getAt(position)) == null) {
 
@@ -442,6 +465,23 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     @Override
     public void colorGrayChanged(ScanPreviewAdapter.ViewHolder holder, int position, boolean b) {
 
+        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+
+
+
+            new GuideView.Builder(EditScanViewActivity.this)
+                    .setTitle("Crop")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(holder.processImage)
+                    .build().show();
+
+            return;
+
+
+        }
+
         getImageDetails().getEffects(getImageDetails().getAt(position)).isGray = b;
         prepareMat(holder, position);
         processImage(holder, position, true);
@@ -450,6 +490,25 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
     @Override
     public void colorTuneChanged(ScanPreviewAdapter.ViewHolder holder, int position, int progress) {
+
+
+        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+
+
+
+            new GuideView.Builder(EditScanViewActivity.this)
+                    .setTitle("Crop")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(holder.processImage)
+                    .build().show();
+
+            return;
+
+
+        }
+
 
         getImageDetails().getEffects(getImageDetails().getAt(position)).colorTune = progress;
         prepareMat(holder, position);
@@ -460,6 +519,24 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     @Override
     public void rotate(ScanPreviewAdapter.ViewHolder holder, int position) {
         super.rotate(holder, position);
+
+
+        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+
+
+
+            new GuideView.Builder(EditScanViewActivity.this)
+                    .setTitle("Crop")
+                    .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(holder.processImage)
+                    .build().show();
+
+            return;
+
+
+        }
 
 
         prepareMat(holder, position);

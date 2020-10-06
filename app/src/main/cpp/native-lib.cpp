@@ -48,6 +48,8 @@ void color_cluster(Mat &image, Mat &result);
 
 void normalize_image(Mat &image, Mat &result);
 
+void normalize_image_bg(Mat &image, Mat &result);
+
 double median_mat(cv::Mat Input);
 
 void auto_canny(Mat &image, Mat &result, float sigma);
@@ -136,130 +138,70 @@ Java_com_aaindia_prodocscanner_TestActivity_adaptiveThresholdFromJNI(JNIEnv *env
 void find_corners(Mat &image, vector<Point> &corners) {
 
 
-
-    /**
-    COLOR SEGMENTATION -> MEDIAN BLUR 7
-    */
-
-    Mat cluster_mask(image.rows, image.cols, CV_8U);
-    color_cluster(image, cluster_mask);
-    medianBlur(cluster_mask, cluster_mask, 7);
-
-    /**
-    NORMALIZED IMAGE -> MEDIAN BLUR 3
-    */
-
     Mat norm_image(image.rows, image.cols, CV_8U);
-    normalize_image(image, norm_image);
-    medianBlur(norm_image, norm_image, 3);
+    normalize_image_bg(image, norm_image);
 
-    /**
-    EDGE -> DILATE, FOR CLUSTER AND NORM_IMG
-    */
 
-    auto_canny(cluster_mask, cluster_mask, 1);
     auto_canny(norm_image, norm_image, 1);
-    dilate(cluster_mask, cluster_mask, Mat::ones(5, 5, CV_8U));
+
     dilate(norm_image, norm_image, Mat::ones(5, 5, CV_8U));
 
-    /**
-    FIND RELEVANT HOUGH LINES FOR CLUSTER AND NORM
-    */
-
-    vector<Vec4i> hough_lines_cluster;
-    find_lines(cluster_mask, hough_lines_cluster);
 
     vector<Vec4i> hough_lines_norm;
     find_lines(norm_image, hough_lines_norm);
 
-    /**
-    MASK LINES FOR CLUSTER AND NORM
-    */
 
-    Mat mask_lines_cluster = Mat::zeros(image.rows, image.cols, CV_8U);
     Mat mask_lines_norm = Mat::zeros(image.rows, image.cols, CV_8U);
+    mask_lines(hough_lines_norm, mask_lines_norm, 14);
 
-    mask_lines(hough_lines_cluster, mask_lines_cluster, 21);
-    mask_lines(hough_lines_norm, mask_lines_norm, 21);
 
-    /**
-    FIND HULLS FOR CLUSTER AND NORM
-    */
-
-    vector<vector<Point> > hulls_cluster;
     vector<vector<Point> > hulls_norm;
 
-    find_hulls(mask_lines_cluster, hulls_cluster);
     find_hulls(mask_lines_norm, hulls_norm);
 
 
-    /**
-    MATCH BETWEEN CLUSTER AND NORM
-    */
+    int index_best = 0;
 
-    size_t top = 4;
-    int overlap = -1;
-    size_t best_norm_index = -1, best_cluster_index = -1;
-
-    for (size_t i = 1; i < hulls_cluster.size(); i++) {
-
-        if (i == top)
-            break;
-
-        Mat mask_cluster = Mat::ones(image.rows, image.cols, CV_8U);
-
-        drawContours(mask_cluster, hulls_cluster, i, Scalar(255, 255, 255), -1);
-
-        for (size_t j = 1; j < hulls_norm.size(); j++) {
-
-            if (j == top)
-                break;
-
-            Mat mask_norm = Mat::zeros(image.rows, image.cols, CV_8U);
-            drawContours(mask_norm, hulls_norm, j, Scalar(255, 255, 255), -1);
-
-
-            Mat compare_mat = mask_norm == mask_cluster;
-            int match = countNonZero(compare_mat);
-
-            if (match > overlap) {
-                overlap = match;
-                best_norm_index = j;
-                best_cluster_index = i;
-            }
-
-
-        }
-    }
-
-    double area_cluster = contourArea(hulls_cluster[best_cluster_index]);
-    double area_norm = contourArea(hulls_norm[best_norm_index]);
 
     vector<vector<Point>> best_hull;
     vector<vector<Point>> best_hull2;
 
-    if (area_cluster > area_norm) {
 
-        best_hull.push_back(hulls_cluster[best_cluster_index]);
-        best_hull2.push_back(hulls_cluster[best_cluster_index]);
+    for (int i = 1; i < hulls_norm.size(); i++) {
 
-    } else {
 
-        best_hull.push_back(hulls_norm[best_norm_index]);
-        best_hull2.push_back(hulls_norm[best_norm_index]);
+        if (best_hull.size() > 0) {
+            best_hull.clear();
+            best_hull2.clear();
+        }
+
+        best_hull.push_back(hulls_norm[i]);
+        best_hull2.push_back(hulls_norm[i]);
+
+
+        if (!find_approx_quad(best_hull[0], best_hull2[0])) {
+
+
+        } else {
+            index_best = i;
+
+            break;
+        }
+
 
     }
-    if (!find_approx_quad(best_hull[0], best_hull2[0])) {
+
+    if (index_best == 0) {
 
         best_hull2[0][0] = Point(5, 5);
         best_hull2[0][1] = Point(5, 505);
         best_hull2[0][2] = Point(505, 505);
         best_hull2[0][3] = Point(505, 5);
+
+
     }
 
     corners = best_hull2[0];
-    //drawContours( image,  best_hull2 ,  0, Scalar(255,0, 0)  , 2 );
-
 
 
 }
@@ -366,7 +308,22 @@ void find_hulls(Mat &mask, vector<vector<Point> > &hulls) {
 
     sort(hulls.begin(), hulls.end(), [](const vector<Point> &lhs, const vector<Point> &rhs) {
 
-        return (contourArea(lhs) > contourArea(rhs));
+
+        Moments m_lhs = moments(lhs, false);
+        Moments m_rhs = moments(rhs, false);
+
+        double c_x_lhs = m_lhs.m10 / m_lhs.m00;
+        double c_y_lhs = m_lhs.m01 / m_lhs.m00;
+
+
+        double c_x_rhs = m_rhs.m10 / m_rhs.m00;
+        double c_y_rhs = m_rhs.m01 / m_rhs.m00;
+
+        double distance_lhs = (c_x_lhs - 256) * (c_x_lhs - 256) + (c_y_lhs - 256) * (c_y_lhs - 256);
+        double distance_rhs = (c_x_rhs - 256) * (c_x_rhs - 256) + (c_y_rhs - 256) * (c_y_rhs - 256);
+
+        return distance_rhs > distance_lhs;
+
 
     });
 }
@@ -458,7 +415,7 @@ void normalize_image(Mat &image, Mat &result) {
             dilate(image_planes[i], temp, Mat::ones(7, 7, CV_8U));
             //medianBlur(temp, temp, 21);
 
-            blur(temp, temp, Size(21, 21));
+            medianBlur(temp, temp, 21);
 
 
             absdiff(image_planes[i], temp, temp);
@@ -500,6 +457,55 @@ void normalize_image(Mat &image, Mat &result) {
         normalize(temp, image_original, 0, 255, 32);
 
         //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
+
+
+    }
+
+
+}
+
+
+void normalize_image_bg(Mat &image, Mat &result) {
+
+
+    vector<Mat> image_planes;
+    split(image, image_planes);
+
+    //__android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
+
+
+    if (image.channels() > 2) {
+
+        for (int i = 0; i < 3; ++i) {
+            dilate(image_planes[i], image_planes[i], Mat::ones(9, 9, CV_8U));
+            medianBlur(image_planes[i], image_planes[i], 21);
+
+            // blur(image_planes[i],image_planes[i], Size(21, 21));
+
+        }
+
+        merge(image_planes, result);
+
+        image_planes[0].release();
+        image_planes[1].release();
+        image_planes[2].release();
+    } else {
+
+
+        Mat image_original = image;
+
+        // __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
+
+        dilate(image_original, image_original, Mat::ones(9, 9, CV_8U));
+
+        medianBlur(image_original, image_original, 21);
+
+
+        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
+
+
+        //blur(image_original, image_original, Size(21, 21));
+
 
 
     }
@@ -846,10 +852,6 @@ Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1Native(JNIEnv *e
         vector_Point_to_Mat(corners, crop_bounds);
 
 
-//        vector<vector<Point>> _corners;
-//        _corners.push_back(corners);
-//
-//        drawContours(image_original, _corners, 0, Scalar(0, 255, 0), 5);
 
     }
     catch (...) {
@@ -1059,8 +1061,6 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         final_mats[2].release();
 
 
-
-
         BrightnessAndContrastAuto(mat_original, mat_original, 2);
 
         cvtColor(mat_original, mat_original, COLOR_BGR2HSV);
@@ -1071,11 +1071,10 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         split(mat_original, mats2);
 
 
+        add(mats2[1], mats2[1] * ((colorVal - 50) / 50) * 1, mats2[1], mat);
 
-        add(mats2[1], mats2[1] * ((colorVal-50)/50)*1, mats2[1], mat);
 
-
-        add(mats2[2], mats2[2] * ((colorVal-50)/50)*3, mats2[2], mat);
+        add(mats2[2], mats2[2] * ((colorVal - 50) / 50) * 3, mats2[2], mat);
 
         merge(mats2, mat_original);
 
@@ -1085,7 +1084,6 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
 
 
         cvtColor(mat_original, mat, COLOR_HSV2BGR);
-
 
 
         mat_original.release();

@@ -39,7 +39,7 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
 
     public ArrayList<String> originalFilepaths;
     private Context context;
-    private String scanDirName;
+    public String scanDirName;
 
     private int layoutHeight;
 
@@ -207,4 +207,6 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
 
 
     }
+
+
 }

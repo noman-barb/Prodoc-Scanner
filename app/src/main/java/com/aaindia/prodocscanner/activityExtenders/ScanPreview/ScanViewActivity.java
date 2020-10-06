@@ -34,6 +34,7 @@ import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
+import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -48,7 +49,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface {
+public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface{
 
     public static final String NEW_SCAN = "new_scan";
 
@@ -277,12 +278,16 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         originalDirFile = new File(scanDirPath, FileNav.ORIGINAL_IMAGE_DIR);
         processedDirFile = new File(scanDirPath, FileNav.PROCESSED_IMAGE_DIR);
 
+        onScanDirPathChange(originalDirFile.getAbsolutePath());
+
         originalDirFile.mkdirs();
         processedDirFile.mkdirs();
 
 
         originalFilepaths = new ArrayList<>();
         imageDetails = new SavedImageDetails(FileNav.getEffectsFile(scanDirPath));
+
+
 
 
         // check auto crop
@@ -371,8 +376,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                         imageDetails.sync();
 
-                        if (pd.isShowing())
-                            pd.dismiss();
+                        if (pd.isShowing()) {
+                            try {
+                                pd.dismiss();
+                            } catch (Exception e) {
+
+                            }
+
+                        }
                         adapter.scanDirName = getScanDirPath();
                         adapter.originalFilepaths = getOriginalFilepaths();
                         adapter.savedImageDetails = imageDetails;
@@ -788,5 +799,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         super.onBackPressed();
 
         finish();
+    }
+
+
+
+    public void onScanDirPathChange(String path) {
+
     }
 }

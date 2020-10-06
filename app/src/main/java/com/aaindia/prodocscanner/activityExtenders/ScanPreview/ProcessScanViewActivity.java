@@ -36,8 +36,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     private Thread displayImageProcessThread;
 
 
-    private SavedImageDetails imageDetails;
-
     private String lastPreparedFilename = null;
 
     ActivityManager am;
@@ -46,7 +44,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        imageDetails = getImageDetails();
+
         am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
     }
 
@@ -66,7 +64,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
         getBinding().protector.setVisibility(View.VISIBLE);
         holder.processing.setVisibility(View.VISIBLE);
-        Effects effects = imageDetails.getEffects(imageDetails.getAt(position));
+        Effects effects = getImageDetails().getEffects(getImageDetails().getAt(position));
 
 
         int colorCode = effects.color;
@@ -88,8 +86,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Map<Integer, PointF> cropBoundsMap = holder.polygonView.getPoints();
 
 
-
-
                 if (!colorOnly) {
 
                     for (int i = 0; i < 4; i++) {
@@ -106,11 +102,9 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                     }
 
                 } else {
-                    cropBoundsOriginalMap = imageDetails.getCorners(imageDetails.getAt(position));
+                    cropBoundsOriginalMap = getImageDetails().getCorners(getImageDetails().getAt(position));
                     cropBoundsMap = cropBoundsOriginalMap;
                 }
-
-
 
 
                 Point point1 = new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y);
@@ -132,8 +126,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 Imgproc.warpPerspective(holder.originalMat, processedMat, transform, holder.originalMat.size());
 
 
-
-
                 Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
 
 
@@ -152,16 +144,16 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                 MatFilter.colorize(processedMat, colorCode, colorTune, colorGray);
 
 
-                imageDetails.getEffects(imageDetails.getAt(position)).corners = (HashMap<Integer, PointF>) cropBoundsOriginalMap;
+                getImageDetails().getEffects(getImageDetails().getAt(position)).corners = (HashMap<Integer, PointF>) cropBoundsOriginalMap;
 
 
-                String processedImageFilepath = FileNav.getProcessedFileFromName(getScanDirPath(), imageDetails.getOrdering().get(position)).getAbsolutePath();
+                String processedImageFilepath = FileNav.getProcessedFileFromName(getScanDirPath(), getImageDetails().getOrdering().get(position)).getAbsolutePath();
 
 
-                if (imageDetails.sync()) {
+                if (getImageDetails().sync()) {
 
 
-                    int rot = imageDetails.getRotation(imageDetails.getAt(position));
+                    int rot = getImageDetails().getRotation(getImageDetails().getAt(position));
 
 
                     int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
@@ -184,7 +176,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                         currentProcessing.remove(position);
 
-                        getAutoCroppedSet().add(imageDetails.getAt(position));
+                        getAutoCroppedSet().add(getImageDetails().getAt(position));
 
                         holder.polygonView.setVisibility(View.GONE);
                         holder.processing.setVisibility(View.GONE);
@@ -196,8 +188,8 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                         getBinding().protector.setVisibility(View.GONE);
 
-                      //  getRecyclerView().getAdapter().notifyDataSetChanged();
-                        onProcessed(holder,position);
+                        //  getRecyclerView().getAdapter().notifyDataSetChanged();
+                        onProcessed(holder, position);
 
                     }
                 });
@@ -243,9 +235,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     }
 
-    public void onProcessed(ScanPreviewAdapter.ViewHolder holder, int position){
-
-
+    public void onProcessed(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
@@ -267,12 +257,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     public void prepareMat(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
-        if (holder.originalMat != null && holder.originalMat.width() > 0) {
-
-            if (holder.matPosition == position)
-                return;
-
-        }
 
 
         if (holder.originalMat != null) {
@@ -283,6 +267,8 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         Mat displayMat = new Mat();
 
         holder.originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));
+
+
 
 
         if (holder.originalMat.channels() == 4)
@@ -304,9 +290,10 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         if (displayMat.channels() == 4)
             Imgproc.cvtColor(displayMat, displayMat, Imgproc.COLOR_BGRA2RGB);
 
-        if (holder.displayBitmap != null)
+        if (holder.displayBitmap != null) {
             holder.displayBitmap.recycle();
 
+        }
         holder.displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
 
 

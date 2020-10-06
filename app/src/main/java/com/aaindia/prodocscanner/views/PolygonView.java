@@ -211,6 +211,25 @@ public class PolygonView extends FrameLayout {
         }
     }
 
+    public void setBallsVisibility(int vis){
+
+
+        pointer1.setVisibility(vis);
+        pointer2.setVisibility(vis);
+        pointer3.setVisibility(vis);
+        pointer4.setVisibility(vis);
+
+        midPointer12.setVisibility(vis);
+
+        midPointer13.setVisibility(vis);
+
+        midPointer24.setVisibility(vis);
+
+        midPointer34.setVisibility(vis);
+
+
+    }
+
     private void setPointsCoordinates(Map<Integer, PointF> pointFMap) {
         pointer1.setX(pointFMap.get(0).x);
         pointer1.setY(pointFMap.get(0).y);
@@ -416,8 +435,23 @@ public class PolygonView extends FrameLayout {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             int eid = event.getAction();
+
+
+
+
+
             switch (eid) {
                 case MotionEvent.ACTION_MOVE:
+
+
+                    if (pointMove != null) {
+
+                        pointMove.onMove(v.getX(), v.getY());
+                    }
+
+
+
+
                     PointF mv = new PointF(event.getX() - DownPT.x, event.getY() - DownPT.y);
 
 
@@ -428,6 +462,8 @@ public class PolygonView extends FrameLayout {
 
                         mainPointer2.setY((int) (clipBoundsY((int) (mainPointer2.getY() + mv.y))));
                         mainPointer1.setY((int) (clipBoundsY((int) (mainPointer1.getY() + mv.y))));
+
+
 
                     } else {
                         v.setX((int) (clipBoundsX((int) (StartPT.x + mv.x))));
@@ -445,6 +481,14 @@ public class PolygonView extends FrameLayout {
 //                            new PointF(pointer4.getX(), pointer4.getY())));
 
 
+
+                    if (pointMove != null) {
+
+                        pointMove.onStart();
+                        pointMove.onMove(v.getX(), v.getY());
+                    }
+
+
                     DownPT.x = event.getX();
                     DownPT.y = event.getY();
                     StartPT = new PointF(v.getX(), v.getY());
@@ -455,6 +499,12 @@ public class PolygonView extends FrameLayout {
 
                     break;
                 case MotionEvent.ACTION_UP:
+
+
+                    if (pointMove != null) {
+
+                        pointMove.onStop();
+                    }
 
 
                     int color = 0;
@@ -614,6 +664,12 @@ public class PolygonView extends FrameLayout {
             return true;
         }
     }
+
+    public void setLineWidth(int w){
+        paint.setStrokeWidth(w);
+    }
+
+
 
     public interface OnPointMove {
 

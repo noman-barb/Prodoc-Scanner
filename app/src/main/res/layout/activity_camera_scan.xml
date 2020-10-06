@@ -12,6 +12,9 @@
         tools:context=".activity.CameraPreviewActivity">
 
 
+
+
+
         <RelativeLayout
 
             android:id="@+id/toolbarRL"
@@ -154,6 +157,11 @@
                     app:layout_constraintTop_toTopOf="parent">
 
 
+
+
+
+
+
                     <androidx.camera.view.PreviewView
 
                         android:id="@+id/camera_preview"
@@ -162,12 +170,16 @@
                         app:scaleType="fitCenter"></androidx.camera.view.PreviewView>
 
 
+
                 </FrameLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
 
         </RelativeLayout>
+
+
+
 
 
         <RelativeLayout

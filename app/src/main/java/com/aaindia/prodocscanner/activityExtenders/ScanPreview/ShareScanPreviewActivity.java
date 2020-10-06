@@ -158,7 +158,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                pd.dismiss();
+                                try {
+                                    pd.dismiss();
+                                } catch (Exception e) {
+
+                                }
 
 
                                 setPDFOutputPathExport(output);
@@ -186,7 +190,15 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+
+
+                        try {
+                            pd.dismiss();
+                        } catch (Exception ex) {
+
+                        }
+
+
                     }
                 });
             }
@@ -233,7 +245,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                pd.dismiss();
+                                try {
+                                    pd.dismiss();
+                                } catch (Exception e) {
+
+                                }
 
 
                                 if (!export)
@@ -252,7 +268,13 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception ex) {
+
+                        }
+
+
                     }
                 });
             }
@@ -335,7 +357,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            pd.dismiss();
+                                            try {
+                                                pd.dismiss();
+                                            } catch (Exception e) {
+
+                                            }
 
 
                                             Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -379,7 +405,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    pd.dismiss();
+                                    try {
+                                        pd.dismiss();
+                                    } catch (Exception ex) {
+
+                                    }
                                 }
                             });
                         }

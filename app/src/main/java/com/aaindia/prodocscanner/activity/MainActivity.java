@@ -7,6 +7,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -14,6 +15,7 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
@@ -85,6 +87,7 @@ import java.util.zip.ZipOutputStream;
 import angtrim.com.fivestarslibrary.FiveStarsDialog;
 import angtrim.com.fivestarslibrary.NegativeReviewListener;
 import angtrim.com.fivestarslibrary.ReviewListener;
+
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
 import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
@@ -228,6 +231,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     @Override
     protected void onDestroy() {
 
+
         try {
             executor.shutdown();
 
@@ -342,6 +346,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
         showcase();
+
+
+
+
+
 
 
     }
@@ -674,7 +683,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
 
                         nagivateTo(currentPath);
                     }
@@ -738,7 +751,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
 
                         Toast.makeText(MainActivity.this, "Done", Toast.LENGTH_SHORT).show();
                     }
@@ -859,7 +876,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         if (clipboard.deleteAfter) {
 
-                            if (src.compareTo(new File(currentPath)) != 0)
+                            if (!FileNav.isChild(src, new File(currentPath)))
                                 FileNav.deleteDirectoryQuietely(src);
                             clipboard.filepaths.remove(i);
                             i--;
@@ -880,7 +897,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     public void run() {
 
 
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
                         nagivateTo(currentPath);
 
                     }
@@ -1087,7 +1108,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
                     }
                 });
 
@@ -1685,7 +1710,13 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            pd.dismiss();
+                            try {
+                                pd.dismiss();
+                            } catch (Exception ex) {
+
+                            }
+
+
                         }
                     });
                 }
@@ -1700,7 +1731,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                pd.dismiss();
+                try {
+                    pd.dismiss();
+                } catch (Exception e) {
+
+                }
 
                 new Sharer(MainActivity.this, arrayList).share();
             }
@@ -1997,11 +2032,17 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 PdfRenderer.Page page = renderer.openPage(i);
 
+
                 int width = getResources().getDisplayMetrics().densityDpi / 72 * page.getWidth();
                 int height = getResources().getDisplayMetrics().densityDpi / 72 * page.getHeight();
                 bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                Canvas canvas = new Canvas(bitmap);
+                canvas.drawColor(Color.WHITE);
+                canvas.drawBitmap(bitmap, 0, 0, null);
+
+
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
 
                 String filename = i + ".jpg";
                 String filepath = originalImageDir.getAbsolutePath() + File.separator + filename;
@@ -2121,7 +2162,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.dismiss();
+                        try {
+                            pd.dismiss();
+                        } catch (Exception e) {
+
+                        }
                         nagivateTo(currentPath);
                         simpleToast("Done");
                     }

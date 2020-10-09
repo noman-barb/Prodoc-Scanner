@@ -2,16 +2,22 @@ package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.SnapHelper;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,6 +44,7 @@ import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
 import com.google.gson.internal.$Gson$Preconditions;
 import com.jsibbold.zoomage.ZoomageView;
@@ -54,6 +61,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public static final String NEW_SCAN = "new_scan";
 
     public static final String SCAN_DIR_PATH = "scan_dir_path";
+
 
     ActivityScanViewBinding binding;
 
@@ -94,6 +102,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
+    public boolean isProcessing = false;
     public int wd = -1;
     public int ht = -1;
 
@@ -110,6 +119,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         this.outputPathPDFExport = path;
     }
+
+
+
+    public static final int PERMISION_REQUEST_CODE_SINGLE_PAGE = 2910;
+    public static final int PERMISION_REQUEST_CODE_SELECTED = 2911;
+    public static final int PERMISION_REQUEST_CODE_ALL = 2912;
+
+
 
 
 
@@ -249,6 +266,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
     }
+
+
 
 
     @Override
@@ -465,7 +484,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public void shareSinglePage(ScanPreviewAdapter.ViewHolder holder, int position, boolean isExport) {
+
+
     }
+
+
+
+
+
 
     public void addPages(ScanPreviewAdapter.ViewHolder holder, int position) {
     }
@@ -477,6 +503,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public void share(boolean isExport) {
+
+
+
     }
 
 
@@ -485,6 +514,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public void viewPDF() {
+
 
 
     }
@@ -511,6 +541,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void process(int postion, ScanPreviewAdapter.ViewHolder holder) {
 
+        if (isProcessing)
+            return;
+
+
+        isProcessing = true;
         processImage(holder, postion, false);
 
 
@@ -585,6 +620,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onClick(View view) {
 
+        if (isProcessing)
+            return;
+
 
         int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
 
@@ -633,6 +671,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         } else if (id == R.id.exportSinglePageRL) {
 
             shareSinglePage(holder, position, true);
+
+
         } else if (id == R.id.addPagesRL) {
             if (position < 0)
                 return;
@@ -727,59 +767,68 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public synchronized void showHideColorRL(boolean show) {
 
 
-        if (showHideColorRLIsAnimating) {
 
-
-            binding.colorControlRL.setVisibility(show ? View.VISIBLE : View.GONE);
-
-
-            return;
-        }
-
-        binding.colorControlRL.clearAnimation();
-
-
-        showHideColorRLIsAnimating = true;
-
-        if (show && binding.colorControlRL.getVisibility() == View.GONE) {
-
+        if (show){
 
             binding.colorControlRL.setVisibility(View.VISIBLE);
-            ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
-            animator.setInterpolator(new AccelerateDecelerateInterpolator());
-            animator.setDuration(200);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
-
-                    if ((float) valueAnimator.getAnimatedValue() == 1)
-                        showHideColorRLIsAnimating = false;
-                }
-            });
-
-            animator.start();
-
-
-        } else if (!show && binding.colorControlRL.getVisibility() == View.VISIBLE) {
-
-            ValueAnimator animator = ValueAnimator.ofFloat(1, 0);
-            animator.setInterpolator(new AccelerateDecelerateInterpolator());
-            animator.setDuration(200);
-            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
-
-                    if ((Float) valueAnimator.getAnimatedValue() == 0) {
-                        binding.colorControlRL.setVisibility(View.GONE);
-                        showHideColorRLIsAnimating = false;
-                    }
-                }
-            });
-
-            animator.start();
         }
+        else {
+            binding.colorControlRL.setVisibility(View.GONE);
+        }
+
+//        if (showHideColorRLIsAnimating) {
+//
+//
+//            binding.colorControlRL.setVisibility(show ? View.VISIBLE : View.GONE);
+//
+//
+//            return;
+//        }
+//
+//        binding.colorControlRL.clearAnimation();
+//
+//
+//        showHideColorRLIsAnimating = true;
+//
+//        if (show && binding.colorControlRL.getVisibility() == View.GONE) {
+//
+//
+//            binding.colorControlRL.setVisibility(View.VISIBLE);
+//            ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
+//            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+//            animator.setDuration(200);
+//            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                @Override
+//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
+//
+//                    if ((float) valueAnimator.getAnimatedValue() == 1)
+//                        showHideColorRLIsAnimating = false;
+//                }
+//            });
+//
+//            animator.start();
+//
+//
+//        } else if (!show && binding.colorControlRL.getVisibility() == View.VISIBLE) {
+//
+//            ValueAnimator animator = ValueAnimator.ofFloat(1, 0);
+//            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+//            animator.setDuration(200);
+//            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//                @Override
+//                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+//                    binding.colorControlRL.setAlpha((Float) valueAnimator.getAnimatedValue());
+//
+//                    if ((Float) valueAnimator.getAnimatedValue() == 0) {
+//                        binding.colorControlRL.setVisibility(View.GONE);
+//                        showHideColorRLIsAnimating = false;
+//                    }
+//                }
+//            });
+//
+//            animator.start();
+//        }
 
 
     }

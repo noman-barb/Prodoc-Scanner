@@ -32,4 +32,6 @@
 -keep class androidx.* { *; }
 -keep class com.tom_roush.* { *; }
 -keep class com.aaindia.prodocscanner.wrappers.* { *; }
+-keep class org.spongycastle.* { *; }
+-dontwarn org.spongycastle.**
 

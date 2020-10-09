@@ -209,6 +209,8 @@ public class PolygonView extends FrameLayout {
         if (pointFMap.size() == 4) {
             setPointsCoordinates(pointFMap);
         }
+
+        invalidate();
     }
 
     public void setBallsVisibility(int vis){

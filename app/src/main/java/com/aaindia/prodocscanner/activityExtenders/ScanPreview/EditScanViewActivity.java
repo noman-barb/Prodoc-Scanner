@@ -79,7 +79,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
         }
 
-        binding.protector.setVisibility(View.VISIBLE);
+
 
 
         Thread t = new Thread(new Runnable() {
@@ -149,13 +149,21 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             public boolean onMenuItemClick(MenuItem item) {
 
 
+
                 try {
                     t.join();
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+
                 }
 
                 int id = item.getItemId();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        binding.protector.setVisibility(View.VISIBLE);
+                    }
+                });
+                isProcessing = true;
 
                 int colorCode = id;
 
@@ -521,6 +529,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         super.rotate(holder, position);
 
 
+
         if (holder.polygonView.getVisibility()==View.VISIBLE) {
 
 
@@ -537,6 +546,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
         }
+
+        isProcessing = true;
 
 
         prepareMat(holder, position);

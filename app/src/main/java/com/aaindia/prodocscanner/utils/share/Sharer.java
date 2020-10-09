@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
@@ -103,9 +104,12 @@ public class Sharer {
         for (File f : files) {
 
             try {
+
+
                 MediaStore.Images.Media.insertImage(context.getContentResolver(), f.getAbsolutePath(), filename + " " + System.currentTimeMillis() + ".jpg", "Prodoc Scanner Images");
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+
+
             }
         }
 

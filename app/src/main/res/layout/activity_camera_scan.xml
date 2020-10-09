@@ -159,8 +159,17 @@
 
 
 
+                    <!--
 
 
+                    <com.aaindia.prodocscanner.views.PolygonView
+                        android:id="@+id/cropView"
+                        android:elevation="20dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"></com.aaindia.prodocscanner.views.PolygonView>
+
+
+                    -->
 
                     <androidx.camera.view.PreviewView
 

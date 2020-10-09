@@ -1,7 +1,11 @@
 package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spannable;
@@ -18,6 +22,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -651,16 +657,151 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
     }
 
+
+
+
+
+
+
+
+    private void requestStoragePermission(int perm) {
+
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Permission Needed");
+            builder.setMessage("Storage permission is required to export");
+            builder.setCancelable(false);
+
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, perm);
+
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //
+                }
+            });
+
+
+            builder.create();
+            builder.show();
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, perm);
+        }
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+
+        if (grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+
+                    if (requestCode == PERMISION_REQUEST_CODE_SELECTED) {
+
+                        shareSelected(true);
+
+
+                    }
+
+
+                }
+            });
+
+        } else {
+
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Permission not granted");
+            builder.setMessage("Cannot export as permission to write to external storage was denied");
+
+            builder.setCancelable(false);
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+
+
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //e.printStackTrace();
+                }
+            });
+
+
+            builder.create();
+            builder.show();
+        }
+
+    }
+
+
+
+
+
+
     private void shareSelected(boolean isExport) {
 
-        Utils.copyNotProcessedOriginals(getImageDetails(), getScanDirPath());
 
-        ArrayList<File> files = new ArrayList<>();
+
+
+        if (isExport) {
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                        PackageManager.PERMISSION_GRANTED) {
+
+
+                } else {
+                    requestStoragePermission(PERMISION_REQUEST_CODE_SELECTED);
+                    return;
+                }
+
+            }
+
+
+        }
+
+
+
+
+
+
+
+
+        ProgressDialog pd1 = new ProgressDialog(GridScanViewActivity.this);
+        pd1.setTitle("Please wait");
+        pd1.setMessage("Processing uncropped images");
+        pd1.setCancelable(false);
+
+
+        ArrayList<File> files = new ArrayList<>(adapter.selectedItems.size());
+        HashSet<String> set = new HashSet<>(adapter.selectedItems.size());
         double size = 0;
+
 
         for (int i = 0; i < adapter.originalFilepaths.size(); i++) {
 
             if (adapter.selectedItems.contains(i)) {
+
+                set.add(getImageDetails().getAt(i));
 
                 File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), new File(adapter.originalFilepaths.get(i)).getName());
 
@@ -671,9 +812,51 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         }
 
-        deselectAll();
 
-        shareFromArray(files, size, isExport);
+        double finalSize = size;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                Utils.copyNotProcessedOriginals(set, getImageDetails(), getScanDirPath(), new Utils.OnUpdateCopy() {
+                    @Override
+                    public void showDialog() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (!pd1.isShowing())
+                                        pd1.show();
+
+                                } catch (Exception e) {
+                                } catch (Error e1) {
+                                }
+                            }
+                        });
+                    }
+                });
+
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+
+                        pd1.dismiss();
+                        deselectAll();
+
+                        shareFromArray(files, finalSize, isExport);
+
+
+                    }
+                });
+
+
+            }
+        }).start();
+
+
     }
 
     private void deleteSelected() {
@@ -745,7 +928,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     @Override
     public void onScanDirPathChange(String path) {
 
-        if (adapter!=null){
+        if (adapter != null) {
             adapter.scanDirName = getScanDirPath();
             adapter.originalFilepaths = getOriginalFilepaths();
             adapter.notifyDataSetChanged();

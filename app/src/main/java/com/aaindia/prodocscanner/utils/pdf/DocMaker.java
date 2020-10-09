@@ -138,7 +138,7 @@ public class DocMaker {
             document.addPage(page);
 
 
-            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+            PDPageContentStream contentStream = new PDPageContentStream(document, page, true,true,true);
 
 
             PDImageXObject ximage = JPEGFactory.createFromImage(document, bitmap, (float) quality, 72);

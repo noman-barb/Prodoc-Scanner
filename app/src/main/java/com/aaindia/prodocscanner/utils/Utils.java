@@ -2,6 +2,7 @@ package com.aaindia.prodocscanner.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.PointF;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -19,10 +20,15 @@ import com.google.gson.JsonElement;
 
 import org.apache.commons.io.FileUtils;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 public class Utils {
 
@@ -58,13 +64,23 @@ public class Utils {
         Log.d("aaaaaaaaaaaaaaaaaaaa", msg);
     }
 
-    public static void copyNotProcessedOriginals(SavedImageDetails imageDetails, String scanDir) {
+    public static void copyNotProcessedOriginals(HashSet<String> masks, SavedImageDetails imageDetails, String scanDir, OnUpdateCopy updateCopy) {
 
         Iterator i = imageDetails.getOrdering().iterator();
+
+        int total = imageDetails.getOrdering().size();
+
+        int current = 1;
+
+        Mat m;
         while (i.hasNext()) {
 
 
             String filename = (String) i.next();
+
+            if (masks != null)
+                if (!masks.contains(filename))
+                    continue;
 
 
             Effects effects = imageDetails.getEffects(filename);
@@ -77,15 +93,35 @@ public class Utils {
             if (!processedImageFilepath.exists()) {
 
 
+                updateCopy.showDialog();
+
                 try {
-                    FileUtils.copyFile(originalFile, processedImageFilepath);
-                } catch (IOException e) {
+                    //FileUtils.copyFile(originalFile, processedImageFilepath);
+
+                    m = Imgcodecs.imread(originalFile.getAbsolutePath());
+
+                    effects.corners.put(0, new PointF(0, 0));
+                    effects.corners.put(1, new PointF(m.width(), 0));
+                    effects.corners.put(2, new PointF(0, m.height()));
+                    effects.corners.put(3, new PointF(m.width(), m.height()));
+
+                    effects.color = MatFilter.COLOR_ORIGINAL;
+                    effects.colorTune = MatFilter.getDefaultTune(effects.color);
+
+                    Imgcodecs.imwrite(processedImageFilepath.getAbsolutePath(), m);
+
+                    m.release();
+
+
+                } catch (Exception e) {
 
                 }
 
 
             }
         }
+
+        imageDetails.sync();
 
     }
 
@@ -112,6 +148,13 @@ public class Utils {
             //deprecated in API 26
             v.vibrate(500);
         }
+    }
+
+
+    public interface OnUpdateCopy {
+
+
+        void showDialog();
     }
 
 

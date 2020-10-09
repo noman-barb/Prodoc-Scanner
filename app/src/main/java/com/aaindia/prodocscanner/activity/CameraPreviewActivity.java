@@ -565,7 +565,95 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
         preview.setSurfaceProvider(binding.cameraPreview.createSurfaceProvider());
 
+////////////////////////////////// todo delete this block
 
+
+//        ImageAnalysis imageAnalysis =
+//                new ImageAnalysis.Builder()
+//                        .setTargetResolution(new Size(1280, 720))
+//                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+//                        .build();
+//
+//
+//        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor(), new ImageAnalysis.Analyzer() {
+//            @Override
+//            public void analyze(@NonNull ImageProxy image) {
+//
+//
+//
+//
+//                int rotationDegrees = image.getImageInfo().getRotationDegrees();
+//
+//
+//                bitmap = binding.cameraPreview.getBitmap();
+//
+//                if (bitmap==null){
+//                    image.close();
+//                    return;
+//                }
+//
+//
+//                Mat mat = new Mat();
+//
+//                Utils.bitmapToMat(bitmap, mat);
+//
+//                MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
+//                MatFilter.cropV1(mat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+//                HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
+//                Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new org.opencv.core.Size(mat.width(), mat.height()));
+//
+//
+//
+//                int del = (int)(bitmap.getWidth()*0.05);
+//
+//                sortedPoints[0].x = Math.max(sortedPoints[0].x-del,0);
+//                sortedPoints[0].y = Math.max(sortedPoints[0].y-del,0);
+//
+//
+//                sortedPoints[1].x = Math.max(sortedPoints[1].x-del,0);
+//                sortedPoints[1].y = Math.max(sortedPoints[1].y-del,0);
+//
+//                sortedPoints[2].x = Math.max(sortedPoints[2].x-del,0);
+//                sortedPoints[2].y = Math.max(sortedPoints[2].y-del,0);
+//
+//                sortedPoints[3].x = Math.max(sortedPoints[3].x-del,0);
+//                sortedPoints[3].y = Math.max(sortedPoints[3].y-del,0);
+//
+//
+//                for (int i = 0; i < sortedPoints.length; i++) {
+//                    cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
+//                }
+//
+//
+//                bitmap.recycle();
+//
+//                bitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);
+//
+//                Utils.matToBitmap(mat,bitmap);
+//
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        binding.cropView.setLineWidth(8);
+//                        binding.cropView.setBallsVisibility(View.INVISIBLE);
+//
+//                        binding.cropView.setPoints(cropBoundsMap);
+//                        binding.cropView.invalidate();
+//                    }
+//                });
+//
+//
+//
+//
+//
+//                mat.release();
+//                image.close();
+//            }
+//        });
+
+
+        ////////////////////////////////// todo end delete this block
 
 
         camera = cameraProvider.bindToLifecycle(CameraPreviewActivity.this, cameraSelector, preview, imageCapture);

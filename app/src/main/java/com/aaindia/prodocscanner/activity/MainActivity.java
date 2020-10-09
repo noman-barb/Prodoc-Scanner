@@ -66,6 +66,7 @@ import com.tom_roush.pdfbox.contentstream.operator.state.Save;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.junit.internal.runners.statements.RunAfters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -1505,70 +1506,145 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private void shareDocs() {
 
-        File outputDir = null;
 
 
-        ArrayList<String> selectedDocs = new ArrayList<>();
 
-        ArrayList<SavedImageDetails> imageDetailsArrayList = new ArrayList<>();
+        ProgressDialog pd1 = new ProgressDialog(MainActivity.this);
+        pd1.setTitle("Please wait");
+        pd1.setMessage("Processing uncropped images");
+        pd1.setCancelable(false);
 
-        double size = 0;
 
-        for (ListFIlesInfo fIlesInfo : adapter.data) {
 
-            if (fIlesInfo.isSelected && fIlesInfo.is_scan) {
 
-                outputDir = FileNav.getOutputDir(fIlesInfo.filepath);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-                outputDir.mkdirs();
 
-                SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(fIlesInfo.filepath));
 
-                Utils.copyNotProcessedOriginals(imageDetails, fIlesInfo.filepath);
+                File outputDir = null;
 
-                imageDetailsArrayList.add(imageDetails);
 
-                selectedDocs.add(fIlesInfo.filepath);
+                ArrayList<String> selectedDocs = new ArrayList<>();
 
-                File[] fs = new File(fIlesInfo.filepath + File.separator + FileNav.PROCESSED_IMAGE_DIR).listFiles();
+                ArrayList<SavedImageDetails> imageDetailsArrayList = new ArrayList<>();
 
-                for (File f : fs) {
 
-                    size += f.length() / 1024.0;
+
+
+                double size = 0;
+
+                for (ListFIlesInfo fIlesInfo : adapter.data) {
+
+                    if (fIlesInfo.isSelected && fIlesInfo.is_scan) {
+
+                        outputDir = FileNav.getOutputDir(fIlesInfo.filepath);
+
+                        outputDir.mkdirs();
+
+                        SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(fIlesInfo.filepath));
+
+                        Utils.copyNotProcessedOriginals(null,imageDetails, fIlesInfo.filepath, new Utils.OnUpdateCopy() {
+                            @Override
+                            public void showDialog() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+                                        try {
+                                            if (!pd1.isShowing())
+                                                pd1.show();
+                                        }
+
+                                        catch (Exception e){}
+                                        catch (Error e2){}
+
+                                    }
+                                });
+                            }
+                        });
+
+                        imageDetailsArrayList.add(imageDetails);
+
+                        selectedDocs.add(fIlesInfo.filepath);
+
+                        File[] fs = new File(fIlesInfo.filepath + File.separator + FileNav.PROCESSED_IMAGE_DIR).listFiles();
+
+                        for (File f : fs) {
+
+                            size += f.length() / 1024.0;
+                        }
+
+                    }
+
+
                 }
 
-            }
 
-
-        }
-
-        ProgressDialog pd = new ProgressDialog(MainActivity.this);
-        pd.setTitle("Making PDF 1");
-        pd.setMessage("Page 1");
-        pd.setCancelable(false);
-
-
-        new ShareDialog(MainActivity.this, size, new ShareDialog.OnShareDialogListener() {
-            @Override
-            public void share(boolean isPDF, double quality) {
-
-                quality = (quality) / 200.0;
-
-
-                pd.show();
-                double finalQuality = quality;
-                new Thread(new Runnable() {
+                double finalSize = size;
+                runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF);
+
+                        try {
+                            pd1.dismiss();
+                        }
+
+                        catch (Exception e){}
+
+
+                        ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                        pd.setTitle("Making PDF 1");
+                        pd.setMessage("Page 1");
+                        pd.setCancelable(false);
+
+
+                        new ShareDialog(MainActivity.this, finalSize, new ShareDialog.OnShareDialogListener() {
+                            @Override
+                            public void share(boolean isPDF, double quality) {
+
+                                quality = (quality) / 200.0;
+
+
+                                pd.show();
+                                double finalQuality = quality;
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF);
+                                    }
+                                }).start();
+
+
+                            }
+                        }).build(false).show();
+
+                        deselectAll();
+
+
                     }
-                }).start();
+                });
+
+
+
+
+
 
 
             }
-        }).build(false).show();
+        }).start();
 
-        deselectAll();
+
+
+
+
+
+
+
+
+
+
     }
 
 

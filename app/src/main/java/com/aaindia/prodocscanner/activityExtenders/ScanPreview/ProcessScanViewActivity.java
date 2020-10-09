@@ -59,7 +59,11 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         if (currentProcessing.contains(position))
             return;
 
+
+        isProcessing = true;
         currentProcessing.add(position);
+
+
 
 
         getBinding().protector.setVisibility(View.VISIBLE);
@@ -191,6 +195,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                         //  getRecyclerView().getAdapter().notifyDataSetChanged();
                         onProcessed(holder, position);
 
+                        isProcessing = false;
                     }
                 });
 

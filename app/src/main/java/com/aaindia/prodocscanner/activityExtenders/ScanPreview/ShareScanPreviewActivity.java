@@ -1,15 +1,23 @@
 package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.pdf.DocMaker;
@@ -17,13 +25,21 @@ import com.aaindia.prodocscanner.utils.share.ShareDialog;
 import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import org.spongycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.ListIterator;
 
 public class ShareScanPreviewActivity extends GridScanViewActivity {
+
+
+
 
 
     @Override
@@ -34,21 +50,189 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
     }
 
 
+    private void requestStoragePermission(int perm) {
+
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Permission Needed");
+            builder.setMessage("Storage permission is required to export");
+            builder.setCancelable(false);
+
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, perm);
+
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //
+                }
+            });
+
+
+            builder.create();
+            builder.show();
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, perm);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+
+        if (grantResults.length > 0 &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+
+                    if (requestCode == PERMISION_REQUEST_CODE_SINGLE_PAGE) {
+
+
+                        int position = ((LinearLayoutManager) binding.recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+
+
+                        ScanPreviewAdapter.ViewHolder holder = (ScanPreviewAdapter.ViewHolder) binding.recyclerView.findViewHolderForAdapterPosition(position);
+
+                        if (position > -1 && holder != null) {
+
+                            shareSinglePage(holder, position, true);
+
+                        }
+
+
+                    } else if (requestCode == PERMISION_REQUEST_CODE_SELECTED) {
+                        share(true);
+                    }
+
+
+                }
+            });
+
+        } else {
+
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Permission not granted");
+            builder.setMessage("Cannot export as permission to write to external storage was denied");
+
+            builder.setCancelable(false);
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+
+
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //e.printStackTrace();
+                }
+            });
+
+
+            builder.create();
+            builder.show();
+        }
+
+    }
+
+
     @Override
     public void shareSinglePage(ScanPreviewAdapter.ViewHolder holder, int position, boolean isExport) {
         super.shareSinglePage(holder, position, isExport);
 
+
+
+
+        if (isExport) {
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                        PackageManager.PERMISSION_GRANTED) {
+
+
+                } else {
+                    requestStoragePermission(PERMISION_REQUEST_CODE_SINGLE_PAGE);
+                    return;
+                }
+
+            }
+
+
+        }
+
+
         getBottomMenu1().setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        Utils.copyNotProcessedOriginals(getImageDetails(), getScanDirPath());
 
-        File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), new File(getOriginalFilepaths().get(position)).getName());
+        ProgressDialog pd1 = new ProgressDialog(ShareScanPreviewActivity.this);
+        pd1.setTitle("Please wait");
+        pd1.setMessage("Processing uncropped images");
+        pd1.setCancelable(false);
 
-        ArrayList<File> files = new ArrayList<>();
 
-        files.add(processedFile);
+        HashSet<String> set = new HashSet<>(1);
 
-        shareFromArray(files, processedFile.length() / 1024.0, isExport);
+        set.add(getImageDetails().getAt(position));
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                Utils.copyNotProcessedOriginals(set, getImageDetails(), getScanDirPath(), new Utils.OnUpdateCopy() {
+                    @Override
+                    public void showDialog() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+
+                                    if (!pd1.isShowing())
+                                        pd1.show();
+                                } catch (Exception e) {
+                                } catch (Error e1) {
+                                }
+                            }
+                        });
+                    }
+                });
+
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        pd1.dismiss();
+
+                        File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), new File(getOriginalFilepaths().get(position)).getName());
+
+                        ArrayList<File> files = new ArrayList<>();
+
+                        files.add(processedFile);
+
+                        shareFromArray(files, processedFile.length() / 1024.0, isExport);
+
+
+                    }
+                });
+
+            }
+        }).start();
+
 
     }
 
@@ -64,25 +248,94 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
     public void share(boolean isExport) {
 
 
-        Utils.copyNotProcessedOriginals(getImageDetails(), getScanDirPath());
+        if (isExport) {
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
 
-        ArrayList<File> files = new ArrayList<>();
-        double size = 0;
-        ListIterator listIterator = getImageDetails().getOrdering().listIterator();
+                if (ContextCompat.checkSelfPermission(
+                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                        PackageManager.PERMISSION_GRANTED) {
 
-        while (listIterator.hasNext()) {
 
-            String s = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + listIterator.next();
+                } else {
+                    requestStoragePermission(PERMISION_REQUEST_CODE_ALL);
+                    return;
+                }
 
-            File f = new File(s);
-            size += f.length() / 1024.0;
+            }
 
-            files.add(f);
 
         }
 
-        shareFromArray(files, size, isExport);
+
+        ProgressDialog pd1 = new ProgressDialog(ShareScanPreviewActivity.this);
+        pd1.setTitle("Please wait");
+        pd1.setMessage("Processing uncropped images");
+        pd1.setCancelable(false);
+
+
+        HashSet<String> set = new HashSet<>(getImageDetails().getOrdering().size());
+
+        set.addAll(getImageDetails().getOrdering());
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                Utils.copyNotProcessedOriginals(set, getImageDetails(), getScanDirPath(), new Utils.OnUpdateCopy() {
+                    @Override
+                    public void showDialog() {
+
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                try {
+                                    if (!pd1.isShowing())
+                                        pd1.show();
+                                } catch (Exception e) {
+                                } catch (Error e2) {
+                                }
+
+                            }
+                        });
+
+                    }
+                });
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+
+                        pd1.dismiss();
+
+                        ArrayList<File> files = new ArrayList<>();
+                        double size = 0;
+                        ListIterator listIterator = getImageDetails().getOrdering().listIterator();
+
+                        while (listIterator.hasNext()) {
+
+                            String s = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + listIterator.next();
+
+                            File f = new File(s);
+                            size += f.length() / 1024.0;
+
+                            files.add(f);
+
+                        }
+
+                        shareFromArray(files, size, isExport);
+                    }
+                });
+
+            }
+        }).start();
+
 
     }
 
@@ -121,8 +374,6 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         quality = (quality) / 200.0;
 
         if (isPDF) {
-
-
 
 
             runOnUiThread(new Runnable() {
@@ -205,12 +456,10 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         } else {
 
 
-
-
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    pd.setTitle("Compressing Images");
+                    pd.setTitle("Saving Images");
                     pd.show();
                 }
             });
@@ -287,16 +536,25 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
     public void viewPDF() {
 
 
-        Utils.copyNotProcessedOriginals(getImageDetails(), getScanDirPath());
+        ProgressDialog pd1 = new ProgressDialog(ShareScanPreviewActivity.this);
+        pd1.setTitle("Please wait");
+        pd1.setMessage("Processing uncropped images");
+        pd1.setCancelable(false);
 
 
-        ArrayList<File> files = new ArrayList<>();
+        ArrayList<File> files = new ArrayList<>(getImageDetails().getOrdering().size());
+        HashSet<String> fileSet = new HashSet<>(getImageDetails().getOrdering().size());
         double size = 0;
         ListIterator listIterator = getImageDetails().getOrdering().listIterator();
 
         while (listIterator.hasNext()) {
 
-            String s = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + listIterator.next();
+            String name = (String) listIterator.next();
+
+            fileSet.add(name);
+
+
+            String s = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + name;
 
             File f = new File(s);
             size += f.length() / 1024.0;
@@ -305,121 +563,162 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
         }
 
-        ProgressDialog pd = new ProgressDialog(ShareScanPreviewActivity.this);
-        pd.setTitle("Making PDF");
-        pd.setMessage("Page 1/" + files.size());
-        pd.setCancelable(false);
 
-
-        new ShareDialog(this, (int) size, new ShareDialog.OnShareDialogListener() {
+        double finalSize = size;
+        new Thread(new Runnable() {
             @Override
-            public void share(boolean isPDF, double quality) {
+            public void run() {
 
 
-                new Thread(new Runnable() {
+                Utils.copyNotProcessedOriginals(fileSet, getImageDetails(), getScanDirPath(), new Utils.OnUpdateCopy() {
                     @Override
-                    public void run() {
-
-
-                        double q = (quality) / 200.0;
+                    public void showDialog() {
 
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                pd.setTitle("Making PDF");
-                                pd.show();
+                                try {
+                                    if (!pd1.isShowing())
+                                        pd1.show();
+                                } catch (Exception e) {
+                                } catch (Error e2) {
+                                }
                             }
                         });
 
-
-                        File outputDir = FileNav.getOutputDir(getScanDirPath());
-                        String pdfName = FileNav.getPDFName(getScanDirPath());
-
-                        File outputFile = new File(outputDir, pdfName);
+                    }
+                });
 
 
-                        try {
-                            new DocMaker(ShareScanPreviewActivity.this, files, q).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
-                                @Override
-                                public void onUpdate(int currentPage, int totalPage) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
 
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            pd.setMessage("Page " + currentPage + "/" + totalPage);
+                        pd1.dismiss();
+
+
+                        ProgressDialog pd = new ProgressDialog(ShareScanPreviewActivity.this);
+                        pd.setTitle("Making PDF");
+                        pd.setMessage("Page 1/" + files.size());
+                        pd.setCancelable(false);
+
+
+                        new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize, new ShareDialog.OnShareDialogListener() {
+                            @Override
+                            public void share(boolean isPDF, double quality) {
+
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+
+                                        double q = (quality) / 200.0;
+
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                pd.setTitle("Making PDF");
+                                                pd.show();
+                                            }
+                                        });
+
+
+                                        File outputDir = FileNav.getOutputDir(getScanDirPath());
+                                        String pdfName = FileNav.getPDFName(getScanDirPath());
+
+                                        File outputFile = new File(outputDir, pdfName);
+
+
+                                        try {
+                                            new DocMaker(ShareScanPreviewActivity.this, files, q).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                                                @Override
+                                                public void onUpdate(int currentPage, int totalPage) {
+
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            pd.setMessage("Page " + currentPage + "/" + totalPage);
+                                                        }
+                                                    });
+                                                }
+
+                                                @Override
+                                                public void onComplete(String output) {
+
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            try {
+                                                                pd.dismiss();
+                                                            } catch (Exception e) {
+
+                                                            }
+
+
+                                                            Intent intent = new Intent(Intent.ACTION_VIEW);
+
+                                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                                                                File file = new File(output);
+                                                                Uri uri = FileProvider.getUriForFile(ShareScanPreviewActivity.this, getPackageName() + ".provider", file);
+
+                                                                intent.setDataAndType(uri, "application/pdf");
+
+                                                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                                                            } else {
+
+                                                                intent.setDataAndType(Uri.parse(pdfName), "application/pdf");
+                                                                intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(output));
+                                                            }
+
+                                                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+
+                                                            try {
+                                                                startActivity(intent);
+                                                            } catch (Exception e) {
+
+                                                                Toast.makeText(getApplicationContext(), "No PDF viewer app found", Toast.LENGTH_SHORT).show();
+                                                            }
+
+                                                        }
+                                                    });
+
+                                                }
+
+                                                @Override
+                                                public void onComplete(ArrayList<File> output) {
+
+                                                }
+                                            });
+                                        } catch (IOException e) {
+
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    try {
+                                                        pd.dismiss();
+                                                    } catch (Exception ex) {
+
+                                                    }
+                                                }
+                                            });
                                         }
-                                    });
-                                }
 
-                                @Override
-                                public void onComplete(String output) {
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                pd.dismiss();
-                                            } catch (Exception e) {
-
-                                            }
-
-
-                                            Intent intent = new Intent(Intent.ACTION_VIEW);
-
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
-                                                File file = new File(output);
-                                                Uri uri = FileProvider.getUriForFile(ShareScanPreviewActivity.this, getPackageName() + ".provider", file);
-
-                                                intent.setDataAndType(uri, "application/pdf");
-
-                                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                                            } else {
-
-                                                intent.setDataAndType(Uri.parse(pdfName), "application/pdf");
-                                                intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(output));
-                                            }
-
-                                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-
-                                            try {
-                                                startActivity(intent);
-                                            } catch (Exception e) {
-
-                                                Toast.makeText(getApplicationContext(), "No PDF viewer app found", Toast.LENGTH_SHORT).show();
-                                            }
-
-                                        }
-                                    });
-
-                                }
-
-                                @Override
-                                public void onComplete(ArrayList<File> output) {
-
-                                }
-                            });
-                        } catch (IOException e) {
-
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        pd.dismiss();
-                                    } catch (Exception ex) {
 
                                     }
-                                }
-                            });
-                        }
+                                }).start();
+
+                            }
+                        }).typeView().build(false).show();
 
 
                     }
-                }).start();
+                });
 
             }
-        }).typeView().build(false).show();
+        }).start();
 
 
     }

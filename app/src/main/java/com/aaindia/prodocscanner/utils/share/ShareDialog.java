@@ -22,10 +22,12 @@ import androidx.appcompat.app.AlertDialog;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.adapters.ListFilesAdapter;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.slider.Slider;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -55,6 +57,9 @@ public class ShareDialog {
 
     MaterialTextView textViewPDF, txtViewImg;
 
+
+    TextInputEditText password;
+    SwitchMaterial passwordProtect;
     int qualityControlHeight = 0;
 
     public ShareDialog(Activity context, double initialSizeKB, OnShareDialogListener listener) {
@@ -79,6 +84,34 @@ public class ShareDialog {
         txtViewImg = linearLayout.findViewById(R.id.shareImageTxt);
         textViewPDF = linearLayout.findViewById(R.id.sharePDFTxt);
 
+        password = linearLayout.findViewById(R.id.password);
+        passwordProtect = linearLayout.findViewById(R.id.passwordProtectCB);
+
+        password.setVisibility(View.GONE);
+
+        passwordProtect.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
+                if (compoundButton.isPressed()) {
+
+                    context.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            if (b) {
+                                password.setVisibility(View.VISIBLE);
+                            } else {
+                                password.setVisibility(View.GONE);
+                                password.setText("");
+                            }
+                        }
+                    });
+
+                }
+            }
+        });
+
         imgRadio.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -86,6 +119,11 @@ public class ShareDialog {
 
                 if (compoundButton.isPressed()) {
                     pdfRadio.setChecked(!b);
+
+
+                    linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.GONE);
+
+
 
 
                 }
@@ -102,6 +140,11 @@ public class ShareDialog {
 
                     imgRadio.setChecked(!b);
 
+
+
+                    linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.VISIBLE);
+
+
                 }
             }
         });
@@ -113,6 +156,13 @@ public class ShareDialog {
 
                 imgRadio.setChecked(true);
                 pdfRadio.setChecked(false);
+
+                linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.GONE);
+
+
+
+
+
             }
         });
 
@@ -121,10 +171,11 @@ public class ShareDialog {
             public void onClick(View view) {
                 pdfRadio.setChecked(true);
                 imgRadio.setChecked(false);
+
+                linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.VISIBLE);
+
             }
         });
-
-
 
 
         qualitySlider.addOnChangeListener(new Slider.OnChangeListener() {
@@ -182,8 +233,8 @@ public class ShareDialog {
 
 
         ((TextView) linearLayout.findViewById(R.id.shareTxt)).setText("Export as:");
-        ((TextView) linearLayout.findViewById(R.id.sharePDFTxt)).setText("PDF to device:");
-        ((TextView) linearLayout.findViewById(R.id.shareImageTxt)).setText("Images to gallery");
+      //  ((TextView) linearLayout.findViewById(R.id.sharePDFTxt)).setText("PDF to device:");
+       // ((TextView) linearLayout.findViewById(R.id.shareImageTxt)).setText("Images to gallery");
         shareTxtBtnTxt = "Export";
 
         return this;
@@ -234,7 +285,19 @@ public class ShareDialog {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
-                        listener.share(pdfRadio.isChecked(), qualitySlider.getValue());
+
+                        String passwordTxt = null;
+
+                        if (passwordProtect.isChecked()) {
+
+                            String pass = password.getText().toString();
+
+                            if (pass.length() > 0) {
+                                passwordTxt = pass;
+                            }
+                        }
+
+                        listener.share(pdfRadio.isChecked(), qualitySlider.getValue(), passwordTxt);
                     }
                 })
                 .setNegativeButton("Cancel", /* listener = */ null);
@@ -260,6 +323,6 @@ public class ShareDialog {
 
     public interface OnShareDialogListener {
 
-        void share(boolean isPDF, double quality);
+        void share(boolean isPDF, double quality, String password);
     }
 }

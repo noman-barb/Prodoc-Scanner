@@ -20,7 +20,7 @@
             android:id="@+id/toolbarRL"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+
             android:background="@color/colorSecondaryDark"
             android:elevation="3dp"
             android:minHeight="?attr/actionBarSize">
@@ -252,6 +252,29 @@
                         android:src="@drawable/click_photo">
 
                     </ImageView>
+
+
+                    <ProgressBar
+
+                        android:id="@+id/processingCapture"
+                        android:visibility="gone"
+                        android:alpha="0.7"
+                        android:scaleY="1"
+                        android:scaleX="1"
+                        android:progressTint="@color/colorWhite"
+                        android:indeterminateTint="@color/colorWhite"
+
+                        android:foregroundTint="@color/colorWhite"
+
+                        android:layout_alignTop="@id/cameraCapture"
+                        android:layout_alignBottom="@id/cameraCapture"
+                        android:layout_centerInParent="true"
+
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+
+                    </ProgressBar>
 
                     <LinearLayout
 

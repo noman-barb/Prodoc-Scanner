@@ -25,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
@@ -98,6 +99,7 @@ public class ListFilesAdapter extends RecyclerView.Adapter<ListFilesAdapter.View
 
                         .load(getItem(position).thumbnailPath )
                         .skipMemoryCache(true)
+                        .transition(DrawableTransitionOptions.withCrossFade())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
 
                         .into(holder.thumbnail);
@@ -111,6 +113,7 @@ public class ListFilesAdapter extends RecyclerView.Adapter<ListFilesAdapter.View
                         .load("" )
                         .placeholder(R.drawable.scan_folder_icon)
                         .skipMemoryCache(true)
+                        .transition(DrawableTransitionOptions.withCrossFade())
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
 
                         .into(holder.thumbnail);

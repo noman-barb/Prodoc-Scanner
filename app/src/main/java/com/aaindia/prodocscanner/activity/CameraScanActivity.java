@@ -1,22 +1,31 @@
 package com.aaindia.prodocscanner.activity;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.Spannable;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
@@ -25,6 +34,7 @@ import android.widget.Toast;
 
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ScanViewActivity;
+import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
@@ -34,6 +44,10 @@ import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.nguyenhoanglam.imagepicker.model.Image;
+import com.nguyenhoanglam.imagepicker.ui.imagepicker.ImagePicker;
+
 
 import org.apache.commons.io.FileUtils;
 import org.opencv.core.Mat;
@@ -53,19 +67,24 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
 import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
 
 public class CameraScanActivity extends CameraPreviewActivity {
 
 
     public static final String IMPORT_IMAGES = "import_images";
+    private static final int PERMISION_REQUEST_CODE_STORAGE = 2420;
     public static String SCAN_PATH_KEY = "scan_path";
     public static String CURRENT_DIR_KEY = "current_dir";
     public static String NUM_PAGES = "num_pages";
     public static String INSERT_AT = "insert_at";
     public static String ADD_PAGES = "add_pages";
+
+    public static String RETAKE_IMAGE = "retake_image";
 
 
     private ActivityCameraScanBinding binding;
@@ -94,6 +113,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private boolean importImages = false;
     boolean intentResult = false;
 
+    boolean isRetakeImage = false;
 
     MediaPlayer cameraShutterSound = null;
 
@@ -123,12 +143,13 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     cameraShutterSound.stop();
 
                 cameraShutterSound.release();
+                cameraShutterSound = null;
             }
         } catch (Exception e) {
         }
 
 
-        if (!executorService.isTerminated()) {
+        if (executorService != null && !executorService.isTerminated()) {
 
 
             if (!executorService.isShutdown())
@@ -178,8 +199,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 if (importImages || intentResult) {
 
                     imageDetails.sync();
-                    goToDocViewer();
-                    finish();
+                    next(binding.next);
                 }
 
 
@@ -192,18 +212,97 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-        if (requestCode == IMPORT_ACTIVITY_CODE
-                && resultCode == Activity.RESULT_OK) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 
-            onExternalImport(data);
 
+            if (requestCode == IMPORT_ACTIVITY_CODE
+                    && resultCode == Activity.RESULT_OK) {
+
+                onExternalSafImport(data);
+
+            }
+
+        } else {
+            if (ImagePicker.shouldHandleResult(requestCode, resultCode, data, IMPORT_ACTIVITY_CODE)) {
+
+                onExternalImport(data);
+            }
         }
 
+
     }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+
+        switch (requestCode) {
+            case PERMISION_REQUEST_CODE_STORAGE:
+
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startImagePicker();
+                } else {
+
+                    AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+                    builder.setTitle("Permission not granted");
+                    builder.setMessage("Cannot import images as permission to access storage was denied.");
+
+                    builder.setCancelable(false);
+
+                    builder.setPositiveButton("OK", (dialog, which) -> {
+
+                        if (importImages)
+                            finish();
+
+
+                        try {
+                            dialog.dismiss();
+                        } catch (Exception e) {
+                            //e.printStackTrace();
+                        }
+                    });
+
+
+                    builder.create();
+                    builder.show();
+                }
+                return;
+        }
+    }
+
 
     private void onExternalImport(Intent data) {
 
         MainActivity.listingModified = true;
+
+
+        ArrayList<Image> images = ImagePicker.getImages(data);
+
+        ArrayList<Uri> uris = new ArrayList<>();
+
+        for (Image image : images) {
+            uris.add(image.getUri());
+        }
+
+
+        if (uris.size() > 0) {
+
+
+            if (uris.size() > 1) {
+                importMultipleImages(uris);
+            } else {
+                importSingleImage(uris.get(0));
+            }
+        }
+
+
+    }
+
+
+    private void onExternalSafImport(Intent data) {
 
         if (data.getClipData() != null) {
 
@@ -300,8 +399,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
                             // newly added
 
                             if (importImages) {
-                                goToDocViewer();
-                                finish();
+                                // goToDocViewer();
+                                //  finish();
+
+                                next(binding.next);
                             }
                         }
                     });
@@ -403,6 +504,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         importImages = getIntent().getExtras().getBoolean(IMPORT_IMAGES, false);
 
+        isRetakeImage = getIntent().getExtras().getBoolean(RETAKE_IMAGE, false);
+
 
         setRequestPermission(!(importImages || intentResult));
 
@@ -431,7 +534,29 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
         if (importImages) {
+
+
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && Build.SUPPORTED_64_BIT_ABIS.length > 0) {
+//                importImages();
+//            } else {
+//                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//
+//                                importImages();
+//                            }
+//                        });
+//                    }
+//                }, 300);
+//            }
+
+
             importImages();
+
         }
 
         executorService = Executors.newFixedThreadPool(2);
@@ -440,7 +565,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (intentResult) {
 
             importImages = true;
-            onExternalImport(getIntent());
+            onExternalSafImport(getIntent());
         }
 
 
@@ -513,6 +638,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     }
 
+
     @Override
     public void next(Button view) {
         super.next(view);
@@ -530,14 +656,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
         pd.setCancelable(false);
 
 
-        executorService.shutdown();
+        if (executorService != null && !executorService.isTerminated())
+            executorService.shutdown();
 
         new Thread(new Runnable() {
             @Override
             public void run() {
 
-                while (!executorService.isTerminated()) {
+                if(executorService!=null) {
+                    while (!executorService.isTerminated()) {
 
+                    }
                 }
 
                 runOnUiThread(new Runnable() {
@@ -569,12 +698,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (getIntent().getExtras() != null) {
 
             scrollTo = getIntent().getExtras().getInt(CameraScanActivity.INSERT_AT, 0);
+
+            if (isRetakeImage && insertAt > 0) {
+                scrollTo--;
+            }
         }
 
         Intent intent = new Intent(CameraScanActivity.this, ScanPreviewActivity.class);
         intent.putExtra(ScanPreviewActivity.SCAN_DIR_PATH, scanDirPath);
         intent.putExtra(GlobalConstants.CLASS_NAME, MainActivity.CLASS_NAME);
         intent.putExtra(ScanPreviewActivity.SCROLL_TO, scrollTo);
+
         intent.putExtra(ScanViewActivity.NEW_SCAN, true);
 
 
@@ -589,15 +723,104 @@ public class CameraScanActivity extends CameraPreviewActivity {
     public void importImages() {
         super.importImages();
 
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 
-        intent.setType("image/*");
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 
-        startActivityForResult(intent, IMPORT_ACTIVITY_CODE);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, !isRetakeImage);
 
+            intent.setType("image/*");
+
+            startActivityForResult(intent, IMPORT_ACTIVITY_CODE);
+
+        } else {
+            checkCameraPermission();
+        }
+
+
+    }
+
+
+    private void checkCameraPermission() {
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.READ_EXTERNAL_STORAGE) ==
+                    PackageManager.PERMISSION_GRANTED) {
+                startImagePicker();
+
+                ;
+
+            } else {
+                requestStoragePermision();
+            }
+
+        } else {
+
+            startImagePicker();
+
+        }
+    }
+
+    private void requestStoragePermision() {
+
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+
+            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle("Permission Needed");
+            builder.setMessage("Storage access permission is needed to import images.");
+            builder.setCancelable(false);
+
+
+            builder.setPositiveButton("OK", (dialog, which) -> {
+
+
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISION_REQUEST_CODE_STORAGE);
+
+                try {
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    //
+                }
+            });
+
+
+            builder.create();
+            builder.show();
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISION_REQUEST_CODE_STORAGE);
+        }
+
+
+    }
+
+    private void startImagePicker() {
+
+
+        ImagePicker.with(CameraScanActivity.this)
+                .setFolderMode(true)
+
+                .setShowCamera(false)
+                .setAlwaysShowDoneButton(false)
+                .setDoneTitle("Import")
+                .setBackgroundColor("#E1E2E1")
+                .setToolbarColor("#3949AB")
+                .setStatusBarColor("#3949AB")
+                .setProgressBarColor("#2962FF")
+                .setIndicatorColor("#2962FF")
+
+                .setMultipleMode(true)
+                .setShowNumberIndicator(true)
+                .setRequestCode(IMPORT_ACTIVITY_CODE)
+                .start();
     }
 
     @Override
@@ -665,6 +888,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
     }
 
+
     @Override
     public void captureImage(ImageView view) {
         super.captureImage(view);
@@ -672,6 +896,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         if (isCapturing)
             return;
+
+        cameraShutterAnimation();
+        binding.processingCapture.setVisibility(View.VISIBLE);
         view.setAlpha(0.4f);
         isCapturing = true;
 
@@ -699,10 +926,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
                     imageSaved(imageFile, imageFile.getName(), null);
-                    cameraShutterAnimation();
 
 
                     isCapturing = false;
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            binding.processingCapture.setVisibility(View.GONE);
+                        }
+                    });
 
                 }
 
@@ -711,6 +945,15 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 public void onError(@NonNull ImageCaptureException exception) {
 
                     isCapturing = false;
+
+                    isCapturing = false;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            binding.processingCapture.setVisibility(View.GONE);
+                        }
+                    });
 
                 }
             });
@@ -725,9 +968,14 @@ public class CameraScanActivity extends CameraPreviewActivity {
             public void onCaptureSuccess(@NonNull ImageProxy image) {
 
 
-                isCapturing = false;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
 
-                cameraShutterAnimation();
+                        binding.processingCapture.setVisibility(View.GONE);
+                    }
+                });
+
 
                 ImageCropActivity.originalBitmap = BitmapUtils.imageProxyToBitmap(image);
                 ImageCropActivity.rotationDegrees = image.getImageInfo().getRotationDegrees();
@@ -736,6 +984,16 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 Intent intent = new Intent(CameraScanActivity.this, ImageCropActivity.class);
 
                 HashMap<String, File> map = FileNav.newImageFile(scanDirPath);
+
+                isCapturing = false;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        binding.processingCapture.setVisibility(View.GONE);
+                    }
+                });
+
 
                 try {
                     String originalFileName = map.get(FileNav.ORIGINAL_IMAGE_FILE).getCanonicalPath();
@@ -765,57 +1023,71 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private void cameraShutterAnimation() {
 
 
-        runOnUiThread(new Runnable() {
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
 
-                binding.cameraAlphaAnimationRL.setVisibility(View.VISIBLE);
 
-                ValueAnimator valueAnimator = ValueAnimator.ofFloat(0.2f, 0.4f, 0.6f, 0.8f, 1f, 1f, 1f, 0.8f, 0.6f, 0.4f, 0.2f, 0f);
-
-                valueAnimator.setDuration(150);
-
-                valueAnimator.setInterpolator(new AccelerateInterpolator());
-
-                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                runOnUiThread(new Runnable() {
                     @Override
-                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
-
-                        float value = (float) valueAnimator.getAnimatedValue();
-                        binding.cameraAlphaAnimationRL.setAlpha(value);
+                    public void run() {
 
 
-                        if (value < 0.1f) {
+                        try {
 
-                            binding.cameraAlphaAnimationRL.setVisibility(View.GONE);
+                            binding.cameraAlphaAnimationRL.setVisibility(View.VISIBLE);
+
+                            ValueAnimator valueAnimator = ValueAnimator.ofFloat(0.2f, 0.4f, 0.6f, 0.8f, 1f, 1f, 1f, 0.8f, 0.6f, 0.4f, 0.2f, 0f);
+
+                            valueAnimator.setDuration(150);
+
+                            valueAnimator.setInterpolator(new AccelerateInterpolator());
+
+                            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                                @Override
+                                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+
+                                    float value = (float) valueAnimator.getAnimatedValue();
+                                    binding.cameraAlphaAnimationRL.setAlpha(value);
+
+
+                                    if (value < 0.1f) {
+
+                                        binding.cameraAlphaAnimationRL.setVisibility(View.GONE);
+                                    }
+
+                                }
+                            });
+
+
+                            try {
+
+                                if (cameraShutterSound != null) {
+                                    if (cameraShutterSound.isPlaying())
+                                        cameraShutterSound.stop();
+
+                                    cameraShutterSound.start();
+                                }
+
+                            } catch (Exception e) {
+                            }
+
+
+                            valueAnimator.start();
+                        } catch (Exception e) {
                         }
+
 
                     }
                 });
-
-
-                try {
-
-                    if (cameraShutterSound != null) {
-                        if (cameraShutterSound.isPlaying())
-                            cameraShutterSound.stop();
-
-                        cameraShutterSound.start();
-                    }
-
-                } catch (Exception e) {
-                }
-
-
-                valueAnimator.start();
-
-
             }
-        });
+        }, 300);
     }
 
 
     private void imageSaved(File filepath, String filename, Effects effects) {
+
+
 
 
         runOnUiThread(new Runnable() {
@@ -830,10 +1102,34 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                     new GuideView.Builder(CameraScanActivity.this)
                             .setTitle("Next")
-                            .setContentSpan((Spannable) Html.fromHtml("<b>Proceed next</b> if you are <b>done</b> with the scan otherwise <b>continue scanning</b>."))
+                            .setContentSpan((Spannable) Html.fromHtml("<b>Proceed next</b> if you are <b>done</b>."))
                             .setGravity(Gravity.auto) //optional
                             .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
                             .setTargetView(binding.next)
+
+                            .setGuideListener(new GuideListener() {
+                                @Override
+                                public void onDismiss(View view) {
+
+
+                                    new GuideView.Builder(CameraScanActivity.this)
+                                            .setTitle("Capture more")
+                                            .setContentSpan((Spannable) Html.fromHtml("Or <b>capture more </b> images in one go."))
+                                            .setGravity(Gravity.auto) //optional
+                                            .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                            .setTargetView(binding.cameraCapture)
+
+                                            .setGuideListener(new GuideListener() {
+                                                @Override
+                                                public void onDismiss(View view) {
+
+                                                }
+                                            })
+                                            .build()
+                                            .show();
+
+                                }
+                            })
                             .build()
                             .show();
 
@@ -855,22 +1151,124 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 imageDetails.getOrdering().add(insertAt, filename);
 
 
-                incrementPageCounters();
 
 
-                if (filepath != null) {
 
-                    executorService.execute(new Runnable() {
-                        @Override
-                        public void run() {
 
-                            autocropThis(filepath.getAbsolutePath(), imageDetails);
-                        }
-                    });
+                if (filename != null && insertAt == 0 && executorService!=null && !executorService.isTerminated() && scanDirPath!=null) {
+
+                    try {
+
+                        executorService.execute(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                try {
+
+                                    File originalFile = new File(scanDirPath + File.separator + FileNav.ORIGINAL_IMAGE_DIR + File.separator + filename);
+
+
+                                    if (!originalFile.exists())
+                                        return;
+                                    Log.d("aaaaaaaaaaaaa", originalFile.getAbsolutePath());
+                                    Mat mat = Imgcodecs.imread(originalFile.getAbsolutePath());
+
+                                    int width = mat.width();
+                                    int height = mat.height();
+
+                                    float mp = (float) ((mat.width() / 1000.0) * (mat.height() / 1000.0));
+                                    if (mp > 2) {
+                                        float scale = 2.0f / mp;
+
+                                        Imgproc.resize(mat, mat, new Size(width * scale, height * scale), Imgproc.INTER_AREA);
+
+                                    }
+
+                                    Log.d("aaaaaaaaaaaaa", scanDirPath + File.separator + "thumbnail.jpg");
+
+                                    Imgcodecs.imwrite(scanDirPath + File.separator + "thumbnail.jpg", mat);
+                                    mat.release();
+
+
+                                } catch (Exception e) {
+                                }
+
+
+                            }
+                        });
+
+
+                    } catch (Exception e) {
+                    }
 
                 }
 
-                isCapturing = false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+                if (isRetakeImage && insertAt > 0) {
+
+                    String oldImageName = imageDetails.getAt(insertAt - 1);
+
+                    File file1 = new File(scanDirPath + File.separator + FileNav.ORIGINAL_IMAGE_DIR + File.separator + oldImageName);
+                    File file2 = new File(scanDirPath + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + oldImageName);
+
+                    if (file1.exists()) {
+                        FileUtils.deleteQuietly(file1);
+                    }
+                    if (file2.exists()) {
+                        FileUtils.deleteQuietly(file2);
+                    }
+
+
+                    imageDetails.getOrdering().remove(insertAt - 1);
+
+                    if (filepath != null) {
+                        try {
+                            autocropThis(filepath.getAbsolutePath(), imageDetails);
+                        } catch (Exception e) {
+                        }
+
+                    }
+
+                    // autocropThis(filepath.getAbsolutePath(), imageDetails);
+                    imageDetails.sync();
+                    goToDocViewer();
+                } else {
+
+
+                    if (filepath != null) {
+
+
+                        executorService.execute(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                try {
+                                    autocropThis(filepath.getAbsolutePath(), imageDetails);
+                                } catch (Exception e) {
+                                }
+
+                            }
+                        });
+
+
+                    }
+
+
+                    incrementPageCounters();
+                    isCapturing = false;
+                }
 
 
             }
@@ -925,8 +1323,21 @@ public class CameraScanActivity extends CameraPreviewActivity {
         super.onResume();
 
 
-        if (executorService == null) {
+        if (executorService == null || executorService.isTerminated()) {
             executorService = Executors.newFixedThreadPool(2);
+        }
+
+
+        if (cameraShutterSound == null) {
+            try {
+
+                cameraShutterSound = new MediaPlayer();
+                cameraShutterSound.setAudioStreamType(AudioManager.STREAM_RING);
+                cameraShutterSound.setDataSource(this, Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.camera_shutter));
+                cameraShutterSound.prepare();
+            } catch (Exception e) {
+
+            }
         }
 
     }

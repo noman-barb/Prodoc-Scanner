@@ -3,6 +3,7 @@ package com.aaindia.prodocscanner.adapters;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -30,6 +31,7 @@ import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
 import com.aaindia.prodocscanner.wrappers.Effects;
+import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 
 import com.bumptech.glide.Glide;
@@ -50,6 +52,7 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.Executors;
 
 public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.ViewHolder> {
 
@@ -58,8 +61,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     public String scanDirName;
     public LinkedList<String> orders;
 
-    public ArrayList<String> originalFilepaths;
-    public SavedImageDetails savedImageDetails;
+//    public ArrayList<String> originalFilepaths;
+//    public SavedImageDetails savedImageDetails;
     private Context context;
     private int imageViewMargin = 0;
 
@@ -72,8 +75,10 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     private int THRESH_DISTANCE = 100;
     private boolean touchLock = false;
 
+    public DataProvider dataProvider;
 
-    public ScanPreviewAdapter(Activity context, String scanDirName, TouchableReyclerView reyclerView, AdapterInterface adapterInterface) {
+
+    public ScanPreviewAdapter(Activity context, String scanDirName, TouchableReyclerView reyclerView, AdapterInterface adapterInterface, DataProvider dataProvider) {
         this.context = context;
         this.scanDirName = scanDirName;
         this.reyclerView = reyclerView;
@@ -84,9 +89,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         int width = displayMetrics.widthPixels;
 
         THRESH_DISTANCE = (int) (width * 0.10);
-
-
-
+        this.dataProvider = dataProvider;
 
 
     }
@@ -102,18 +105,22 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
+        Glide.with(context).clear(holder.imageView);
 
-        Log.d("aaaaaaaaaaaaa","pos "+ position);
+        holder.isBusy = false;
 
-        Log.d("aaaaaaaaaaaaa","size "+ getItemCount());
+       // holder.imageView.recycle();
+        holder.polygonView.setVisibility(View.GONE);
 
-        if (position>=(originalFilepaths.size())){
+        if (position >= (dataProvider.filepathProvider().size())) {
             return;
         }
 
         holder.imageViewParent.clearAnimation();
+        ;
         holder.imageViewParent.setScaleX(1.0f);
         holder.imageViewParent.setScaleY(1.0f);
+
         holder.imageViewParent.setRotation(0);
 
 
@@ -128,22 +135,26 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
         }
 
-        String imageFilename = new File(originalFilepaths.get(position)).getName();
+        String imageFilename = new File(dataProvider.filepathProvider().get(position)).getName();
 
         File processedFile = FileNav.getProcessedFileFromName(scanDirName, imageFilename);
 
 
-        final String[] imageShowPath = {originalFilepaths.get(position)};
+        final String[] imageShowPath = {dataProvider.filepathProvider().get(position)};
 
 
-
-        holder.processing.setVisibility(View.GONE);
+        holder.processing.setVisibility(View.VISIBLE);
 
         holder.nextAction.setVisibility(View.GONE);
 
         holder.imageView.clearAnimation();
 
-        Glide.with(context).clear(holder.imageView);
+
+
+
+        boolean processedFileExists = processedFile.exists();
+
+
 
 
         holder.imageView.post(new Runnable() {
@@ -151,12 +162,24 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
             public void run() {
 
 
-                if (processedFile.exists() && savedImageDetails.getEffects(imageFilename) != null) {
+                if (processedFileExists && dataProvider.imageDetailsProvider().getEffects(imageFilename) != null) {
 
 
                     holder.nextAction.setVisibility(View.GONE);
 
                     imageShowPath[0] = processedFile.getAbsolutePath();
+
+
+                    holder.processing.setVisibility(View.GONE);
+
+
+                    holder.imageViewParent.setScaleX(1.0f);
+                    holder.imageViewParent.setScaleY(1.0f);
+                    holder.imageViewParent.setRotation(0);
+
+
+
+
 
                     Glide.with(context)
 
@@ -200,7 +223,6 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                             .into(holder.imageView);
 
                 } else {
-
 
 
                     Glide.with(context)
@@ -252,10 +274,12 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                             .into(holder.imageView);
 
 
+
+
                 }
 
 
-                holder.pageNumber.setText("Page " + (position + 1) + "/" + originalFilepaths.size());
+                holder.pageNumber.setText("Page " + (position + 1) + "/" + dataProvider.filepathProvider().size());
 
                 holder.polygonView.setVisibility(View.GONE);
 
@@ -301,14 +325,13 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                         x1 = event.getX();
 
 
-
                         break;
                     case MotionEvent.ACTION_MOVE:
 
 
-                    //
+                        //
 
-                        if (!touchLock && holder.imageView.getCurrentScaleFactor()<1.1) {
+                        if (!touchLock && holder.imageView.getCurrentScaleFactor() < 1.1) {
                             touchLock = event.getPointerCount() > 1;
                             x2 = event.getX();
 
@@ -324,7 +347,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                     case MotionEvent.ACTION_UP:
 
 
-                        if (!touchLock && holder.imageView.getCurrentScaleFactor()<1.1) {
+                        if (!touchLock && holder.imageView.getCurrentScaleFactor() < 1.1) {
 
                             if (Math.abs(deltaSum) > THRESH_DISTANCE) {
 
@@ -359,13 +382,11 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
     public int getItemCount() {
 
 
-        if (originalFilepaths != null)
-            return originalFilepaths.size();
+        if (dataProvider.filepathProvider()!= null)
+            return dataProvider.filepathProvider().size();
 
         return 0;
     }
-
-
 
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -378,6 +399,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         public RelativeLayout nextAction;
         public ImageView processImage;
         public ImageView clearAction;
+
+        public boolean isBusy = false;
 
 
         public Bitmap displayBitmap = null;
@@ -412,5 +435,12 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         void notProcessed(int postion, ViewHolder holder);
 
         void processExit(int position, ViewHolder holder);
+    }
+
+    public interface DataProvider{
+
+        ArrayList<String> filepathProvider();
+        SavedImageDetails imageDetailsProvider();
+
     }
 }

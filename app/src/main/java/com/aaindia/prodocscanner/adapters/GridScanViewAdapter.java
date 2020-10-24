@@ -37,7 +37,7 @@ import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
 public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapter.ViewHolder> {
 
 
-    public ArrayList<String> originalFilepaths;
+
     private Context context;
     public String scanDirName;
 
@@ -50,13 +50,17 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
 
     public boolean globalSelect = false;
 
+    public DataModel model;
 
-    public GridScanViewAdapter(Activity context, String scanDirName, ArrayList<String> originalFilepaths, ItemPressHelper itemPressHelper) {
 
-        this.originalFilepaths = originalFilepaths;
+    public GridScanViewAdapter(Activity context, String scanDirName, DataModel model, ItemPressHelper itemPressHelper) {
+
+
         this.context = context;
         this.scanDirName = scanDirName;
         this.itemPressHelper = itemPressHelper;
+
+        this.model = model;
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         context.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -114,13 +118,13 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
 
 
         holder.pageNumber.setText((position + 1) + "");
-        File processedFile = FileNav.getProcessedFileFromName(scanDirName, new File(originalFilepaths.get(position)).getName());
+        File processedFile = FileNav.getProcessedFileFromName(scanDirName, new File(model.dataProvider().get(position)).getName());
 
         String filepath = processedFile.getAbsolutePath();
 
         if (!processedFile.exists()) {
 
-            filepath = originalFilepaths.get(position);
+            filepath = model.dataProvider().get(position);
         }
 
         String finalFilepath = filepath;
@@ -168,10 +172,10 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
     @Override
     public int getItemCount() {
 
-        if (originalFilepaths != null) {
+        if (model != null) {
 
-            if (originalFilepaths.size() != 0) {
-                return originalFilepaths.size();
+            if (model.dataProvider().size() != 0) {
+                return model.dataProvider().size();
             } else {
                 return 0;
             }
@@ -206,6 +210,12 @@ public class GridScanViewAdapter extends RecyclerView.Adapter<GridScanViewAdapte
         void onLongPress(GridScanViewAdapter.ViewHolder holder, int position);
 
 
+    }
+
+    public interface DataModel{
+
+
+        public ArrayList<String> dataProvider();
     }
 
 

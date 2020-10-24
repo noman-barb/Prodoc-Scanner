@@ -32,8 +32,8 @@ public class Constants {
 
         documentImageTypesData = new ArrayList<>();
 
-        documentImageTypesData.add(DOCUMENT_TYPE_NOTE);
         documentImageTypesData.add(DOCUMENT_TYPE_DOCUMENT);
+        documentImageTypesData.add(DOCUMENT_TYPE_NOTE);
         documentImageTypesData.add(DOCUMENT_TYPE_PHOTO);
 
         return documentImageTypesData;

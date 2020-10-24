@@ -21,6 +21,7 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,16 +30,21 @@ import android.text.Html;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aaindia.prodocscanner.BuildConfig;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.GridScanViewActivity;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
@@ -51,6 +57,7 @@ import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.utils.pdf.DocMaker;
+import com.aaindia.prodocscanner.utils.pdf.PDFRendererWhiteBG;
 import com.aaindia.prodocscanner.utils.share.ShareDialog;
 import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.aaindia.prodocscanner.wrappers.Clipboard;
@@ -61,16 +68,26 @@ import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.gson.JsonObject;
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
 import com.tom_roush.pdfbox.contentstream.operator.state.Save;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
+import com.tom_roush.pdfbox.pdmodel.PDPage;
+import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException;
+import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImage;
+import com.tom_roush.pdfbox.rendering.PDFRenderer;
 
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+
 import org.junit.internal.runners.statements.RunAfters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -89,6 +106,8 @@ import angtrim.com.fivestarslibrary.FiveStarsDialog;
 import angtrim.com.fivestarslibrary.NegativeReviewListener;
 import angtrim.com.fivestarslibrary.ReviewListener;
 
+import eu.dkaratzas.android.inapp.update.Constants;
+import eu.dkaratzas.android.inapp.update.InAppUpdateManager;
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
 import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
@@ -173,6 +192,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private static final int MENU_ITEM_ID_SHARE_LOW_RES = 14;
     private static final int MENU_ITEM_ID_OCR = 15;
+    private static final int REQ_CODE_VERSION_UPDATE = 1839;
+    private static final int MENU_ITEM_MORE_OPTIONS_ABOUT = 16;
 
     public ActivityMainBinding binding;
     public ListFilesAdapter adapter;
@@ -195,38 +216,43 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     public void onResume() {
 
 
+
         Utils.checkOpenCV(this);
 
         super.onResume();
 
 
-        if (executor != null) {
+//        if (executor != null) {
+//
+//
+//            try {
+//                executor.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                        ArrayList<ListFIlesInfo> x = FileNav.getDirInfo(currentPath, null);
+//
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//
+//                                if (listingModified || x.size() != adapter.data.size()) {
+//
+//
+//
+//                                    listingModified = false;
+//                                }
+//                            }
+//                        });
+//                    }
+//                });
+//            } catch (Exception e) {
+//            }
+//        }
 
 
-            try {
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
+        nagivateTo(currentPath);
 
-                        ArrayList<ListFIlesInfo> x = FileNav.getDirInfo(currentPath, null);
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-
-                                if (listingModified || x.size() != adapter.data.size()) {
-
-                                    nagivateTo(currentPath);
-
-                                    listingModified = false;
-                                }
-                            }
-                        });
-                    }
-                });
-            } catch (Exception e) {
-            }
-        }
     }
 
     @Override
@@ -334,6 +360,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         binding.addPhotos.setOnClickListener(this);
 
+        binding.emptyStartScanning.setOnClickListener(this::onClick);
         searchHandle(binding.searchView);
 
         nagivateTo(currentPath);
@@ -349,9 +376,96 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         showcase();
 
 
+        if (Prefs.firstTimeSeenScreen(MainActivity.this, "first_time_app_open_ion_main_activity_news")) {
+
+            Ion.with(this)
+                    .load("http://prodocstatic.awessamapps.com/news/news.json")
+                    .asJsonObject()
+                    .setCallback(new FutureCallback<JsonObject>() {
+                        @Override
+                        public void onCompleted(Exception e, JsonObject result) {
 
 
+                            if (e == null) {
 
+
+                                try {
+
+                                    Long id = result.get("newsId").getAsLong();
+
+                                    String news = result.get("msg").getAsString();
+                                    String header = result.get("header").getAsString();
+
+                                    Boolean isUpdate = result.get("isUpdate").getAsBoolean();
+
+                                    if (id != null && news != null) {
+
+                                        long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
+
+                                        if (id > curId) {
+
+                                            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                                            builder.setTitle(Html.fromHtml(header));
+
+                                            TextView textView = new TextView(MainActivity.this);
+
+                                            textView.setMovementMethod(LinkMovementMethod.getInstance());
+
+                                            textView.setText(Html.fromHtml(news));
+
+                                            textView.setPadding(50, 50, 50, 50);
+
+                                            builder.setView(textView);
+                                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialogInterface, int i) {
+
+
+                                                    Prefs.NewsPrefs.setLatestInt(MainActivity.this, id);
+
+                                                }
+                                            });
+                                            builder.setCancelable(false);
+
+                                            builder.show();
+
+                                        } else {
+
+                                            if (isUpdate != null && isUpdate)
+                                                inAppUpdateManager();
+
+
+                                        }
+                                    }
+                                } catch (Exception e1) {
+                                } catch (Error e2) {
+                                }
+
+
+                            }
+
+                        }
+                    });
+
+        }
+
+    }
+
+    private void inAppUpdateManager() {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                InAppUpdateManager inAppUpdateManager = InAppUpdateManager.Builder(MainActivity.this, REQ_CODE_VERSION_UPDATE)
+                        .resumeUpdates(true)
+                        .mode(Constants.UpdateMode.FLEXIBLE)
+                        .snackBarMessage("An update has just been downloaded.")
+                        .snackBarAction("RESTART");
+
+                inAppUpdateManager.checkForAppUpdate();
+            }
+        });
 
 
     }
@@ -530,6 +644,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         SpannableString exportBackup = new SpannableString(BLANK_SPACE_5 + MORE_OPTIONS_EXPORT_BACKUP);
 
+        SpannableString more = new SpannableString(BLANK_SPACE_5 + "More");
+        SpannableString about = new SpannableString(BLANK_SPACE_5 + "About");
+        SpannableString localBackup = new SpannableString(BLANK_SPACE_5 + "Local Backup");
+
 
         setSpannableDrawable(R.drawable.baseline_create_new_folder_black_24, newFolder);
         setSpannableDrawable(R.drawable.baseline_content_paste_black_24, paste);
@@ -539,7 +657,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         setSpannableDrawable(R.drawable.baseline_share_black_24, shareApp);
 
         setSpannableDrawable(R.drawable.baseline_archive_white_24, importBackup);
-        setSpannableDrawable(R.drawable.baseline_backup_white_24, exportBackup);
+        setSpannableDrawable(R.drawable.baseline_unarchive_white_24, exportBackup);
+        setSpannableDrawable(R.drawable.baseline_more_white_24, more);
+        setSpannableDrawable(R.drawable.baseline_info_white_24, about);
+        setSpannableDrawable(R.drawable.baseline_sd_storage_white_24, localBackup);
 
 
         menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_CREATE_NEW_FOLDER, 0, newFolder);
@@ -554,12 +675,21 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         // menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_SYNC_SETTINGS, 0, syncSettings);
 
 
-        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_IMPORT_BACKUP, 0, importBackup);
-        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_EXPORT_BACKUP, 0, exportBackup);
+        SubMenu sMenu = menu.addSubMenu(localBackup);
+
+        sMenu.setHeaderTitle(Html.fromHtml("<h4>Local Backup</h4>"));
+        sMenu.add(0, MENU_ITEM_ID_MORE_OPTIONS_IMPORT_BACKUP, 0, importBackup);
+        sMenu.add(0, MENU_ITEM_ID_MORE_OPTIONS_EXPORT_BACKUP, 0, exportBackup);
 
 
-        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_RATE_APP, 0, rateApp);
-        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_SHARE_APP, 0, shareApp);
+        SubMenu sMenu1 = menu.addSubMenu(more);
+        sMenu1.setHeaderTitle(Html.fromHtml("<h4>More</h4>"));
+        sMenu1.add(0, MENU_ITEM_ID_MORE_OPTIONS_RATE_APP, 0, rateApp);
+        sMenu1.add(0, MENU_ITEM_ID_MORE_OPTIONS_SHARE_APP, 0, shareApp);
+        sMenu1.add(0, MENU_ITEM_MORE_OPTIONS_ABOUT, 0, about);
+
+//        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_RATE_APP, 0, rateApp);
+//        menu.add(0, MENU_ITEM_ID_MORE_OPTIONS_SHARE_APP, 0, shareApp);
 
 
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -592,7 +722,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                     case MENU_ITEM_ID_MORE_OPTIONS_RATE_APP:
                         rateThisApp();
-
+                        break;
                     case MENU_ITEM_ID_MORE_OPTIONS_SHARE_APP:
                         shareThisApp();
                         break;
@@ -605,6 +735,25 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     case MENU_ITEM_ID_MORE_OPTIONS_EXPORT_BACKUP:
 
                         exportLocalBackup();
+                        break;
+
+                    case MENU_ITEM_MORE_OPTIONS_ABOUT:
+
+                        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                        builder.setTitle(Html.fromHtml("<h4>Prodoc Scanner <i>v" + BuildConfig.VERSION_NAME + "</i></h4>"));
+
+                        String s = "Developed by <b><i>Awessam Apps India</i></b>" + "<br><br>" + "<a href='mailto:correspondence.awessamapps@gmail.com'>correspondence.awessamapps@gmail.com</a>";
+                        TextView textView = new TextView(MainActivity.this);
+
+                        textView.setMovementMethod(LinkMovementMethod.getInstance());
+                        textView.setTextIsSelectable(true);
+
+                        textView.setText(Html.fromHtml(s));
+
+                        textView.setPadding(50, 50, 50, 50);
+                        builder.setView(textView);
+                        builder.show();
+
                         break;
 
 
@@ -1156,42 +1305,48 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         currentPath = path;
 
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
+        try {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
 
-                fIlesInfos = FileNav.getDirInfo(path, null);
-                adapter.data = fIlesInfos;
-                sortScans();
+                    fIlesInfos = FileNav.getDirInfo(path, null);
+                    adapter.data = fIlesInfos;
+                    sortScans();
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
 
 
-                        if (adapter.data.size() > 0) {
-                            binding.emptyDocumentImage.setVisibility(View.GONE);
-                        } else {
+                            if (adapter.data.size() > 0) {
+                                binding.emptyDocumentImage.setVisibility(View.GONE);
+                            } else {
 
-                            binding.emptyDocumentImage.setVisibility(View.VISIBLE);
+                                binding.emptyDocumentImage.setVisibility(View.VISIBLE);
 
-                            if (!currentPath.equals(baseDirPath))
-                                binding.emptyDocumentTV.setText("Folder is empty.");
-                            else {
-                                binding.emptyDocumentTV.setText("It's empty here.\nStart scanning now.");
+                                if (!currentPath.equals(baseDirPath)) {
+                                    binding.emptyDocumentTV.setText("FOLDER IS EMPTY");
+                                    binding.emptyDocumentTV1.setText("SCAN NOW");
+
+                                } else {
+                                    binding.emptyDocumentTV.setText("IT'S EMPTY HERE");
+                                    binding.emptyDocumentTV1.setText("START SCANNING");
+                                }
                             }
+
+
+                            toogleBackArrow(!path.equals(baseDirPath));
+
+                            binding.scanList.getAdapter().notifyDataSetChanged();
+
                         }
+                    });
 
-
-                        toogleBackArrow(!path.equals(baseDirPath));
-
-                        binding.scanList.getAdapter().notifyDataSetChanged();
-
-                    }
-                });
-
-            }
-        });
+                }
+            });
+        } catch (Exception e) {
+        }
 
 
     }
@@ -1507,20 +1662,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void shareDocs() {
 
 
-
-
         ProgressDialog pd1 = new ProgressDialog(MainActivity.this);
         pd1.setTitle("Please wait");
         pd1.setMessage("Processing uncropped images");
         pd1.setCancelable(false);
 
 
-
-
         new Thread(new Runnable() {
             @Override
             public void run() {
-
 
 
                 File outputDir = null;
@@ -1529,8 +1679,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 ArrayList<String> selectedDocs = new ArrayList<>();
 
                 ArrayList<SavedImageDetails> imageDetailsArrayList = new ArrayList<>();
-
-
 
 
                 double size = 0;
@@ -1545,7 +1693,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(fIlesInfo.filepath));
 
-                        Utils.copyNotProcessedOriginals(null,imageDetails, fIlesInfo.filepath, new Utils.OnUpdateCopy() {
+                        Utils.copyNotProcessedOriginals(null, imageDetails, fIlesInfo.filepath, new Utils.OnUpdateCopy() {
                             @Override
                             public void showDialog() {
                                 runOnUiThread(new Runnable() {
@@ -1555,10 +1703,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                         try {
                                             if (!pd1.isShowing())
                                                 pd1.show();
+                                        } catch (Exception e) {
+                                        } catch (Error e2) {
                                         }
-
-                                        catch (Exception e){}
-                                        catch (Error e2){}
 
                                     }
                                 });
@@ -1589,9 +1736,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         try {
                             pd1.dismiss();
+                        } catch (Exception e) {
                         }
-
-                        catch (Exception e){}
 
 
                         ProgressDialog pd = new ProgressDialog(MainActivity.this);
@@ -1602,7 +1748,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         new ShareDialog(MainActivity.this, finalSize, new ShareDialog.OnShareDialogListener() {
                             @Override
-                            public void share(boolean isPDF, double quality) {
+                            public void share(boolean isPDF, double quality, String password) {
 
                                 quality = (quality) / 200.0;
 
@@ -1612,7 +1758,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF);
+                                        makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF, password);
                                     }
                                 }).start();
 
@@ -1627,22 +1773,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
 
-
-
-
-
-
             }
         }).start();
-
-
-
-
-
-
-
-
-
 
 
     }
@@ -1650,7 +1782,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private static boolean isComplete = false;
 
-    private void makeAllPDFs(ArrayList<String> selectedDocs, ArrayList<SavedImageDetails> imageDetailsArrayList, double quality, ProgressDialog pd, boolean isPDF) {
+    private void makeAllPDFs(ArrayList<String> selectedDocs, ArrayList<SavedImageDetails> imageDetailsArrayList, double quality, ProgressDialog pd, boolean isPDF, String password) {
 
 
         ArrayList<File> arrayList = new ArrayList<>();
@@ -1698,7 +1830,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             if (isPDF) {
 
                 try {
-                    new DocMaker(MainActivity.this, files, quality).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                    new DocMaker(MainActivity.this, files, quality, password).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
                         @Override
                         public void onUpdate(int currentPage, int totalPage) {
 
@@ -1740,7 +1872,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 isComplete = false;
                 try {
-                    new DocMaker(MainActivity.this, files, quality).makeImages(outputDir.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                    new DocMaker(MainActivity.this, files, quality, password).makeImages(outputDir.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
                         @Override
                         public void onUpdate(int currentPage, int totalPage) {
 
@@ -1833,6 +1965,26 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
     private void copyToClipBoard(boolean deleteAfter) {
+
+
+        simpleToast("Copied to clipboard");
+        Utils.vibrate(MainActivity.this, 25);
+
+
+        if (!Prefs.firstTimeSeenScreen(MainActivity.this, "copy_doc_folder")) {
+
+            new GuideView.Builder(MainActivity.this)
+                    .setTitle("How to paste?")
+
+                    .setContentSpan((Spannable) Html.fromHtml("At first, <b>navigate</b> to the desired <b>folder</b> and then <b>click</b> here to <b>paste</b>."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                    .setTargetView(binding.moreOptionsRl)
+
+
+                    .build()
+                    .show();
+        }
 
         clipboard.deleteAfter = deleteAfter;
 
@@ -2075,104 +2227,213 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
 
-    private void pdfToBitmapSave(File pdfFile, ProgressDialog pd) {
+    private void pdfToBitmap(InputStream in, PDDocument pdDocument, ProgressDialog dialog, String name) throws IOException {
+
+        name = name == null ? "PDF" : name;
+
+        String finalName = name;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                dialog.setTitle("Importing");
+                dialog.setMessage("It will take a while");
+
+                if (!dialog.isShowing()) {
+                    try {
+                        dialog.show();
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        });
 
 
-        try {
+        pdDocument.setAllSecurityToBeRemoved(true);
 
-            File scanDir = FileNav.newScanDir(currentPath);
+        File tempFile = FileNav.getTempFile(MainActivity.this, "temp.pdf");
 
-            File originalImageDir = FileNav.originalScanDirFromScanDir(scanDir);
+        if (tempFile.exists()) {
+            FileUtils.deleteQuietly(tempFile);
+            tempFile = FileNav.getTempFile(MainActivity.this, "temp.pdf");
+        }
+
+        pdDocument.save(tempFile);
+        pdDocument.close();
 
 
-            SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(scanDir.getAbsoluteFile()));
+        File scanDir = FileNav.newScanDir(currentPath);
+
+        File originalImageDir = FileNav.originalScanDirFromScanDir(scanDir);
 
 
-            PdfRenderer renderer = new PdfRenderer(ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY));
+        SavedImageDetails imageDetails = new SavedImageDetails(FileNav.getEffectsFile(scanDir.getAbsoluteFile()));
 
 
-            Bitmap bitmap;
+        PdfRenderer renderer = new PdfRenderer(ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY));
+        int pages = renderer.getPageCount();
 
-            final int pageCount = renderer.getPageCount();
 
-            for (int i = 0; i < pageCount; i++) {
+        Bitmap bitmap;
 
+
+        for (int i = 0; i < pages; i++) {
+
+
+            PdfRenderer.Page page = renderer.openPage(i);
+
+
+
+            int width = 4 * page.getWidth();
+            int height = 4 * page.getHeight();
+
+
+            if (width<2500){
+                double scale = 2500.0/width;
+
+                width*=scale;
+                height*=scale;
+            }
+
+
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+            Canvas canvas = new Canvas(bitmap);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(bitmap, 0, 0, null);
+
+
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
+
+
+            String filename = i + ".jpg";
+            String filepath = originalImageDir.getAbsolutePath() + File.separator + filename;
+
+            File processedFileDir = new File(scanDir + File.separator + FileNav.PROCESSED_IMAGE_DIR);
+
+            processedFileDir.mkdirs();
+
+            File processedFile = new File(processedFileDir, filename);
+
+
+            try (FileOutputStream out = new FileOutputStream(filepath)) {
+
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
+
+                imageDetails.getOrdering().add(filename);
+
+                HashMap<Integer, PointF> pointMap = new HashMap<>();
+
+                pointMap.put(0, new PointF(0, 0));
+                pointMap.put(1, new PointF(width, 0));
+                pointMap.put(2, new PointF(0, height));
+                pointMap.put(3, new PointF(width, height));
+
+                Effects effects = new Effects(pointMap, MatFilter.COLOR_ORIGINAL, false, 0, 0);
+                imageDetails.putEffects(filename, effects);
+
+                out.close();
 
                 int finalI = i;
+                String finalName1 = name;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        pd.setMessage("Page " + (finalI + 1) + "/" + pageCount);
+                        dialog.setMessage(Html.fromHtml("<b>" + finalName1 + "</b><br><br>" + "Page " + (finalI + 1) + "/" + pages));
+
+                        if (!dialog.isShowing()) {
+                            try {
+                                dialog.show();
+                            } catch (Exception e) {
+                            }
+                        }
+
                     }
                 });
 
-                PdfRenderer.Page page = renderer.openPage(i);
 
-
-                int width = getResources().getDisplayMetrics().densityDpi / 72 * page.getWidth();
-                int height = getResources().getDisplayMetrics().densityDpi / 72 * page.getHeight();
-                bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-                Canvas canvas = new Canvas(bitmap);
-                canvas.drawColor(Color.WHITE);
-                canvas.drawBitmap(bitmap, 0, 0, null);
-
-
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT);
-
-                String filename = i + ".jpg";
-                String filepath = originalImageDir.getAbsolutePath() + File.separator + filename;
-
-                File processedFileDir = new File(scanDir + File.separator + FileNav.PROCESSED_IMAGE_DIR);
-
-                processedFileDir.mkdirs();
-
-                File processedFile = new File(processedFileDir, filename);
-
-                try (FileOutputStream out = new FileOutputStream(filepath)) {
-
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
-
-                    imageDetails.getOrdering().add(filename);
-
-                    HashMap<Integer, PointF> pointMap = new HashMap<>();
-
-                    pointMap.put(0, new PointF(0, 0));
-                    pointMap.put(1, new PointF(width, 0));
-                    pointMap.put(2, new PointF(0, height));
-                    pointMap.put(3, new PointF(width, height));
-
-                    Effects effects = new Effects(pointMap, MatFilter.COLOR_ORIGINAL, false, 0, 0);
-                    imageDetails.putEffects(filename, effects);
-
-                    out.close();
-
-                } catch (IOException e) {
-
-                }
-
-                FileUtils.copyFile(new File(filepath), processedFile);
-
-                imageDetails.sync();
-
-                page.close();
-
+            } catch (IOException e) {
 
             }
 
-            renderer.close();
-        } catch (Exception ex) {
+            FileUtils.copyFile(new File(filepath), processedFile);
+
+            imageDetails.sync();
+
+
+            if (bitmap != null && !bitmap.isRecycled())
+                bitmap.recycle();
+            page.close();
+
+            in.close();
 
         }
 
+
+        renderer.close();
+
+        FileUtils.deleteQuietly(tempFile);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+
+                    if (dialog.isShowing())
+                        dialog.dismiss();
+
+                } catch (Exception e) {
+                }
+
+                nagivateTo(currentPath);
+
+            }
+        });
+
+
     }
+
 
     private void processImportLocalPdf(ArrayList<Uri> uris) {
 
 
+        ExecutorService service = Executors.newFixedThreadPool(1);
+
+
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
         pd.setTitle("Importing PDF");
-        pd.setMessage("Page");
+        pd.setMessage("It will take a while");
+        pd.setButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+
+
+                            service.shutdownNow();
+
+                            while (!service.isTerminated()) {
+                            }
+
+
+                        } catch (Exception e) {
+                        }
+
+                        try {
+                            if (pd.isShowing())
+                                pd.dismiss();
+                        } catch (Exception e) {
+                        }
+
+                        nagivateTo(currentPath);
+                    }
+                });
+
+            }
+        });
         pd.setCancelable(false);
         pd.show();
 
@@ -2182,75 +2443,196 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             public void run() {
 
 
-                int pdfCount = 0;
-                for (Uri uri : uris) {
+                for (int i = 0; i < uris.size(); i++) {
 
-                    pdfCount++;
 
-                    int finalPdfCount = pdfCount;
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            pd.setTitle("Importing PDF " + finalPdfCount + "/" + uris.size());
-                        }
-                    });
+                    int finalI = i;
+                    boolean encrypted = false;
 
 
                     try {
 
-                        File temp = FileNav.getTempFile(getApplicationContext(), "temp1.pdf");
+
+                        InputStream in = getContentResolver().openInputStream(uris.get(i));
 
 
-                        InputStream in = getContentResolver().openInputStream(uri);
-                        OutputStream out = new FileOutputStream(temp);
-
-
+                        PDDocument pdDocument = null;
                         try {
-                            IOUtils.copy(in, out);
-                        } catch (Exception e) {
+
+                            pdDocument = PDDocument.load(in);
+
+//
+//                            if (pdDocument.isEncrypted()) {
+//                                encrypted = true;
+//
+//                            }
+                        } catch (InvalidPasswordException e2) {
+                            encrypted = true;
                         }
 
 
-                        try {
-                            out.close();
-                        } catch (Exception e) {
-
-                        }
-                        try {
+                        if (encrypted) {
                             in.close();
-                        } catch (Exception e) {
 
+                            try {
+                                pdDocument.close();
+                            } catch (Exception e2e2) {
+                            }
+                        }
+
+                        if (!encrypted) {
+
+                            PDDocument finalPdDocument = pdDocument;
+
+                            try {
+                                service.execute(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            pdfToBitmap(in, finalPdDocument, pd, Utils.getFileNameFromUri(uris.get(finalI), MainActivity.this));
+                                        } catch (IOException e) {
+
+                                        }
+                                    }
+                                });
+                            } catch (Exception e) {
+                            }
+
+                        } else {
+
+
+                            int finalI1 = i;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    String name = Utils.getFileNameFromUri(uris.get(finalI), MainActivity.this);
+
+                                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                                    builder.setTitle(name);
+                                    builder.setMessage("This document is password protected.");
+                                    TextInputEditText input = new TextInputEditText(MainActivity.this);
+                                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                                    input.setHint("Password");
+                                    builder.setView(input);
+
+                                    input.requestFocus();
+
+                                    InputMethodManager imm1 = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                                    imm1.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+
+
+                                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int few) {
+
+
+                                            if (pd.isShowing()) {
+
+                                                try {
+
+                                                    pd.dismiss();
+                                                } catch (Exception e) {
+                                                }
+                                            }
+
+                                        }
+                                    });
+
+                                    builder.setPositiveButton("Import", (dialog, which) -> {
+                                        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                                        imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+
+
+                                        try {
+
+
+                                            boolean enc = false;
+
+
+                                            Log.d("aaaaa", "check " + enc);
+
+                                            InputStream in2 = getContentResolver().openInputStream(uris.get(finalI1));
+                                            PDDocument pdDocument2 = null;
+
+                                            try {
+
+                                                pdDocument2 = PDDocument.load(in2, input.getText().toString());
+
+//                                                if (pdDocument2.isEncrypted()) {
+//                                                    enc = true;
+//                                                    try {
+//                                                        pdDocument2.close();
+//                                                    } catch (Exception rwer) {
+//                                                    }
+//
+//                                                }
+                                            } catch (InvalidPasswordException e2) {
+                                                enc = true;
+                                            }
+
+
+                                            if (enc) {
+
+
+                                                if (input.getParent() != null) {
+                                                    ((ViewGroup) input.getParent()).removeView(input);
+                                                }
+
+                                                builder.show();
+
+
+                                                Utils.vibrate(MainActivity.this, 30);
+                                                simpleToast("Wrong password.");
+
+
+                                            } else {
+
+                                                PDDocument finalPdDocument = pdDocument2;
+
+                                                try {
+                                                    service.execute(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            try {
+                                                                pdfToBitmap(in2, finalPdDocument, pd, Utils.getFileNameFromUri(uris.get(finalI), MainActivity.this));
+                                                            } catch (IOException e) {
+
+                                                            }
+                                                        }
+                                                    });
+                                                } catch (Exception e) {
+                                                }
+
+
+                                            }
+                                        } catch (Exception e) {
+
+                                            Log.d("aaaaaaaaaaa", e.getMessage());
+                                        }
+
+
+                                    });
+
+
+                                    builder.show();
+
+                                }
+                            });
                         }
 
 
-                        pdfToBitmapSave(temp, pd);
-
-                        FileUtils.forceDelete(temp);
-
-                    } catch (Exception e) {
-
+                    } catch (IOException e) {
 
                     }
-
-
+                    //
                 }
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            pd.dismiss();
-                        } catch (Exception e) {
-
-                        }
-                        nagivateTo(currentPath);
-                        simpleToast("Done");
-                    }
-                });
 
 
             }
-        }).start();
+        }).
+
+                start();
 
 
     }
@@ -2278,18 +2660,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             case R.id.cameraCapture:
 
 
-                binding.imageOptionsRL.setTransitionName("reveal");
-
-
-                Intent intent = new Intent(MainActivity.this, CameraScanActivity.class);
-
-
-                intent.putExtra(CameraScanActivity.CURRENT_DIR_KEY, currentPath);
-                intent.putExtra(CameraScanActivity.INSERT_AT, 0);
-
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-                MainActivity.this.startActivity(intent);
+                startScanning();
 
 
                 break;
@@ -2311,7 +2682,31 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 break;
 
 
+            case R.id.emptyStartScanning:
+
+
+                startScanning();
+
+
+                break;
+
         }
+    }
+
+    private void startScanning() {
+
+        binding.imageOptionsRL.setTransitionName("reveal");
+
+
+        Intent intent = new Intent(MainActivity.this, CameraScanActivity.class);
+
+
+        intent.putExtra(CameraScanActivity.CURRENT_DIR_KEY, currentPath);
+        intent.putExtra(CameraScanActivity.INSERT_AT, 0);
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        MainActivity.this.startActivity(intent);
     }
 
 

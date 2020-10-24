@@ -67,26 +67,16 @@ public class FileNav {
     public static final String ORIGINAL_IMAGE_FILE = "original_image_file";
 
 
+    public static boolean isChild(File parent, File maybeChild) {
 
-
-
-    public static boolean isChild(File parent, File maybeChild ){
-
-
-
-        Log.d("aaaaaaaa", "parent "+parent.getAbsolutePath());
 
         try {
 
-            File testFile = new File (maybeChild.getCanonicalPath());
+            File testFile = new File(maybeChild.getCanonicalPath());
 
             File possibleParent = new File(parent.getCanonicalPath());
 
-            while ( testFile != null ) {
-
-
-
-                Log.d("aaaaaaaa", "test "+testFile.getAbsolutePath());
+            while (testFile != null) {
 
 
                 if (possibleParent.equals(testFile))
@@ -95,9 +85,8 @@ public class FileNav {
                 testFile = testFile.getParentFile();
             }
 
+        } catch (Exception e) {
         }
-
-        catch (Exception e){}
 
 
         return false;
@@ -362,16 +351,43 @@ public class FileNav {
                 filename = filename.substring(0, filename.length() - SCAN_IDENTIFIER.length());
 
                 try {
-                    thumbnailPath = new File(filepath + File.separator + PROCESSED_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                    File thumbFile = new File(filepath + File.separator + "thumbnail.jpg");
+
+                    if (thumbFile.exists()) {
+                        thumbnailPath = thumbFile.getAbsolutePath();
+                    } else {
+
+                        thumbFile = new File(filepath + File.separator + PROCESSED_IMAGE_DIR);
+
+                        if (thumbFile.exists() && thumbFile.listFiles().length > 0) {
+                            thumbnailPath = new File(filepath + File.separator + PROCESSED_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                        } else {
+
+
+                            try {
+
+                                thumbnailPath = new File(filepath + File.separator + ORIGINAL_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                            } catch (Exception e2) {
+
+                            }
+                        }
+
+
+                    }
                 } catch (Exception e) {
+
 
                     try {
 
                         thumbnailPath = new File(filepath + File.separator + ORIGINAL_IMAGE_DIR).listFiles()[0].getAbsolutePath();
 
-                    } catch (Exception e2) {
+                    } catch (Exception e3) {
 
                     }
+
                 }
 
 
@@ -538,7 +554,7 @@ public class FileNav {
 
                 File processed = new File(filepath + File.separator + PROCESSED_IMAGE_DIR);
 
-                if (processed.exists()) {
+                if (processed.exists() && processed.listFiles().length > 0) {
 
                     String[] subFiles = processed.list();
 
@@ -551,27 +567,59 @@ public class FileNav {
 
                     File original = new File(filepath + File.separator + ORIGINAL_IMAGE_DIR);
 
+                    if (original.exists()) {
 
-                    String[] subFiles = original.list();
+                        String[] subFiles = original.list();
 
-                    if (subFiles == null)
-                        numPages = 0;
-                    else
-                        numPages = subFiles.length;
+                        if (subFiles == null)
+                            numPages = 0;
+                        else
+                            numPages = subFiles.length;
+
+                    }
 
                 }
 
 
                 filename = filename.substring(0, filename.length() - SCAN_IDENTIFIER.length());
 
+
                 try {
-                    thumbnailPath = new File(filepath + File.separator + PROCESSED_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                    File thumbFile = new File(filepath + File.separator + "thumbnail.jpg");
+
+                    if (thumbFile.exists()) {
+                        thumbnailPath = thumbFile.getAbsolutePath();
+                    } else {
+
+                        thumbFile = new File(filepath + File.separator + PROCESSED_IMAGE_DIR);
+
+                        if (thumbFile.exists() && thumbFile.listFiles().length > 0) {
+                            thumbnailPath = new File(filepath + File.separator + PROCESSED_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                        } else {
+
+
+                            try {
+
+                                thumbnailPath = new File(filepath + File.separator + ORIGINAL_IMAGE_DIR).listFiles()[0].getAbsolutePath();
+
+                            } catch (Exception e2) {
+
+                            }
+                        }
+
+
+                    }
                 } catch (Exception e) {
+
 
                     try {
 
                         thumbnailPath = new File(filepath + File.separator + ORIGINAL_IMAGE_DIR).listFiles()[0].getAbsolutePath();
-                    } catch (Exception e2) {
+
+                    } catch (Exception e3) {
+
                     }
 
                 }
@@ -584,7 +632,7 @@ public class FileNav {
             }
 
 
-            if (numPages==0){
+            if (numPages == 0) {
                 FileUtils.deleteQuietly(new File(filepath));
                 continue;
             }
@@ -736,17 +784,14 @@ public class FileNav {
 
         try {
 
-            if (src.isDirectory()){
+            if (src.isDirectory()) {
                 FileUtils.deleteDirectory(src);
 
-            }
-
-            else {
+            } else {
                 FileUtils.deleteQuietly(src);
             }
+        } catch (Exception e) {
         }
-
-        catch (Exception e){}
     }
 
 

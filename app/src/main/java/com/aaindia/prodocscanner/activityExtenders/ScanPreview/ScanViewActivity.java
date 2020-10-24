@@ -16,11 +16,15 @@ import android.animation.ValueAnimator;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Html;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
@@ -31,7 +35,9 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.databinding.ActivityScanViewBinding;
@@ -39,24 +45,38 @@ import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.Prefs;
+import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
+import com.aaindia.prodocscanner.wrappers.CompleteEffectHolder;
+import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
-import com.google.gson.internal.$Gson$Preconditions;
 import com.jsibbold.zoomage.ZoomageView;
 
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface{
+import smartdevelop.ir.eram.showcaseviewlib.GuideView;
+import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
+import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
+
+public class ScanViewActivity extends AppCompatActivity implements View.OnClickListener, ScanPreviewAdapter.AdapterInterface {
 
     public static final String NEW_SCAN = "new_scan";
 
@@ -89,16 +109,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    public boolean documentChanged() {
-        return isChange;
-    }
-
     public void setDocumentChanged(boolean isChange) {
         this.isChange = isChange;
-    }
-
-    public File getOriginalDirFile() {
-        return originalDirFile;
     }
 
 
@@ -121,19 +133,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-
     public static final int PERMISION_REQUEST_CODE_SINGLE_PAGE = 2910;
     public static final int PERMISION_REQUEST_CODE_SELECTED = 2911;
     public static final int PERMISION_REQUEST_CODE_ALL = 2912;
 
 
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_scan_view);
@@ -142,7 +149,17 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         activityCalledFromClassname = (String) getIntent().getExtras().get(GlobalConstants.CLASS_NAME);
 
 
-        adapter = new ScanPreviewAdapter(this, scanDirPath, getRecyclerView(), this);
+        adapter = new ScanPreviewAdapter(this, scanDirPath, getRecyclerView(), this, new ScanPreviewAdapter.DataProvider() {
+            @Override
+            public ArrayList<String> filepathProvider() {
+                return getOriginalFilepaths();
+            }
+
+            @Override
+            public SavedImageDetails imageDetailsProvider() {
+                return getImageDetails();
+            }
+        });
 
 
         loadInitialData();
@@ -178,6 +195,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         binding.noCropRL.setOnClickListener(this::onClick);
         binding.exportSinglePageRL.setOnClickListener(this::onClick);
         binding.OcrRL.setOnClickListener(this::onClick);
+        binding.retakeRL.setOnClickListener(this::onClick);
+        binding.copySingleRL.setOnClickListener(this::onClick);
+        binding.pasteRL.setOnClickListener(this::onClick);
 
 
         binding.colorTuneSK.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
@@ -235,6 +255,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public BottomSheetBehavior getBottomMenu1() {
+        binding.pasteSingleRLSeperator.setVisibility(App.CLIPBOARD.isEmpty() ? View.GONE : View.VISIBLE);
+        binding.pasteRL.setVisibility(App.CLIPBOARD.isEmpty() ? View.GONE : View.VISIBLE);
         return sheetBehavior;
     }
 
@@ -248,7 +270,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 binding.bottomSheet.getGlobalVisibleRect(outRect);
 
                 if (!outRect.contains((int) event.getRawX(), (int) event.getRawY()))
-                    sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    getBottomMenu1().setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         }
 
@@ -266,8 +288,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         sheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
     }
-
-
 
 
     @Override
@@ -305,8 +325,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         originalFilepaths = new ArrayList<>();
         imageDetails = new SavedImageDetails(FileNav.getEffectsFile(scanDirPath));
-
-
 
 
         // check auto crop
@@ -404,8 +422,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                         }
                         adapter.scanDirName = getScanDirPath();
-                        adapter.originalFilepaths = getOriginalFilepaths();
-                        adapter.savedImageDetails = imageDetails;
+//                        adapter.originalFilepaths = getOriginalFilepaths();
+//                        adapter.savedImageDetails = imageDetails;
 
                         binding.fileNameTV.setText(FileNav.getPDFName(getScanDirPath()).replace(".pdf", ""));
 
@@ -489,11 +507,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-
-
-
-
-    public void addPages(ScanPreviewAdapter.ViewHolder holder, int position) {
+    public void addPages(ScanPreviewAdapter.ViewHolder holder, int position, boolean retake) {
     }
 
     public void deleteFile(ScanPreviewAdapter.ViewHolder holder, int position) {
@@ -505,7 +519,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public void share(boolean isExport) {
 
 
-
     }
 
 
@@ -514,7 +527,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public void viewPDF() {
-
 
 
     }
@@ -557,10 +569,13 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         getBinding().protector.setVisibility(View.VISIBLE);
 
+
         if (!autoCropped.contains(getImageDetails().getAt(postion))) {
 
 
+            holder.isBusy = true;
             if (wd == -1) {
+
 
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
@@ -577,12 +592,20 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 }, 350);
 
             } else {
+
+
                 crop(holder, postion, false);
             }
 
 
         } else {
 
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    holder.imageView.setAlpha(1);
+                }
+            });
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -680,7 +703,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             if (holder == null || holder.processing == null)
                 return;
 
-            addPages(holder, position);
+            addPages(holder, position, false);
         } else if (id == R.id.deleteRL) {
             if (position < 0)
                 return;
@@ -712,7 +735,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         } else if (id == R.id.moreRL) {
 
             if (sheetBehavior != null && sheetBehavior.getState() == sheetBehavior.STATE_HIDDEN)
-                sheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                getBottomMenu1().setState(BottomSheetBehavior.STATE_EXPANDED);
         } else if (id == R.id.OcrRL) {
 
             if (position < 0)
@@ -724,8 +747,168 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             getBottomMenu1().setState(BottomSheetBehavior.STATE_HIDDEN);
             ocrPage(holder, position);
 
+        } else if (id == R.id.retakeRL) {
+
+
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            addPages(holder, position, true);
+
+        } else if (id == R.id.copySingleRL) {
+
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            copySinglePage(holder, position);
+
+        } else if (id == R.id.pasteRL) {
+
+            if (position < 0)
+                return;
+
+            if (holder == null || holder.processing == null)
+                return;
+
+            getBottomMenu1().setState(getBottomMenu1().STATE_HIDDEN);
+
+            paste(position);
+
+
         }
 
+    }
+
+    private void paste(int pos) {
+
+
+        ProgressDialog pd1 = new ProgressDialog(ScanViewActivity.this);
+        pd1.setTitle("Pasting");
+        pd1.setMessage("Page ");
+        pd1.setCancelable(false);
+        pd1.show();
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                int position = pos;
+                position++;
+
+                ListIterator iterator = App.CLIPBOARD.listIterator();
+
+
+                String filename, originalFilePath, processedFilePath;
+
+
+                while (iterator.hasNext()) {
+
+                    int finalPosition = position;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (pd1.isShowing()) {
+                                pd1.setMessage("Page " + finalPosition + "/" + App.CLIPBOARD.size());
+                            }
+                        }
+                    });
+
+                    CompleteEffectHolder effectHolder = (CompleteEffectHolder) iterator.next();
+
+                    filename = System.currentTimeMillis() + ".jpg";
+
+                    originalFilePath = getScanDirPath() + File.separator + FileNav.ORIGINAL_IMAGE_DIR + File.separator + filename;
+
+                    processedFilePath = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + filename;
+
+
+                    try {
+                        FileUtils.copyFile(new File(effectHolder.originalPath), new File(originalFilePath));
+
+
+                        try {
+                            FileUtils.copyFile(new File(effectHolder.processedPath), new File(processedFilePath));
+                        } catch (Exception e) {
+                        }
+
+
+                        Effects effects = new Effects(effectHolder.corners, effectHolder.color, effectHolder.isGray, effectHolder.rotation, effectHolder.colorTune);
+
+                        getImageDetails().getOrdering().add(position, filename);
+                        getImageDetails().putEffects(filename, effects);
+                        position++;
+
+                    } catch (Exception e) {
+
+                    }
+
+                }
+
+                getImageDetails().sync();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+
+                        try {
+                            pd1.dismiss();
+                        }
+                        catch (Exception e){}
+                        loadInitialData();
+
+                        Toast.makeText(getApplicationContext(), "Pasted", Toast.LENGTH_SHORT).show();
+                        Utils.vibrate(ScanViewActivity.this, 25);
+
+                        Utils.vibrate(ScanViewActivity.this, 25);
+                    }
+                });
+
+            }
+        }).start();
+
+
+    }
+
+    private void copySinglePage(ScanPreviewAdapter.ViewHolder holder, int position) {
+
+        getBottomMenu1().setState(getBottomMenu1().STATE_HIDDEN);
+
+        App.CLIPBOARD.clear();
+
+        String processedPath = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + getImageDetails().getAt(position);
+        Effects effects = getImageDetails().getEffects(getImageDetails().getAt(position));
+        CompleteEffectHolder effectHolder = new CompleteEffectHolder(effects.corners, effects.color, effects.isGray, effects.rotation, effects.colorTune,
+                getOriginalFilepaths().get(position), processedPath, getScanDirPath(), getImageDetails().getAt(position));
+
+        App.CLIPBOARD.add(effectHolder);
+
+        Toast.makeText(ScanViewActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+        Utils.vibrate(ScanViewActivity.this, 25);
+
+
+        if (!Prefs.firstTimeSeenScreen(ScanViewActivity.this, "copy_single_page_doc")) {
+
+            new GuideView.Builder(ScanViewActivity.this)
+                    .setTitle("How to paste?")
+
+                    .setContentSpan((Spannable) Html.fromHtml("At first, <b>navigate</b> to the desired <b>document</b> and then <b>tap</b> here to find <b>paste</b> option."))
+                    .setGravity(Gravity.auto) //optional
+                    .setDismissType(DismissType.anywhere)
+                    .setTargetView(binding.moreRL)
+
+
+                    .build()
+                    .show();
+        }
     }
 
     private void ocrPage(ScanPreviewAdapter.ViewHolder holder, int position) {
@@ -767,12 +950,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public synchronized void showHideColorRL(boolean show) {
 
 
-
-        if (show){
+        if (show) {
 
             binding.colorControlRL.setVisibility(View.VISIBLE);
-        }
-        else {
+        } else {
             binding.colorControlRL.setVisibility(View.GONE);
         }
 
@@ -849,7 +1030,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         finish();
     }
-
 
 
     public void onScanDirPathChange(String path) {

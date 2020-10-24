@@ -21,6 +21,7 @@ import com.aaindia.prodocscanner.utils.ViewUtils;
 import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.wrappers.Effects;
 
+
 import java.io.File;
 import java.util.HashMap;
 
@@ -46,7 +47,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     public void chooseColor(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
-        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+        if (holder.isBusy) {
 
 
 
@@ -128,16 +129,19 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         SpannableString contrast = new SpannableString("Photo");
         SpannableString paperStyle = new SpannableString("Note");
         SpannableString whiteBoardStyle = new SpannableString("Document");
+        SpannableString textStyle = new SpannableString("Text");
 
         setSpanActionColor(original, colorCode, MatFilter.COLOR_ORIGINAL);
         setSpanActionColor(contrast, colorCode, MatFilter.COLOR_CONTRAST);
         setSpanActionColor(paperStyle, colorCode, MatFilter.COLOR_PAPER);
         setSpanActionColor(whiteBoardStyle, colorCode, MatFilter.COLOR_WHITEBOARD);
+        setSpanActionColor(textStyle, colorCode, MatFilter.COLOR_TEXT);
 
         menu.add(0, MatFilter.COLOR_ORIGINAL, 0, original);
         menu.add(0, MatFilter.COLOR_CONTRAST, 0, contrast);
         menu.add(0, MatFilter.COLOR_PAPER, 0, paperStyle);
         menu.add(0, MatFilter.COLOR_WHITEBOARD, 0, whiteBoardStyle);
+      //  menu.add(0, MatFilter.COLOR_TEXT, 0, textStyle );
 
         boolean finalColorGray = colorGray;
         setColorTuneListen(true);
@@ -196,6 +200,10 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     public void crop(ScanPreviewAdapter.ViewHolder holder, int position, boolean noCrop) {
 
 
+
+        holder.isBusy = true;
+
+
         zoomageEnableDisable(holder, false);
 
         holder.processing.setVisibility(View.VISIBLE);
@@ -209,13 +217,16 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
                 prepareMat(holder, position);
 
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 
+
                         holder.imageView.getLayoutParams().width = (int) holder.displayBitmap.getWidth();
                         holder.imageView.getLayoutParams().height = (int) holder.displayBitmap.getHeight();
                         holder.imageView.setImageBitmap(holder.displayBitmap);
+
                         holder.imageView.requestLayout();
 
 
@@ -412,6 +423,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         getBinding().protector.setVisibility(View.GONE);
         holder.processing.setVisibility(View.GONE);
 
+
     }
 
 
@@ -473,7 +485,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     @Override
     public void colorGrayChanged(ScanPreviewAdapter.ViewHolder holder, int position, boolean b) {
 
-        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+        if (holder.isBusy) {
 
 
 
@@ -500,7 +512,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     public void colorTuneChanged(ScanPreviewAdapter.ViewHolder holder, int position, int progress) {
 
 
-        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+        if (holder.isBusy) {
 
 
 
@@ -530,7 +542,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
 
-        if (holder.polygonView.getVisibility()==View.VISIBLE) {
+        if (holder.isBusy) {
 
 
 

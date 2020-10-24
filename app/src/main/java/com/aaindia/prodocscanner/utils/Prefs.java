@@ -230,8 +230,30 @@ public class Prefs {
 
         return a;
 
-
     }
 
+
+    public static class NewsPrefs {
+
+
+        private static final String NEWS_PREF = "news_pref";
+
+        public static final String LATEST_INT = "latest_int";
+
+        public static long getLatestInt(Context context) {
+            SharedPreferences prefs = context.getSharedPreferences(NEWS_PREF, context.MODE_PRIVATE);
+            return prefs.getLong(LATEST_INT, 0);
+        }
+
+
+        public static void setLatestInt(Context context, long val) {
+
+            SharedPreferences.Editor editor = context.getSharedPreferences(NEWS_PREF, context.MODE_PRIVATE).edit();
+            editor.putLong(LATEST_INT, val);
+            editor.commit();
+        }
+
+
+    }
 
 }

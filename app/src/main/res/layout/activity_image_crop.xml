@@ -48,7 +48,7 @@
                     android:elevation="3dp"
                     android:layout_centerInParent="true"
                     android:background="@color/colorSecondary"
-                    android:layout_width="14px"
+                    android:layout_width="match_parent"
                     android:layout_height="2px"></RelativeLayout>
 
                 <RelativeLayout
@@ -58,7 +58,7 @@
                     android:layout_centerInParent="true"
                     android:background="@color/colorSecondary"
                     android:layout_width="2px"
-                    android:layout_height="14px"></RelativeLayout>
+                    android:layout_height="match_parent"></RelativeLayout>
 
 
             </RelativeLayout>
@@ -493,19 +493,12 @@
                     <com.jsibbold.zoomage.ZoomageView
 
 
+                        android:adjustViewBounds="true"
                         android:clipToPadding="false"
                         android:clipChildren="false"
                         xmlns:android="http://schemas.android.com/apk/res/android"
                         xmlns:app="http://schemas.android.com/apk/res-auto"
 
-                        app:zoomage_restrictBounds="false"
-                        app:zoomage_animateOnReset="true"
-                        app:zoomage_autoCenter="true"
-                        app:zoomage_zoomable="true"
-                        app:zoomage_translatable="true"
-                        app:zoomage_minScale="0.6"
-                        app:zoomage_maxScale="8"
-                        app:zoomage_doubleTapToZoom ="true"
 
 
                         android:clickable="false"
@@ -528,6 +521,10 @@
                     android:clickable="false"
 
                     android:visibility="gone"
+                    android:layout_alignBottom="@id/theImage"
+                    android:layout_alignTop="@id/theImage"
+                    android:layout_alignRight="@id/theImage"
+                    android:layout_alignLeft="@id/theImage"
 
                     android:elevation="10dp"
                     android:id="@+id/polygonView"
@@ -606,6 +603,7 @@
 
                     <com.google.android.material.checkbox.MaterialCheckBox
 
+
                         app:buttonTint="@color/colorWhite"
                         android:id="@+id/colorGrayCheck"
                         android:layout_width="wrap_content"
@@ -639,7 +637,8 @@
                     android:layout_alignParentRight="true"
                     android:layout_alignLeft="@id/grayCRL"
                     android:layout_below="@id/colorTuneSK"
-                    android:text="Gray"
+                    android:maxLines="2"
+                    android:text="Black &amp; White"
                     android:textColor="@color/colorWhite"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">

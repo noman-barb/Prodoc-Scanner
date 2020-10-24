@@ -80,6 +80,7 @@ import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
+import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.transition.MaterialContainerTransform;
@@ -90,7 +91,6 @@ import org.apache.commons.io.FileUtils;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
@@ -150,6 +150,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     public void onResume() {
         super.onResume();
 
+        binding.cameraCapture.setAlpha(1.0f);
 
     }
 
@@ -172,9 +173,10 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        getWindow().setStatusBarColor(ContextCompat.getColor(this,R.color.colorSecondaryDark));
         super.onCreate(savedInstanceState);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_camera_scan);
@@ -295,6 +297,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         }
     }
 
+    boolean shallVibrate = false;
+
     private void documentTypeChooser() {
 
 
@@ -314,13 +318,19 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
 
         binding.horizontalPicker.addOnScrollListener(new RecyclerView.OnScrollListener() {
+
+
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
 
+
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     View centerView = snapHelper.findSnapView(binding.horizontalPicker.getLayoutManager());
                     int pos = binding.horizontalPicker.getLayoutManager().getPosition(centerView);
+
+
+
 
                     documentType = Constants.documentImageTypes().get(pos);
 
@@ -343,6 +353,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                                 } else {
                                     viewholder.documentItem.setTextColor(Color.WHITE);
                                 }
+                                if (shallVibrate)
+                                    Utils.vibrate(CameraPreviewActivity.this, 20);
                             }
                         }
 
@@ -363,6 +375,9 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             public void onTouch(HorizontalDocumentChooserAdapter.Viewholder viewholder, int position) {
 
                 binding.horizontalPicker.smoothScrollToPosition(position);
+                shallVibrate  = true;
+                if (shallVibrate)
+                    Utils.vibrate(CameraPreviewActivity.this, 20);
             }
         }
         );
@@ -370,6 +385,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         binding.horizontalPicker.setAdapter(horizontalDocumentChooserAdapter);
 
         binding.horizontalPicker.smoothScrollToPosition(1);
+
+
 
 
     }
@@ -388,6 +405,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
 
                     bindPreview(cameraProvider);
+
                 } catch (ExecutionException | InterruptedException e) {
                 }
             }
@@ -535,7 +553,10 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         if (targetWidth > 0 || targetHeight > 0) {
 
             previewBuilder.setTargetResolution(new Size(targetWidth, targetHeight));
+
+         //   Toast.makeText(getApplicationContext(),"Target Resolution\nWidth "+targetWidth+"\nHeight "+targetHeight,Toast.LENGTH_LONG).show();
         }
+
 
         preview = previewBuilder.build();
 
@@ -563,7 +584,9 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
         imageCapture = imageCaptureBuilder.build();
 
-        preview.setSurfaceProvider(binding.cameraPreview.createSurfaceProvider());
+
+
+        preview.setSurfaceProvider(binding.cameraPreview.getSurfaceProvider());
 
 ////////////////////////////////// todo delete this block
 
@@ -670,6 +693,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 binding.cameraAlphaAnimationRL.setAlpha((Float) valueAnimator.getAnimatedValue());
 
                 if ((float) valueAnimator.getAnimatedValue() == 0) {
+                    shallVibrate = true;
                     binding.cameraAlphaAnimationRL.setVisibility(View.GONE);
 
                 }
@@ -701,12 +725,16 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 int animTime = 700;
 
 
-                MeteringPoint meteringPoint = new DisplayOrientedMeteringPointFactory(binding.cameraPreview.getDisplay(), cameraSelector, binding.cameraPreview.getWidth(), binding.cameraPreview.getHeight()).createPoint(motionEvent.getX(), motionEvent.getY());
 
-                FocusMeteringAction action = new FocusMeteringAction.Builder(meteringPoint).build();
+
 
                 if (camera == null)
                     return false;
+
+                MeteringPoint meteringPoint = new DisplayOrientedMeteringPointFactory(binding.cameraPreview.getDisplay(), camera.getCameraInfo(), binding.cameraPreview.getWidth(), binding.cameraPreview.getHeight()).createPoint(motionEvent.getX(), motionEvent.getY());
+
+                FocusMeteringAction action = new FocusMeteringAction.Builder(meteringPoint).build();
+
 
                 camera.getCameraControl().startFocusAndMetering(action).addListener(new Runnable() {
                     @Override

@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
@@ -39,6 +40,8 @@ import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.wrappers.CompleteEffectHolder;
+import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -46,6 +49,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.Serializable;
@@ -83,7 +90,13 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         binding.gridRecyclerView.setHasFixedSize(true);
 
 
-        adapter = new GridScanViewAdapter(this, getScanDirPath(), getOriginalFilepaths(), this);
+        adapter = new GridScanViewAdapter(this, getScanDirPath(), new GridScanViewAdapter.DataModel() {
+            @Override
+            public ArrayList<String> dataProvider() {
+
+                return getOriginalFilepaths();
+            }
+        }, this);
 
         binding.gridRecyclerView.setLayoutManager(new MyGridLayoytManager(this, 2));
         getBinding().gridRecyclerView.setAdapter(adapter);
@@ -99,13 +112,14 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         binding.exitRL.setOnClickListener(this);
         binding.selectAll.setOnClickListener(this::onClick);
-        binding.deselectAllRL.setOnClickListener(this::onClick);
+        binding.copySelectedRL.setOnClickListener(this::onClick);
         binding.deleteSelectedRL.setOnClickListener(this::onClick);
         binding.shareSelectedRL.setOnClickListener(this::onClick);
         binding.exportSelectedRL.setOnClickListener(this);
         binding.cameraCapture.setOnClickListener(this);
         binding.exportSelectedRL.setOnClickListener(this::onClick);
         binding.ocrSelectedRL.setOnClickListener(this::onClick);
+
 
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT, 0) {
             @Override
@@ -125,6 +139,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             }
         };
 
+
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(binding.gridRecyclerView);
 
@@ -142,7 +157,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
                 adapter.firstTime = true;
 
-                if (adapter.originalFilepaths.size() > 0)
+                if (adapter.model.dataProvider().size() > 0)
                     adapter.notifyItemChanged(0);
 
             }
@@ -155,16 +170,18 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
     private void swap(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
 
+        onLongPress((GridScanViewAdapter.ViewHolder) viewHolder, viewHolder.getAdapterPosition());
+
         swapped = true;
 
 
         int fromPostion = viewHolder.getAdapterPosition();
         int toPosition = target.getAdapterPosition();
 
-        if (adapter.selectedItems.contains(fromPostion)) {
-            adapter.selectedItems.remove(fromPostion);
-            adapter.selectedItems.add(toPosition);
-        }
+//        if (adapter.selectedItems.contains(fromPostion)) {
+//            adapter.selectedItems.remove(fromPostion);
+//            adapter.selectedItems.add(toPosition);
+//        }
 
 
         if (toPosition < fromPostion) {
@@ -341,15 +358,18 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                                                 return;
 
 
-                                            new GuideView.Builder(GridScanViewActivity.this)
-                                                    .setTitle("Crop Image")
+                                            if (binding.recyclerView.getVisibility() == View.VISIBLE) {
 
-                                                    .setGravity(Gravity.auto) //optional
-                                                    .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
-                                                    .setTargetView(hold.processImage)
-                                                    .build().show();
+                                                new GuideView.Builder(GridScanViewActivity.this)
+                                                        .setTitle("Crop Image")
+
+                                                        .setGravity(Gravity.auto) //optional
+                                                        .setDismissType(DismissType.anywhere) //optional - default DismissType.targetView
+                                                        .setTargetView(hold.processImage)
+                                                        .build().show();
 
 
+                                            }
                                         }
                                     })
                                     .build().show();
@@ -373,7 +393,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
                 adapter.firstTime = true;
 
-                if (adapter.originalFilepaths.size() > 0)
+                if (adapter.model.dataProvider().size() > 0)
                     adapter.notifyItemChanged(0);
 
             }
@@ -527,8 +547,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         selectActive = false;
         adapter.selectedItems.clear();
 
-        Utils.vibrate(this, 12);
-        for (int i = 0; i < adapter.originalFilepaths.size(); i++) {
+        Utils.vibrate(GridScanViewActivity.this, 20);
+        for (int i = 0; i < adapter.model.dataProvider().size(); i++) {
 
 
             try {
@@ -554,6 +574,52 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             getImageDetails().sync();
             binding.gridRecyclerView.getAdapter().notifyDataSetChanged();
             binding.recyclerView.getAdapter().notifyDataSetChanged();
+
+            try {
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        try {
+
+                            File originalFile = new File(getOriginalFilepaths().get(0));
+
+                            File processedFile = new File(getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator+ getImageDetails().getAt(0));
+
+
+                            File toCopy = processedFile.exists() ? processedFile : originalFile;
+
+                            if (!toCopy.exists())
+                                return;
+
+                            Mat mat = Imgcodecs.imread(toCopy.getAbsolutePath());
+
+                            int width = mat.width();
+                            int height = mat.height();
+
+                            float mp = (float) ((mat.width() / 1000.0) * (mat.height() / 1000.0));
+                            if (mp > 2) {
+                                float scale = 2.0f / mp;
+
+                                Imgproc.resize(mat, mat, new Size(width * scale, height * scale), Imgproc.INTER_AREA);
+
+                            }
+
+                            Imgcodecs.imwrite(getScanDirPath() + File.separator + "thumbnail.jpg", mat);
+                            mat.release();
+
+
+                        } catch (Exception e) {
+                        }
+
+
+                    }
+                }).start();
+
+
+            } catch (Exception e) {
+            }
         }
 
 
@@ -580,9 +646,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
     private void syncDataAcrossViews() {
-        setOriginalFilepaths(getOriginalFilepaths());
-        ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
-        adapter.originalFilepaths = getOriginalFilepaths();
+       // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
+
     }
 
     @Override
@@ -594,10 +659,9 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         if (id == R.id.selectAll) {
             adapter.globalSelect = true;
             adapter.notifyDataSetChanged();
-        } else if (id == R.id.deselectAllRL) {
+        } else if (id == R.id.copySelectedRL) {
 
-
-            deselectAll();
+            copySelected();
         } else if (id == R.id.deleteSelectedRL) {
 
             deleteSelected();
@@ -605,7 +669,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             singlePageViewModeToggle(false, null, 1);
             getBottomMenu1().setState(BottomSheetBehavior.STATE_HIDDEN);
         } else if (id == R.id.cameraCapture) {
-            addPages(null, getOriginalFilepaths().size() - 1);
+            addPages(null, getOriginalFilepaths().size() - 1, false);
         } else if (id == R.id.shareSelectedRL) {
             shareSelected(false);
         } else if (id == R.id.exportSelectedRL) {
@@ -616,12 +680,63 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
     }
 
+    private void copySelected() {
+
+
+        App.CLIPBOARD.clear();
+
+
+        for (int i = 0; i < adapter.model.dataProvider().size(); i++) {
+
+            if (adapter.selectedItems.contains(i)) {
+
+                String processedPath = getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + getImageDetails().getAt(i);
+                Effects effects = getImageDetails().getEffects(getImageDetails().getAt(i));
+                CompleteEffectHolder effectHolder = new CompleteEffectHolder(effects.corners, effects.color, effects.isGray, effects.rotation, effects.colorTune,
+                        getOriginalFilepaths().get(i), processedPath, getScanDirPath(), getImageDetails().getAt(i));
+
+                App.CLIPBOARD.add(effectHolder);
+
+
+            }
+        }
+
+
+        int position = ((LinearLayoutManager) binding.gridRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+
+
+        GridScanViewAdapter.ViewHolder holder = (GridScanViewAdapter.ViewHolder) binding.gridRecyclerView.findViewHolderForAdapterPosition(position);
+
+
+        if (holder != null) {
+            if (!Prefs.firstTimeSeenScreen(GridScanViewActivity.this, "copy_selected_pages_doc")) {
+
+                new GuideView.Builder(GridScanViewActivity.this)
+                        .setTitle("How to paste?")
+
+                        .setContentSpan((Spannable) Html.fromHtml("1. At first, <b>navigate</b> to the desired <b>document</b>.<br>2. Then <b>tap</b> on the <b>page</b> after which you want to paste the contents.<br>3. <b>Click</b> on <b>more</b> to find <b>paste</b> option."))
+                        .setGravity(Gravity.auto) //optional
+                        .setDismissType(DismissType.anywhere)
+                        .setTargetView(holder.imageView)
+                        .build()
+                        .show();
+            }
+
+        }
+
+        Toast.makeText(GridScanViewActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+        Utils.vibrate(GridScanViewActivity.this, 25);
+
+
+        deselectAll();
+    }
+
     private void ocrSelected() {
 
         ArrayList<String> files = new ArrayList<>();
         double size = 0;
 
-        for (int i = 0; i < adapter.originalFilepaths.size(); i++) {
+        for (int i = 0; i < adapter.model.dataProvider().size(); i++) {
 
             if (adapter.selectedItems.contains(i)) {
 
@@ -658,12 +773,6 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
 
-
-
-
-
-
-
     private void requestStoragePermission(int perm) {
 
 
@@ -696,7 +805,6 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, perm);
         }
     }
-
 
 
     @Override
@@ -750,13 +858,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
 
-
-
-
-
     private void shareSelected(boolean isExport) {
-
-
 
 
         if (isExport) {
@@ -780,12 +882,6 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         }
 
 
-
-
-
-
-
-
         ProgressDialog pd1 = new ProgressDialog(GridScanViewActivity.this);
         pd1.setTitle("Please wait");
         pd1.setMessage("Processing uncropped images");
@@ -797,13 +893,13 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         double size = 0;
 
 
-        for (int i = 0; i < adapter.originalFilepaths.size(); i++) {
+        for (int i = 0; i < adapter.model.dataProvider().size(); i++) {
 
             if (adapter.selectedItems.contains(i)) {
 
                 set.add(getImageDetails().getAt(i));
 
-                File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), new File(adapter.originalFilepaths.get(i)).getName());
+                File processedFile = FileNav.getProcessedFileFromName(getScanDirPath(), new File(adapter.model.dataProvider().get(i)).getName());
 
                 files.add(processedFile);
 
@@ -887,17 +983,17 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             ArrayList<String> pathDelete = new ArrayList<>();
             LinkedList<String> fileDelete = new LinkedList<>();
 
-            for (int i = 0; i < adapter.originalFilepaths.size(); i++) {
+            for (int i = 0; i < adapter.model.dataProvider().size(); i++) {
 
 
                 if (set.contains(i)) {
-                    pathDelete.add(adapter.originalFilepaths.get(i));
+                    pathDelete.add(adapter.model.dataProvider().get(i));
                     fileDelete.add(getImageDetails().getOrdering().get(i));
                     //adapter.notifyItemRemoved(i);
                 }
             }
 
-            adapter.notifyDataSetChanged();
+
             getOriginalFilepaths().removeAll(pathDelete);
             getImageDetails().getOrdering().removeAll(fileDelete);
 
@@ -914,8 +1010,10 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             }
 
             getImageDetails().sync();
+
             syncDataAcrossViews();
             binding.recyclerView.getAdapter().notifyDataSetChanged();
+            adapter.notifyDataSetChanged();
 
 
         });
@@ -930,7 +1028,6 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         if (adapter != null) {
             adapter.scanDirName = getScanDirPath();
-            adapter.originalFilepaths = getOriginalFilepaths();
             adapter.notifyDataSetChanged();
         }
 

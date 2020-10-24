@@ -21,7 +21,7 @@ import androidx.camera.core.ImageProxy;
 import com.aaindia.prodocscanner.wrappers.BitmapMat;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.CustomTarget;
+
 import com.bumptech.glide.request.transition.Transition;
 
 import org.opencv.android.Utils;

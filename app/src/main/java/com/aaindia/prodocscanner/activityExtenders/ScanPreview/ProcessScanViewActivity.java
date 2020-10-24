@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
@@ -28,6 +29,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class ProcessScanViewActivity extends ScanViewActivity {
@@ -40,12 +43,17 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     ActivityManager am;
 
+
+    ExecutorService executorService2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+
+        executorService2 = Executors.newFixedThreadPool(1);
     }
 
 
@@ -62,8 +70,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
         isProcessing = true;
         currentProcessing.add(position);
-
-
 
 
         getBinding().protector.setVisibility(View.VISIBLE);
@@ -184,7 +190,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                         holder.polygonView.setVisibility(View.GONE);
                         holder.processing.setVisibility(View.GONE);
-
+                        holder.isBusy = false;
 
                         zoomageEnableDisable(holder, true);
                         setDocumentChanged(true);
@@ -196,6 +202,61 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                         onProcessed(holder, position);
 
                         isProcessing = false;
+
+
+                        if (position == 0) {
+
+
+                            try {
+
+                                executorService2.execute(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+                                        try {
+
+                                            File originalFile = new File(getOriginalFilepaths().get(0));
+
+                                            File processedFile = new File(getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + getImageDetails().getAt(0));
+
+
+                                            File toCopy = processedFile.exists() ? processedFile : originalFile;
+
+                                            if(!toCopy.exists())
+                                                return;
+
+                                            Mat mat = Imgcodecs.imread(toCopy.getAbsolutePath());
+
+                                            int width = mat.width();
+                                            int height = mat.height();
+
+                                            float mp = (float) ((mat.width() / 1000.0) * (mat.height() / 1000.0));
+                                            if (mp > 2) {
+                                                float scale = 2.0f / mp;
+
+                                                Imgproc.resize(mat, mat, new Size(width * scale, height * scale), Imgproc.INTER_AREA);
+
+                                            }
+
+                                            Imgcodecs.imwrite(getScanDirPath() + File.separator + "thumbnail.jpg", mat);
+                                            mat.release();
+
+
+                                        } catch (Exception e) {
+                                        }
+
+
+                                    }
+                                });
+
+
+                            } catch (Exception e) {
+                            }
+
+
+                        }
+
+
                     }
                 });
 
@@ -262,8 +323,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     public void prepareMat(ScanPreviewAdapter.ViewHolder holder, int position) {
 
 
-
-
         if (holder.originalMat != null) {
             holder.originalMat.release();
         }
@@ -272,8 +331,6 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         Mat displayMat = new Mat();
 
         holder.originalMat = Imgcodecs.imread(getOriginalFilepaths().get(position));
-
-
 
 
         if (holder.originalMat.channels() == 4)
@@ -313,4 +370,20 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+
+        try {
+            if (executorService2 != null && !executorService2.isTerminated()) {
+                executorService2.shutdownNow();
+
+                while (!executorService2.isTerminated()) {
+                }
+            }
+        } catch (Exception e) {
+        }
+
+    }
 }

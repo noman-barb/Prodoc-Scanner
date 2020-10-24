@@ -107,6 +107,105 @@
             </RelativeLayout>
 
 
+
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:alpha="0.2"
+                android:background="@color/gray_cool">
+
+            </RelativeLayout>
+
+
+
+
+
+            <RelativeLayout
+                android:id="@+id/copySingleRL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:paddingLeft="15dp"
+                android:paddingTop="10dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="10dp">
+
+                <ImageView
+                    android:id="@+id/copySingleIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/baseline_content_copy_black_24"
+                    android:backgroundTint="@color/gray_cool"
+                    android:foregroundTint="@color/gray_cool"
+
+                    >
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="25dp"
+                    android:layout_toRightOf="@id/copySingleIV"
+                    android:text="Copy this page"
+                    android:textColor="@color/text"
+                    android:textSize="17sp"></com.google.android.material.textview.MaterialTextView>
+
+            </RelativeLayout>
+
+
+
+
+            <RelativeLayout
+                android:id="@+id/retakeRL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:paddingLeft="15dp"
+                android:paddingTop="10dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="10dp">
+
+                <ImageView
+                    android:id="@+id/retakeIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/baseline_repeat_black_24"
+                    android:backgroundTint="@color/gray_cool"
+                    android:foregroundTint="@color/gray_cool"
+
+                    >
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="25dp"
+                    android:layout_toRightOf="@id/retakeIV"
+                    android:text="Retake this page"
+                    android:textColor="@color/text"
+                    android:textSize="17sp"></com.google.android.material.textview.MaterialTextView>
+
+            </RelativeLayout>
+
+
+
+
+
+
+
+
+
+
             <RelativeLayout
                 android:id="@+id/deleteRL"
                 android:layout_width="match_parent"
@@ -240,6 +339,61 @@
 
 
 
+            <RelativeLayout
+                android:id="@+id/pasteSingleRLSeperator"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:alpha="0.2"
+                android:background="@color/gray_cool">
+
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/pasteRL"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:foreground="?android:selectableItemBackgroundBorderless"
+                android:paddingLeft="15dp"
+                android:paddingTop="10dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="10dp">
+
+                <ImageView
+                    android:id="@+id/pasteIV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/baseline_content_paste_black_24"
+                    android:backgroundTint="@color/gray_cool"
+                    android:foregroundTint="@color/gray_cool"
+
+                    >
+
+                </ImageView>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginLeft="25dp"
+                    android:layout_toRightOf="@id/pasteIV"
+                    android:text="Paste here"
+                    android:textColor="@color/text"
+                    android:textSize="17sp"></com.google.android.material.textview.MaterialTextView>
+
+            </RelativeLayout>
+
+
+
+
+
+
+
+
+
 
 
             <RelativeLayout
@@ -269,7 +423,7 @@
                 android:alpha="0.01"
                 android:background="@color/colorGray1"
                 android:clickable="true"
-                android:elevation="5dp"
+                android:elevation="50dp"
                 android:visibility="gone"></RelativeLayout>
 
 
@@ -509,7 +663,7 @@
                     android:padding="15dp">
 
                     <ImageView
-                        android:id="@+id/retakeIV"
+
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
@@ -561,7 +715,7 @@
                         android:elevation="3dp"
                         android:layout_centerInParent="true"
                         android:background="@color/colorSecondary"
-                        android:layout_width="14px"
+                        android:layout_width="match_parent"
                         android:layout_height="2px"></RelativeLayout>
 
                     <RelativeLayout
@@ -571,7 +725,7 @@
                         android:layout_centerInParent="true"
                         android:background="@color/colorSecondary"
                         android:layout_width="2px"
-                        android:layout_height="14px"></RelativeLayout>
+                        android:layout_height="match_parent"></RelativeLayout>
 
 
                 </RelativeLayout>
@@ -949,13 +1103,14 @@
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
-
+                        android:maxLines="2"
+                        android:text="Black &amp; White"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/colorTuneSK"
                         android:layout_alignLeft="@id/grayCRL"
                         android:layout_alignParentRight="true"
                         android:layout_marginTop="20dp"
-                        android:text="Gray"
+
                         android:textAlignment="center"
                         android:textColor="@color/colorWhite">
 
@@ -971,7 +1126,7 @@
                         android:layout_alignParentLeft="true"
                         android:layout_marginLeft="5dp"
                         android:layout_marginTop="20dp"
-                        android:text="Tone"
+                        android:text="Color Tone"
                         android:textAlignment="textStart"
                         android:textColor="@color/colorWhite">
 
@@ -1121,7 +1276,7 @@
 
 
                 <RelativeLayout
-                    android:id="@+id/deselectAllRL"
+                    android:id="@+id/copySelectedRL"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -1131,12 +1286,13 @@
 
                     <ImageView
 
-                        android:id="@+id/deselectAllIV"
+                        android:id="@+id/copySelectedIV"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true"
                         android:padding="4dp"
-                        android:src="@drawable/baseline_border_clear_white_24">
+
+                        android:src="@drawable/baseline_content_copy_white_24">
 
                     </ImageView>
 
@@ -1147,10 +1303,10 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
 
-                        android:layout_below="@id/deselectAllIV"
+                        android:layout_below="@id/copySelectedIV"
                         android:layout_centerHorizontal="true"
                         android:maxLines="1"
-                        android:text="Deselect All"
+                        android:text="Copy"
                         android:textColor="@color/colorWhite"
                         android:textSize="12sp">
 

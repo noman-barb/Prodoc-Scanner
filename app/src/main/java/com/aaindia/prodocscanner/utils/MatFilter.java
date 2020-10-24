@@ -21,12 +21,14 @@ public class MatFilter {
     public static final int COLOR_CONTRAST = 2;
     public static final int COLOR_PAPER = 3;
     public static final int COLOR_WHITEBOARD = 4;
+    public static final int COLOR_TEXT = 5;
 
 
     public static final int DEFAULT_TUNE_COLOR_ORIGINAL = 0;
     public static final int DEFAULT_TUNE_COLOR_CONTRAST = 10;
-    public static final int DEFAULT_TUNE_COLOR_PAPER = 20;
-    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 55;
+    public static final int DEFAULT_TUNE_COLOR_PAPER = 51;
+    public static final int DEFAULT_TUNE_COLOR_WHITEBOARD = 51;
+    public static final int DEFAULT_TUNE_COLOR_TEXT = 51;
 
 
 
@@ -42,6 +44,10 @@ public class MatFilter {
 
     private static native void cleanTextNative(long nativeObjAddr, float percentage);
 
+
+    private static native void textNative(long nativeObjAddr, float percentage);
+
+
     public static native void cropV1Native(long nativeObjAddr, long nativeObjAddr1);
 
     private static native void doNothing();
@@ -50,12 +56,6 @@ public class MatFilter {
     private static void brightnessContrast(long nativeObjAddr, long percentage) {
         MatFilter.loadLibrary();
         brightnessContrastNative(nativeObjAddr, percentage);
-    }
-
-    private static void paperize(long nativeObjAddr, float percentage) {
-        MatFilter.loadLibrary();
-        paperizeNative(nativeObjAddr, percentage);
-
     }
 
 
@@ -98,6 +98,14 @@ public class MatFilter {
     }
 
 
+    private static void text(Mat mat, float control) {
+
+        textNative(mat.getNativeObjAddr(), control);
+
+
+    }
+
+
     public static void original(Mat mat, int tune) {
 
         brightnessContrast(mat.getNativeObjAddr(), tune);
@@ -135,6 +143,10 @@ public class MatFilter {
 
                 break;
 
+            case COLOR_TEXT:
+                defaultTune = DEFAULT_TUNE_COLOR_TEXT;
+                break;
+
         }
 
         return defaultTune;
@@ -170,8 +182,9 @@ public class MatFilter {
                 break;
 
             case COLOR_PAPER:
+                text(mat,tune);
 
-                paperize(mat.getNativeObjAddr(), tune);
+                //paperize(mat.getNativeObjAddr(), tune);
 
                 break;
 
@@ -179,7 +192,13 @@ public class MatFilter {
 
 
                 whiteboard(mat, tune);
+                break;
 
+            case COLOR_TEXT:
+
+                text(mat,tune);
+
+                break;
         }
 
 

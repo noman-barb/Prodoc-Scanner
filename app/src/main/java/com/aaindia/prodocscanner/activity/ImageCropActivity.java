@@ -316,7 +316,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     private void initAutoCrop() {
 
-       zoomageEnable(false);
+        zoomageEnable(false);
         nextCropEnableDisable(true);
         cropStart = true;
 
@@ -495,7 +495,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             try {
                 displayImageProcessThread.join();
             } catch (InterruptedException e) {
-               // e.printStackTrace();
+                // e.printStackTrace();
             }
 
             processedDisplayImageThreadStop = false;
@@ -632,8 +632,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                         nextCropEnableDisable(false);
 
-                    zoomageEnable(true);
-                    nextClickec = false;
+                        zoomageEnable(true);
+                        nextClickec = false;
 
                     }
                 });
@@ -845,7 +845,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.noCropRL:
 
 
-               zoomageEnable(true);
+                zoomageEnable(true);
 
                 if (displayBitmap != null)
                     displayBitmap.recycle();

@@ -189,6 +189,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         set.add(getImageDetails().getAt(position));
 
 
+        final boolean[] notProcessedAvailable = {false};
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -199,6 +200,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                notProcessedAvailable[0] = true;
                                 try {
 
                                     if (!pd1.isShowing())
@@ -215,6 +217,10 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+
+                        if (notProcessedAvailable[0]){
+                            binding.recyclerView.getAdapter().notifyDataSetChanged();
+                        }
 
                         pd1.dismiss();
 
@@ -351,14 +357,14 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
         new ShareDialog(this, (int) size, new ShareDialog.OnShareDialogListener() {
             @Override
-            public void share(boolean isPDF, double quality) {
+            public void share(boolean isPDF, double quality, String password) {
 
 
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
 
-                        prepareDoc(files, isPDF, quality, pd, isExport);
+                        prepareDoc(files, isPDF, quality, pd, isExport, password);
 
                     }
                 }).start();
@@ -368,7 +374,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
     }
 
 
-    private void prepareDoc(ArrayList<File> files, boolean isPDF, double quality, ProgressDialog pd, boolean export) {
+    private void prepareDoc(ArrayList<File> files, boolean isPDF, double quality, ProgressDialog pd, boolean export, String passowrd) {
 
 
         quality = (quality) / 200.0;
@@ -391,7 +397,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
             File outputFile = new File(outputDir, pdfName);
 
             try {
-                new DocMaker(ShareScanPreviewActivity.this, files, quality).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                new DocMaker(ShareScanPreviewActivity.this, files, quality, passowrd).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
                     @Override
                     public void onUpdate(int currentPage, int totalPage) {
 
@@ -471,7 +477,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
             File outputFile = new File(outputDir, pdfName);
 
             try {
-                new DocMaker(ShareScanPreviewActivity.this, files, quality).makeImages(outputDir.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                new DocMaker(ShareScanPreviewActivity.this, files, quality, passowrd).makeImages(outputDir.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
                     @Override
                     public void onUpdate(int currentPage, int totalPage) {
 
@@ -570,6 +576,8 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
             public void run() {
 
 
+                final boolean[] notProcessedAvailable = {false};
+
                 Utils.copyNotProcessedOriginals(fileSet, getImageDetails(), getScanDirPath(), new Utils.OnUpdateCopy() {
                     @Override
                     public void showDialog() {
@@ -577,6 +585,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                notProcessedAvailable[0] = true;
                                 try {
                                     if (!pd1.isShowing())
                                         pd1.show();
@@ -594,6 +603,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                     @Override
                     public void run() {
 
+
+                        if (notProcessedAvailable[0]){
+                            binding.recyclerView.getAdapter().notifyDataSetChanged();
+                        }
+
                         pd1.dismiss();
 
 
@@ -605,7 +619,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
                         new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize, new ShareDialog.OnShareDialogListener() {
                             @Override
-                            public void share(boolean isPDF, double quality) {
+                            public void share(boolean isPDF, double quality, String password) {
 
 
                                 new Thread(new Runnable() {
@@ -631,7 +645,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
 
                                         try {
-                                            new DocMaker(ShareScanPreviewActivity.this, files, q).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
+                                            new DocMaker(ShareScanPreviewActivity.this, files, q, password).make(outputFile.getAbsolutePath(), new DocMaker.OnPDFMakerUpdate() {
                                                 @Override
                                                 public void onUpdate(int currentPage, int totalPage) {
 

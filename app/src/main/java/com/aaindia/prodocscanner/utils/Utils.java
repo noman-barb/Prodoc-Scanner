@@ -2,10 +2,13 @@ package com.aaindia.prodocscanner.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.PointF;
+import android.net.Uri;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.OpenableColumns;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
@@ -126,6 +129,41 @@ public class Utils {
     }
 
 
+    public static String getFileNameFromUri(Uri uri, Activity activity) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = activity.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+
+    public static void checkOpenCV() {
+
+
+        if (!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initDebug();
+            System.loadLibrary("native-lib");
+        }
+
+        MatFilter.loadLibrary();
+
+    }
+
     public static void checkOpenCV(Activity activity) {
 
 
@@ -140,14 +178,24 @@ public class Utils {
 
 
     public static void vibrate(Activity context, long millis) {
-        Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-// Vibrate for 500 milliseconds
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            v.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE));
-        } else {
-            //deprecated in API 26
-            v.vibrate(500);
+
+
+        millis = Math.max(20,millis);
+        try {
+            Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            if (!v.hasVibrator()){
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                //deprecated in API 26
+                v.vibrate(millis);
+            }
         }
+        catch (Exception e){}
+
+
     }
 
 

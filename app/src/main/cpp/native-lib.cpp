@@ -44,9 +44,9 @@ int get_yintercept(int point1[], int point2[]);
 
 float normd(Vec4i v);
 
-void color_cluster(Mat &image, Mat &result);
-
-void normalize_image(Mat &image, Mat &result);
+//void color_cluster(Mat &image, Mat &result);
+//
+//void normalize_image(Mat &image, Mat &result);
 
 void normalize_image_bg(Mat &image, Mat &result);
 
@@ -75,64 +75,64 @@ void vector_Point_to_Mat(vector<Point> v_point, Mat &mat);
 using namespace std;
 using namespace cv;
 
-extern "C" {
-void JNICALL
-Java_com_aaindia_prodocscanner_TestActivity_adaptiveThresholdFromJNI(JNIEnv *env,
-                                                                     jobject instance,
-                                                                     jlong matAddr) {
-
-    // get Mat from raw address
-    Mat &image_original = *(Mat *) matAddr;
-
-    clock_t begin = clock();
-
-
-    Mat image;
-    resize(image_original, image, Size(512, 512));
-    image.convertTo(image, CV_8U);
-
-    vector<Point> corners;
-
-    try {
-        find_corners(image, corners);
-
-
-        double scale_x = image_original.cols * 1.00 / image.cols;
-        double scale_y = image_original.rows * 1.00 / image.rows;
-
-        for (size_t i = 0; i < corners.size(); i++) {
-            corners[i].x *= scale_x;
-            corners[i].y *= scale_y;
-        }
-
-
-
-
-//        vector<vector<Point>> _corners;
-//        _corners.push_back(corners);
+//extern "C" {
+//void JNICALL
+//Java_com_aaindia_prodocscanner_TestActivity_adaptiveThresholdFromJNI(JNIEnv *env,
+//                                                                     jobject instance,
+//                                                                     jlong matAddr) {
 //
-//        drawContours(image_original, _corners, 0, Scalar(0, 255, 0), 5);
-
-
-        __android_log_print(ANDROID_LOG_INFO, TAG, "working");
-    }
-    catch (...) {
-        __android_log_print(ANDROID_LOG_INFO, TAG, "not working");
-    }
-
-
-
-
-
-
-
-
-    // log computation time to Android Logcat
-    double totalTime = double(clock() - begin) / CLOCKS_PER_SEC;
-    __android_log_print(ANDROID_LOG_INFO, TAG, "adaptiveThreshold computation time = %f seconds\n",
-                        totalTime);
-}
-}
+//    // get Mat from raw address
+//    Mat &image_original = *(Mat *) matAddr;
+//
+//    clock_t begin = clock();
+//
+//
+//    Mat image;
+//    resize(image_original, image, Size(512, 512));
+//    image.convertTo(image, CV_8U);
+//
+//    vector<Point> corners;
+//
+//    try {
+//        find_corners(image, corners);
+//
+//
+//        double scale_x = image_original.cols * 1.00 / image.cols;
+//        double scale_y = image_original.rows * 1.00 / image.rows;
+//
+//        for (size_t i = 0; i < corners.size(); i++) {
+//            corners[i].x *= scale_x;
+//            corners[i].y *= scale_y;
+//        }
+//
+//
+//
+//
+////        vector<vector<Point>> _corners;
+////        _corners.push_back(corners);
+////
+////        drawContours(image_original, _corners, 0, Scalar(0, 255, 0), 5);
+//
+//
+//        __android_log_print(ANDROID_LOG_INFO, TAG, "working");
+//    }
+//    catch (...) {
+//        __android_log_print(ANDROID_LOG_INFO, TAG, "not working");
+//    }
+//
+//
+//
+//
+//
+//
+//
+//
+//    // log computation time to Android Logcat
+//    double totalTime = double(clock() - begin) / CLOCKS_PER_SEC;
+//    __android_log_print(ANDROID_LOG_INFO, TAG, "adaptiveThreshold computation time = %f seconds\n",
+//                        totalTime);
+//}
+//}
 
 
 void find_corners(Mat &image, vector<Point> &corners) {
@@ -398,71 +398,71 @@ void auto_canny(Mat &image, Mat &result, float sigma) {
 }
 
 
-void normalize_image(Mat &image, Mat &result) {
-
-
-    vector<Mat> image_planes;
-    split(image, image_planes);
-
-    //__android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
-
-    Mat temp(image.rows, image.cols, CV_8U);
-
-
-    if (image.channels() > 2) {
-
-        for (int i = 0; i < 3; ++i) {
-            dilate(image_planes[i], temp, Mat::ones(7, 7, CV_8U));
-            //medianBlur(temp, temp, 21);
-
-            medianBlur(temp, temp, 21);
-
-
-            absdiff(image_planes[i], temp, temp);
-            temp = 255 - temp;
-            //NORM_MINMAX = 32
-            normalize(temp, image_planes[i], 0, 255, 32);
-        }
-
-        merge(image_planes, result);
-
-        image_planes[0].release();
-        image_planes[1].release();
-        image_planes[2].release();
-    } else {
-
-
-        Mat image_original = image;
-
-        // __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
-
-        dilate(image_original, temp, Mat::ones(7, 7, CV_8U));
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
-
-
-        blur(temp, temp, Size(21, 21));
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER BLUR %f", now_ms() - begin);
-
-        absdiff(image_original, temp, temp);
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DIFF %f", now_ms() - begin);
-
-        temp = 255 - temp;
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER INVERT %f", now_ms() - begin);
-
-        //NORM_MINMAX = 32
-        normalize(temp, image_original, 0, 255, 32);
-
-        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
-
-
-    }
-
-
-}
+//void normalize_image(Mat &image, Mat &result) {
+//
+//
+//    vector<Mat> image_planes;
+//    split(image, image_planes);
+//
+//    //__android_log_print(ANDROID_LOG_INFO, TAG, "SPLIT %f", now_ms() - begin);
+//
+//    Mat temp(image.rows, image.cols, CV_8U);
+//
+//
+//    if (image.channels() > 2) {
+//
+//        for (int i = 0; i < 3; ++i) {
+//            dilate(image_planes[i], temp, Mat::ones(7, 7, CV_8U));
+//            //medianBlur(temp, temp, 21);
+//
+//            medianBlur(temp, temp, 21);
+//
+//
+//            absdiff(image_planes[i], temp, temp);
+//            temp = 255 - temp;
+//            //NORM_MINMAX = 32
+//            normalize(temp, image_planes[i], 0, 255, 32);
+//        }
+//
+//        merge(image_planes, result);
+//
+//        image_planes[0].release();
+//        image_planes[1].release();
+//        image_planes[2].release();
+//    } else {
+//
+//
+//        Mat image_original = image;
+//
+//        // __android_log_print(ANDROID_LOG_INFO, TAG, "BEFORE DILATE %f", now_ms() - begin);
+//
+//        dilate(image_original, temp, Mat::ones(7, 7, CV_8U));
+//
+//        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DILATE %f", now_ms() - begin);
+//
+//
+//        blur(temp, temp, Size(21, 21));
+//
+//        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER BLUR %f", now_ms() - begin);
+//
+//        absdiff(image_original, temp, temp);
+//
+//        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER DIFF %f", now_ms() - begin);
+//
+//        temp = 255 - temp;
+//
+//        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER INVERT %f", now_ms() - begin);
+//
+//        //NORM_MINMAX = 32
+//        normalize(temp, image_original, 0, 255, 32);
+//
+//        //__android_log_print(ANDROID_LOG_INFO, TAG, "AFTER NORMALIZE %f", now_ms() - begin);
+//
+//
+//    }
+//
+//
+//}
 
 
 void normalize_image_bg(Mat &image, Mat &result) {
@@ -514,28 +514,28 @@ void normalize_image_bg(Mat &image, Mat &result) {
 }
 
 
-void color_cluster(Mat &image, Mat &result) {
-
-    int n = image.rows * image.cols;
-
-    vector<Mat> image_planes;
-    split(image, image_planes);
-
-    Mat pixel_values(n, 3, CV_8U);
-    for (int i = 0; i < 3; ++i)
-        image_planes[i].reshape(1, n).copyTo(pixel_values.col(i));
-    pixel_values.convertTo(pixel_values, CV_32F);
-
-    //CV_TERMCRIT_ITER | CV_TERMCRIT_EPS = 3
-
-    kmeans(pixel_values, 2, result,
-           TermCriteria(TermCriteria::EPS + TermCriteria::MAX_ITER, 10, 0.001), 1,
-           KMEANS_RANDOM_CENTERS);
-    result = result.reshape(0, image.rows);
-    result = result * 255;
-    result.convertTo(result, CV_8U);
-
-}
+//void color_cluster(Mat &image, Mat &result) {
+//
+//    int n = image.rows * image.cols;
+//
+//    vector<Mat> image_planes;
+//    split(image, image_planes);
+//
+//    Mat pixel_values(n, 3, CV_8U);
+//    for (int i = 0; i < 3; ++i)
+//        image_planes[i].reshape(1, n).copyTo(pixel_values.col(i));
+//    pixel_values.convertTo(pixel_values, CV_32F);
+//
+//    //CV_TERMCRIT_ITER | CV_TERMCRIT_EPS = 3
+//
+//    kmeans(pixel_values, 2, result,
+//           TermCriteria(TermCriteria::EPS + TermCriteria::MAX_ITER, 10, 0.001), 1,
+//           KMEANS_RANDOM_CENTERS);
+//    result = result.reshape(0, image.rows);
+//    result = result * 255;
+//    result.convertTo(result, CV_8U);
+//
+//}
 
 
 double median_mat(cv::Mat Input) {
@@ -817,72 +817,63 @@ void gamma_correction(Mat &src, Mat &dst, float fGamma) {
 
 }
 
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1Native(JNIEnv *env, jobject thiz,
-                                                                       jlong matAddr,
-                                                                       jlong native_obj_addr1) {
-
-    // get Mat from raw address
-    Mat &image_original = *(Mat *) matAddr;
-
-    Mat &crop_bounds = *(Mat *) native_obj_addr1;
-
-
-    Mat image;
-    resize(image_original, image, Size(512, 512));
-    image.convertTo(image, CV_8U);
-
-    vector<Point> corners;
-
-
-    try {
-        find_corners(image, corners);
-
-
-        double scale_x = image_original.cols * 1.00 / image.cols;
-        double scale_y = image_original.rows * 1.00 / image.rows;
-
-        for (size_t i = 0; i < corners.size(); i++) {
-            corners[i].x *= scale_x;
-            corners[i].y *= scale_y;
-        }
-
-        vector_Point_to_Mat(corners, crop_bounds);
-
-
-
-    }
-    catch (...) {
-
-    }
-
-
-}
-
-
-void paperizeNative(jlong matAddr, jfloat colorVal) {
-
-    Mat &image_original = *(Mat *) matAddr;
-
-    normalize_image(image_original, image_original);
-
-    colorVal = colorVal >= 50 ? colorVal - 49 : colorVal / 50;
-
-    BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
-}
+//
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_com_aaindia_prodocscanner_activity_ImageCropActivity_cropV1Native(JNIEnv *env, jobject thiz,
+//                                                                       jlong matAddr,
+//                                                                       jlong native_obj_addr1) {
+//
+//    // get Mat from raw address
+//    Mat &image_original = *(Mat *) matAddr;
+//
+//    Mat &crop_bounds = *(Mat *) native_obj_addr1;
+//
+//
+//    Mat image;
+//    resize(image_original, image, Size(512, 512));
+//    image.convertTo(image, CV_8U);
+//
+//    vector<Point> corners;
+//
+//
+//    try {
+//        find_corners(image, corners);
+//
+//
+//        double scale_x = image_original.cols * 1.00 / image.cols;
+//        double scale_y = image_original.rows * 1.00 / image.rows;
+//
+//        for (size_t i = 0; i < corners.size(); i++) {
+//            corners[i].x *= scale_x;
+//            corners[i].y *= scale_y;
+//        }
+//
+//        vector_Point_to_Mat(corners, crop_bounds);
+//
+//
+//
+//    }
+//    catch (...) {
+//
+//    }
+//
+//
+//}
 
 
-void paperizeNative2(Mat &image_original, jfloat colorVal) {
+//void paperizeNative(jlong matAddr, jfloat colorVal) {
+//
+//    Mat &image_original = *(Mat *) matAddr;
+//
+//    normalize_image(image_original, image_original);
+//
+//    colorVal = colorVal >= 50 ? colorVal - 49 : colorVal / 50;
+//
+//    //BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
+//}
 
 
-    normalize_image(image_original, image_original);
-
-    colorVal = colorVal >= 50 ? colorVal - 49 : colorVal / 50;
-
-    BrightnessAndContrastAuto(image_original, image_original, colorVal * 1.0 / 10);
-}
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -898,23 +889,17 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_brightnessContrastNative(JNIEnv *
     image_original = image;
 }
 
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_paperizeNative(JNIEnv *env, jclass clazz,
-                                                              jlong matAddr, jfloat colorVal) {
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_com_aaindia_prodocscanner_utils_MatFilter_paperizeNative(JNIEnv *env, jclass clazz,
+//                                                              jlong matAddr, jfloat colorVal) {
+//
+//    paperizeNative(matAddr, colorVal);
+//
+//
+//}
 
-    paperizeNative(matAddr, colorVal);
 
-
-}extern "C"
-JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_adjustGamma(JNIEnv *env, jclass clazz,
-                                                           jlong matAddr, jfloat gamma) {
-
-    Mat &image_original = *(Mat *) matAddr;
-
-    gamma_correction(image_original, image_original, gamma);
-}
 
 
 
@@ -966,40 +951,33 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1Native(JNIEnv *env, jclass 
 }
 
 
-void cleanTextNativeGray(Mat &mat, jfloat colorVal) {
 
+void SimplestCB(Mat& in, Mat& out, float percent) {
+    assert(in.channels() == 3);
+    assert(percent > 0 && percent < 100);
 
-    Mat mat1 = mat.clone();
+    float half_percent = percent / 200.0f;
 
-    blur(mat1, mat1, Size(3, 3));
-    Mat binary(mat.rows, mat.cols, CV_8U);
-    adaptiveThreshold(mat1, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 10);
-    mat1.release();
+    vector<Mat> tmpsplit; split(in,tmpsplit);
+    for(int i=0;i<3;i++) {
+        //find the low and high precentile values (based on the input percentile)
+        Mat flat; tmpsplit[i].reshape(1,1).copyTo(flat);
+        cv::sort(flat,flat,0);
+        int lowval = flat.at<uchar>(cvFloor(((float)flat.cols) * half_percent));
+        int highval = flat.at<uchar>(cvCeil(((float)flat.cols) * (1.0 - half_percent)));
+        cout << lowval << " " << highval << endl;
 
-    erode(binary, binary, Mat::ones(5, 5, CV_8U), Point(-1, -1), 3);
+        //saturate below the low percentile and above the high percentile
+        tmpsplit[i].setTo(lowval,tmpsplit[i] < lowval);
+        tmpsplit[i].setTo(highval,tmpsplit[i] > highval);
 
-
-    paperizeNative2(mat, 0);
-    bitwise_or(mat, binary, mat);
-
-
-    double thresh = threshold(mat, binary, 0, 255, THRESH_OTSU);
-
-    double control = colorVal;
-    control += 1;
-    control = control >= 50 ? control / 5.0 : control / 20.0;
-
-    gamma_correction(mat, mat, (float) ((thresh + 55) * 1.0 / 255) * 0.8 * control);
-
-
-    bitwise_not(binary, binary);
-    bitwise_xor(mat, mat, mat, binary);
-
-
-    binary.release();
-
-
+        //scale the channel
+        normalize(tmpsplit[i],tmpsplit[i],0,255,NORM_MINMAX);
+    }
+    merge(tmpsplit,out);
 }
+
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -1007,6 +985,103 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
                                                                jlong matAddr, jfloat colorVal) {
 
 
+    Mat &mat = *(Mat *) matAddr;
+
+
+
+
+    if (mat.channels() > 1) {
+
+
+        Mat mat_original = mat.clone();
+
+        if (mat.channels() == 3) {
+            cvtColor(mat, mat, COLOR_BGR2GRAY);
+
+        } else if (mat.channels() == 4) {
+            cvtColor(mat, mat, COLOR_BGRA2GRAY);
+            cvtColor(mat_original, mat_original, COLOR_BGRA2BGR);
+        }
+
+
+
+
+
+        SimplestCB(mat_original,mat_original,1);
+
+
+
+        adaptiveThreshold(mat, mat, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 12);
+
+        //erode(mat, mat, Mat::ones(3, 3, CV_8U));
+
+        cvtColor(mat_original, mat_original, COLOR_BGR2HSV);
+
+
+        vector<Mat> mats2;
+        split(mat_original, mats2);
+
+
+        subtract(mats2[1], mats2[1] * colorVal/100.0 , mats2[1], mat);
+        add(mats2[2], mats2[2] * colorVal*1.0/50, mats2[2], mat);
+
+        bitwise_not(mat, mat);
+
+
+        add(mats2[1], mats2[1] * ((colorVal - 50) / 50) * 1.0, mats2[1], mat);
+        add(mats2[2], mats2[2] * ((colorVal - 50) / 50) * 3.0, mats2[2], mat);
+
+        merge(mats2, mat_original);
+
+        mats2[0].release();
+        mats2[1].release();
+        mats2[2].release();
+
+
+        cvtColor(mat_original, mat, COLOR_HSV2BGR);
+        mat_original.release();
+
+
+    } else {
+
+        Mat binary = mat.clone();
+
+        colorVal-=38;
+        colorVal = std::max(colorVal,5.0f);
+
+        adaptiveThreshold(binary, binary, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, colorVal);
+
+
+        //erode(mat, mat, Mat::ones(3, 3, CV_8U));
+
+        Mat binary2(binary.rows, binary.cols, binary.type());
+
+
+        add(mat,mat*(colorVal/35.0),mat,binary);
+
+        bitwise_not(binary, binary2);
+
+
+
+        binary.copyTo(mat,binary2);
+
+        binary.release();
+        binary2.release();
+
+
+
+
+    }
+
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_aaindia_prodocscanner_utils_MatFilter_doNothing(JNIEnv *env, jclass clazz) {
+    // TODO: implement doNothing()
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_aaindia_prodocscanner_utils_MatFilter_textNative(JNIEnv *env, jclass clazz,
+                                                          jlong matAddr, jfloat colorVal) {
     Mat &mat = *(Mat *) matAddr;
 
 
@@ -1024,8 +1099,12 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         }
 
 
-        cleanTextNativeGray(mat, colorVal);
 
+        adaptiveThreshold(mat, mat, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, 12);
+
+
+
+        //erode(mat, mat, Mat::ones(3, 3, CV_8U));
 
         vector<Mat> original_mats;
         split(mat_original, original_mats);
@@ -1039,7 +1118,6 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         mat.copyTo(final_mats[2]);
 
 
-        threshold(mat, mat, 1, 255, THRESH_BINARY);
 
         bitwise_not(mat, mat);
 
@@ -1061,7 +1139,7 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
         final_mats[2].release();
 
 
-        BrightnessAndContrastAuto(mat_original, mat_original, 2);
+        BrightnessAndContrastAuto(mat_original, mat_original, 1);
 
         cvtColor(mat_original, mat_original, COLOR_BGR2HSV);
 
@@ -1088,26 +1166,15 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cleanTextNative(JNIEnv *env, jcla
 
         mat_original.release();
 
-
     } else {
 
+        colorVal-=38;
+        colorVal = std::max(colorVal,5.0f);
 
-//        int shallBlur = 0;
-//        if ((mat.rows / 1000.0) * (mat.cols / 1000.0) > 6) {
-//            shallBlur = 1;
-//        }
+        adaptiveThreshold(mat, mat, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 51, colorVal);
 
-        cleanTextNativeGray(mat, colorVal);
 
-//        if (shallBlur)
-//            blur(mat, mat, Size(2, 2));
-
+        //erode(mat, mat, Mat::ones(3, 3, CV_8U));
 
     }
-
-
-}extern "C"
-JNIEXPORT void JNICALL
-Java_com_aaindia_prodocscanner_utils_MatFilter_doNothing(JNIEnv *env, jclass clazz) {
-    // TODO: implement doNothing()
 }

@@ -41,10 +41,12 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
     public static final String SCAN_DIR_PATH = "scan_dir_path";
     public static final String SCROLL_TO = "scroll_to";
+
     private static final int ADD_PAGES_ACTIVITY_RESULT_CODE = 929;
 
 
     public static final int EXPORT_TO_DEVICE_CODE = 826;
+
 
 
 
@@ -56,11 +58,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         Utils.checkOpenCV(this);
 
 
+        if (getIntent() != null && getIntent().getExtras() != null) {
 
 
-        if (getIntent()!=null && getIntent().getExtras()!=null){
 
-            int scrollTo = getIntent().getExtras().getInt(SCROLL_TO,0);
+            int scrollTo = getIntent().getExtras().getInt(SCROLL_TO, 0);
 
 
             getBinding().recyclerView.post(new Runnable() {
@@ -75,17 +77,16 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
                                 @Override
                                 public void run() {
                                     getBinding().recyclerView.scrollToPosition(scrollTo);
-                                //    getBinding().recyclerView.getLayoutManager().scrollToPosition(scrollTo);
+                                    //    getBinding().recyclerView.getLayoutManager().scrollToPosition(scrollTo);
                                 }
                             });
                         }
-                    },200);
+                    }, 200);
 
                 }
             });
-          //  getBinding().recyclerView.smoothScrollToPosition(scrollTo);
+            //  getBinding().recyclerView.smoothScrollToPosition(scrollTo);
         }
-
 
 
     }
@@ -100,8 +101,8 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     }
 
     @Override
-    public void addPages(ScanPreviewAdapter.ViewHolder holder, int position) {
-        super.addPages(holder, position);
+    public void addPages(ScanPreviewAdapter.ViewHolder holder, int position, boolean retake) {
+        super.addPages(holder, position, retake);
 
         MainActivity.listingModified = true;
 
@@ -116,7 +117,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
             intent.putExtra(CameraScanActivity.SCAN_PATH_KEY, getScanDirPath());
             intent.putExtra(CameraScanActivity.INSERT_AT, position + 1);
             intent.putExtra(CameraScanActivity.ADD_PAGES, true);
-
+            intent.putExtra(CameraScanActivity.RETAKE_IMAGE, retake);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivityForResult(intent, ADD_PAGES_ACTIVITY_RESULT_CODE);
 
@@ -170,10 +171,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         getOriginalFilepaths().remove(position);
 
-        ((ScanPreviewAdapter)getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
-
-        ((GridScanViewAdapter)getBinding().gridRecyclerView.getAdapter()).originalFilepaths = getOriginalFilepaths();
-
+       // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
 
 
         getImageDetails().removePage(position);
@@ -202,12 +200,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         } else {
 
 
-
             getRecyclerView().getAdapter().notifyDataSetChanged();
 
-            if (position<=getRecyclerView().getAdapter().getItemCount()){
+            if (position <= getRecyclerView().getAdapter().getItemCount()) {
 
-                getRecyclerView().scrollToPosition(  Math.max(position-1,0));
+                getRecyclerView().scrollToPosition(Math.max(position - 1, 0));
             }
         }
     }
@@ -275,8 +272,6 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
                 if (renamed) {
 
                     setScanDirPath(getScanDirPath().replace(finalFromName, newName));
-
-
 
 
                     loadInitialData();
@@ -442,5 +437,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
     }
 
+    @Override
+    public void onProcessed(ScanPreviewAdapter.ViewHolder holder, int position) {
+        super.onProcessed(holder, position);
 
+
+
+    }
 }

@@ -7,15 +7,16 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:itemBackground">@color/colorWhite</item>
         <item name="android:textColor">@color/colorBlack</item>
+
         <item name="android:windowBackground">@drawable/main_activity_theme_bg</item>
 
 
 
 
-
-
-
     </style>
+
+
+
 
 
     <style name="SearchViewStyle" parent="Widget.AppCompat.Light.SearchView">

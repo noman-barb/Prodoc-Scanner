@@ -30,8 +30,19 @@
 -keep class com.xw.* { *; }
 -keep class org.* { *; }
 -keep class androidx.* { *; }
+
 -keep class com.tom_roush.* { *; }
--keep class com.aaindia.prodocscanner.wrappers.* { *; }
 -keep class org.spongycastle.* { *; }
+
+-keep class com.tom_roush.** { public protected private *; }
+-keep class com.aaindia.prodocscanner.wrappers.** { public protected private *; }
+-keep class org.spongycastle.** { public protected private *; }
 -dontwarn org.spongycastle.**
+
+-keep class com.madgag.spongycastle* { *; }
+-keep class com.madgag.spongycastle** {public protected private *; }
+-dontwarn com.madgag.spongycastle.**
+
+
+
 

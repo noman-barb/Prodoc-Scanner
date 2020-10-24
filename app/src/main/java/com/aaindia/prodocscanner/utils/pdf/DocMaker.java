@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
+import com.tom_roush.pdfbox.pdmodel.encryption.AccessPermission;
+import com.tom_roush.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
@@ -31,11 +34,14 @@ public class DocMaker {
     private ArrayList<File> images;
     private double quality;
 
-    public DocMaker(Activity context, ArrayList<File> images, double quality) {
+    private String password = null;
+
+    public DocMaker(Activity context, ArrayList<File> images, double quality, String password) {
 
         this.context = context;
         this.images = images;
         this.quality = quality;
+        this.password = password;
     }
 
     Mat m;
@@ -49,7 +55,7 @@ public class DocMaker {
         double q = quality * 100;
 
 
-        if (q>39){
+        if (q > 39) {
 
 
             update.onComplete(images);
@@ -126,11 +132,15 @@ public class DocMaker {
             Bitmap bitmap = BitmapFactory.decodeFile(images.get(i).getAbsolutePath());
 
 
-
-
             int pdfWidth = (int) PDRectangle.A4.getWidth();
 
             int pdfHeight = pdfWidth * bitmap.getHeight() / bitmap.getWidth();
+
+
+            pdfHeight=(int) PDRectangle.A4.getHeight();
+
+            pdfWidth = pdfHeight*bitmap.getWidth()/bitmap.getHeight();
+
 
             PDPage page = new PDPage(new PDRectangle(pdfWidth, pdfHeight));
 
@@ -138,18 +148,41 @@ public class DocMaker {
             document.addPage(page);
 
 
-            PDPageContentStream contentStream = new PDPageContentStream(document, page, true,true,true);
+            PDPageContentStream contentStream = new PDPageContentStream(document, page, true, true, true);
 
 
             PDImageXObject ximage = JPEGFactory.createFromImage(document, bitmap, (float) quality, 72);
 
             contentStream.drawXObject(ximage, 0, 0, pdfWidth, pdfHeight);
 
+            //
+
+
             contentStream.close();
+
+           // document.importPage(page);
 
             bitmap.recycle();
 
+
         }
+
+
+        if (password != null && password.length() > 0) {
+
+            AccessPermission ap = new AccessPermission();
+
+
+            StandardProtectionPolicy spp = new StandardProtectionPolicy
+                    (password, password, ap);
+
+            spp.setEncryptionKeyLength(128);
+
+            spp.setPermissions(ap);
+            document.protect(spp);
+
+        }
+
 
         document.save(outputPath);
         document.close();

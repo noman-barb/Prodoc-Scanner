@@ -21,8 +21,8 @@ android {
         applicationId "com.aaindia.prodocscanner"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 39
-        versionName "3.1"
+        versionCode 40
+        versionName "3.1.1"
 
 
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -38,7 +38,7 @@ android {
 
     buildTypes {
         debug {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 

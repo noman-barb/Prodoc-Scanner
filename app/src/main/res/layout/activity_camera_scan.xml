@@ -12,9 +12,6 @@
         tools:context=".activity.CameraPreviewActivity">
 
 
-
-
-
         <RelativeLayout
 
             android:id="@+id/toolbarRL"
@@ -27,17 +24,47 @@
 
 
             <ImageView
-                android:rotation="90"
                 android:id="@+id/backArrow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="12dp"
                 android:clickable="true"
+                android:rotation="90"
                 android:src="@drawable/baseline_keyboard_arrow_down_white_24"></ImageView>
+
+
+
 
             <RelativeLayout
 
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/torchRoot"
+
+                android:layout_centerVertical="true"
+                android:layout_marginRight="10dp">
+
+                <ImageView
+                    android:id="@+id/flipCamera"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:clickable="true"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_flip_camera_android_white_24"></ImageView>
+
+
+            </RelativeLayout>
+
+
+
+
+
+            <RelativeLayout
+
+                android:id="@+id/torchRoot"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
@@ -157,8 +184,6 @@
                     app:layout_constraintTop_toTopOf="parent">
 
 
-
-
                     <!--
 
 
@@ -179,16 +204,12 @@
                         app:scaleType="fitCenter"></androidx.camera.view.PreviewView>
 
 
-
                 </FrameLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
 
         </RelativeLayout>
-
-
-
 
 
         <RelativeLayout
@@ -253,28 +274,6 @@
 
                     </ImageView>
 
-
-                    <ProgressBar
-
-                        android:id="@+id/processingCapture"
-                        android:visibility="gone"
-                        android:alpha="0.7"
-                        android:scaleY="1"
-                        android:scaleX="1"
-                        android:progressTint="@color/colorWhite"
-                        android:indeterminateTint="@color/colorWhite"
-
-                        android:foregroundTint="@color/colorWhite"
-
-                        android:layout_alignTop="@id/cameraCapture"
-                        android:layout_alignBottom="@id/cameraCapture"
-                        android:layout_centerInParent="true"
-
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent">
-
-
-                    </ProgressBar>
 
                     <LinearLayout
 
@@ -374,6 +373,28 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <ProgressBar
+
+                        android:id="@+id/processingCapture"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_alignTop="@id/cameraCapture"
+                        android:layout_alignBottom="@id/cameraCapture"
+                        android:layout_centerInParent="true"
+                        android:alpha="0.7"
+
+                        android:foregroundTint="@color/colorWhite"
+
+                        android:indeterminateTint="@color/colorWhite"
+                        android:progressTint="@color/colorWhite"
+                        android:scaleX="1"
+
+                        android:scaleY="1"
+                        android:visibility="gone">
+
+
+                    </ProgressBar>
+
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -385,24 +406,21 @@
                         <Button
 
 
-
                             android:id="@+id/next"
-                            android:theme="@style/AppTheme"
-
-
-
                             android:layout_width="wrap_content"
+
+
                             android:layout_height="wrap_content"
                             android:layout_below="@id/numPagesRl"
-
                             android:layout_centerHorizontal="true"
+
                             android:layout_centerVertical="true"
                             android:background="@drawable/active_btn"
                             android:text="Next"
-                            android:textColor="@color/colorWhite">
+                            android:textColor="@color/colorWhite"
+                            android:theme="@style/AppTheme">
 
                         </Button>
-
 
 
                         <RelativeLayout

@@ -141,6 +141,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     public static final String DOCUMENT_TYPE_KEY = "document_type";
 
+    boolean isLoaded = false;
+
 
     @Override
     public void onBackPressed() {
@@ -360,6 +362,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                             rotate(rotationDegrees);
                             binding.processing.setVisibility(View.GONE);
                             binding.protector.setVisibility(View.GONE);
+
+                            isLoaded = true;
 
 
                             binding.polygonView.pointMove = new PolygonView.OnPointMove() {
@@ -845,6 +849,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.noCropRL:
 
 
+                if (!isLoaded)
+                    return;
+
                 zoomageEnable(true);
 
                 if (displayBitmap != null)
@@ -896,10 +903,17 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.nextCropIB:
 
 
+                if (!isLoaded)
+                    return;
+
                 processDisplayImage();
                 break;
 
             case R.id.nextIB:
+
+
+                if (!isLoaded)
+                    return;
 
                 if (cropStart)
                     return;
@@ -910,6 +924,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.CropRL:
 
+
+                if (!isLoaded)
+                    return;
 
                 if (!binding.polygonView.autoCropped)
                     return;
@@ -929,6 +946,10 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 break;
 
             case R.id.colorRL:
+
+
+                if (!isLoaded)
+                    return;
 
                 if (cropStart) {
 
@@ -953,11 +974,16 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.retakeRL:
 
 
+
                 onBackPressed();
 
                 break;
 
             case R.id.rotateRL:
+
+
+                if (!isLoaded)
+                    return;
 
 
                 if (cropStart) {

@@ -133,6 +133,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
     private boolean requestPermissionEnabled = true;
 
+    private int lensFacing = CameraSelector.LENS_FACING_BACK;
 
     private String documentType = Constants.DEFAULT_DOCUMENT_TYPE;
 
@@ -176,7 +177,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 //        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 //                WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        getWindow().setStatusBarColor(ContextCompat.getColor(this,R.color.colorSecondaryDark));
+        getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorSecondaryDark));
         super.onCreate(savedInstanceState);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_camera_scan);
@@ -261,6 +262,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         binding.next.setOnClickListener(this::onClick);
         binding.backArrow.setOnClickListener(this::onClick);
         binding.torchIV.setOnClickListener(this::onClick);
+        binding.flipCamera.setOnClickListener(this::onClick);
 
         setViews();
 
@@ -330,8 +332,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     int pos = binding.horizontalPicker.getLayoutManager().getPosition(centerView);
 
 
-
-
                     documentType = Constants.documentImageTypes().get(pos);
 
 
@@ -375,7 +375,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             public void onTouch(HorizontalDocumentChooserAdapter.Viewholder viewholder, int position) {
 
                 binding.horizontalPicker.smoothScrollToPosition(position);
-                shallVibrate  = true;
+                shallVibrate = true;
                 if (shallVibrate)
                     Utils.vibrate(CameraPreviewActivity.this, 20);
             }
@@ -385,8 +385,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         binding.horizontalPicker.setAdapter(horizontalDocumentChooserAdapter);
 
         binding.horizontalPicker.smoothScrollToPosition(1);
-
-
 
 
     }
@@ -554,7 +552,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             previewBuilder.setTargetResolution(new Size(targetWidth, targetHeight));
 
-         //   Toast.makeText(getApplicationContext(),"Target Resolution\nWidth "+targetWidth+"\nHeight "+targetHeight,Toast.LENGTH_LONG).show();
+            //   Toast.makeText(getApplicationContext(),"Target Resolution\nWidth "+targetWidth+"\nHeight "+targetHeight,Toast.LENGTH_LONG).show();
         }
 
 
@@ -583,7 +581,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
 
         imageCapture = imageCaptureBuilder.build();
-
 
 
         preview.setSurfaceProvider(binding.cameraPreview.getSurfaceProvider());
@@ -679,7 +676,35 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         ////////////////////////////////// todo end delete this block
 
 
-        camera = cameraProvider.bindToLifecycle(CameraPreviewActivity.this, cameraSelector, preview, imageCapture);
+        try {
+            camera = cameraProvider.bindToLifecycle(CameraPreviewActivity.this, cameraSelector, preview, imageCapture);
+
+        } catch (Exception e) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Seems like there is a problem with your camera.\nPlease try again", Toast.LENGTH_LONG).show();
+
+
+                }
+
+
+            });
+
+            return;
+        } catch (Error e2) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Seems like there is a problem with your camera.\nPlease try again", Toast.LENGTH_LONG).show();
+                }
+            });
+
+            return;
+
+        }
 
 
         ValueAnimator animator = ValueAnimator.ofFloat(1.0f, 0.0f);
@@ -723,9 +748,6 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                 binding.focusIV.requestLayout();
 
                 int animTime = 700;
-
-
-
 
 
                 if (camera == null)
@@ -785,6 +807,10 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         }
 
 
+        if (id == R.id.flipCamera) {
+            flipCamera();
+        }
+
         if (id == R.id.flashIV) {
 
             flashModeChange(((ImageView) view));
@@ -810,6 +836,96 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             } else {
                 binding.torchIV.setAlpha(0.0f);
             }
+
+        }
+    }
+
+
+    boolean isFlipping = false;
+    private void flipCamera() {
+
+
+
+        if (cameraProviderFuture != null) {
+
+            if (isFlipping)
+                return;
+
+            isFlipping = true;
+
+
+
+            try {
+                cameraProviderFuture.get().unbindAll();
+
+
+                if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                    lensFacing = CameraSelector.LENS_FACING_FRONT;
+                    binding.flipCamera.setRotation(90);
+
+                    torchEnabled = false;
+                    camera.getCameraControl().enableTorch(torchEnabled);
+                    binding.torchIV.setAlpha(0.0f);
+
+
+                } else {
+                    lensFacing = CameraSelector.LENS_FACING_BACK;
+                    binding.flipCamera.setRotation(0);
+
+
+                    torchEnabled = true;
+                    camera.getCameraControl().enableTorch(torchEnabled);
+                    binding.torchIV.setAlpha(1.0f);
+
+                }
+
+                cameraSelector = new CameraSelector.Builder()
+                        .requireLensFacing(lensFacing)
+                        .build();
+
+
+                try {
+
+                    camera = cameraProviderFuture.get().bindToLifecycle(CameraPreviewActivity.this, cameraSelector, preview, imageCapture);
+
+
+                    isFlipping = false;
+
+                } catch (Exception e2) {
+
+                    isFlipping = false;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Seems like there is a problem with your camera.\nPlease try again", Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                    return;
+
+                } catch (Error e3) {
+
+                    isFlipping = false;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "Seems like there is a problem with your camera.\nPlease try again", Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                    return;
+
+                }
+
+
+            } catch (ExecutionException e) {
+                isFlipping = false;
+
+            } catch (InterruptedException e) {
+                isFlipping = false;
+
+            }
+
 
         }
     }

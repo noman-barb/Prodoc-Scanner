@@ -639,6 +639,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
 
+    boolean nextClicked = false;
     @Override
     public void next(Button view) {
         super.next(view);
@@ -650,10 +651,19 @@ public class CameraScanActivity extends CameraPreviewActivity {
             return;
 
 
+        if (nextClicked){
+            return;
+        }
+
+        nextClicked = true;
+        isCapturing = true;
+        binding.cameraCapture.setAlpha(0.5f);
+
         ProgressDialog pd = new ProgressDialog(this);
         pd.setTitle("Just a moment");
         pd.setMessage("Detecting document edges");
         pd.setCancelable(false);
+        pd.show();
 
 
         if (executorService != null && !executorService.isTerminated())

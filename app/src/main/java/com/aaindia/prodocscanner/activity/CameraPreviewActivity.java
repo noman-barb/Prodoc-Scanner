@@ -863,9 +863,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     lensFacing = CameraSelector.LENS_FACING_FRONT;
                     binding.flipCamera.setRotation(90);
 
-                    torchEnabled = false;
-                    camera.getCameraControl().enableTorch(torchEnabled);
-                    binding.torchIV.setAlpha(0.0f);
+
 
 
                 } else {
@@ -873,11 +871,11 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                     binding.flipCamera.setRotation(0);
 
 
-                    torchEnabled = true;
-                    camera.getCameraControl().enableTorch(torchEnabled);
-                    binding.torchIV.setAlpha(1.0f);
-
                 }
+
+                torchEnabled = false;
+                camera.getCameraControl().enableTorch(torchEnabled);
+                binding.torchIV.setAlpha(0.0f);
 
                 cameraSelector = new CameraSelector.Builder()
                         .requireLensFacing(lensFacing)

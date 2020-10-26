@@ -173,6 +173,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        isCapturing = false;
+
         if (requestCode == CROP_ACTIVITY_CODE) {
             if (resultCode == Activity.RESULT_OK) {
 
@@ -441,7 +443,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             recycleImageCropActivityBitmap();
 
-            ImageCropActivity.originalBitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
+      //      ImageCropActivity.originalBitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
             ImageCropActivity.rotationDegrees = BitmapUtils.exifRotationDegrees(temp.getAbsolutePath());
 
 
@@ -470,8 +472,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     private void recycleImageCropActivityBitmap() {
 
-        if (ImageCropActivity.originalBitmap != null)
-            ImageCropActivity.originalBitmap.recycle();
+//        if (ImageCropActivity.originalBitmap != null)
+//            ImageCropActivity.originalBitmap.recycle();
     }
 
 
@@ -663,7 +665,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
         pd.setTitle("Just a moment");
         pd.setMessage("Detecting document edges");
         pd.setCancelable(false);
-        pd.show();
 
 
         if (executorService != null && !executorService.isTerminated())
@@ -674,6 +675,19 @@ public class CameraScanActivity extends CameraPreviewActivity {
             public void run() {
 
                 if(executorService!=null) {
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            try {
+                                pd.show();
+                            }
+                            catch (Exception e){}
+
+                        }
+                    });
+
                     while (!executorService.isTerminated()) {
 
                     }
@@ -899,6 +913,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
 
+    boolean aaa = false;
+
     @Override
     public void captureImage(ImageView view) {
         super.captureImage(view);
@@ -973,10 +989,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-        getImageCapture().takePicture(Executors.newSingleThreadExecutor(), new ImageCapture.OnImageCapturedCallback() {
-            @Override
-            public void onCaptureSuccess(@NonNull ImageProxy image) {
 
+        File imageFile = FileNav.getTempFile(CameraScanActivity.this,"single_mode_capture.jpg");
+
+
+
+        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
+
+
+        getImageCapture().takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+            @Override
+            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
                 runOnUiThread(new Runnable() {
                     @Override
@@ -987,13 +1010,51 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 });
 
 
-                ImageCropActivity.originalBitmap = BitmapUtils.imageProxyToBitmap(image);
-                ImageCropActivity.rotationDegrees = image.getImageInfo().getRotationDegrees();
+
+                ImageCropActivity.rotationDegrees = 0;
 
 
                 Intent intent = new Intent(CameraScanActivity.this, ImageCropActivity.class);
 
                 HashMap<String, File> map = FileNav.newImageFile(scanDirPath);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        binding.processingCapture.setVisibility(View.GONE);
+                    }
+                });
+
+
+
+                try {
+                    String originalFileName = map.get(FileNav.ORIGINAL_IMAGE_FILE).getCanonicalPath();
+                    String processedImageFileName = map.get(FileNav.PROCESSED_IMAGE_FILE).getCanonicalPath();
+
+
+                    intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
+                    intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
+
+
+                    intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
+                    startActivityForResult(intent, CROP_ACTIVITY_CODE);
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+
+
+
+            }
+
+
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+
 
                 isCapturing = false;
                 runOnUiThread(new Runnable() {
@@ -1005,26 +1066,78 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 });
 
 
-                try {
-                    String originalFileName = map.get(FileNav.ORIGINAL_IMAGE_FILE).getCanonicalPath();
-                    String processedImageFileName = map.get(FileNav.PROCESSED_IMAGE_FILE).getCanonicalPath();
 
-
-                    intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
-                    intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
-
-                    intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
-                    super.onCaptureSuccess(image);
-                    startActivityForResult(intent, CROP_ACTIVITY_CODE);
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
 
 
             }
         });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ///////////////////////////////////////////////////////
+//        getImageCapture().takePicture(Executors.newSingleThreadExecutor(), new ImageCapture.OnImageCapturedCallback() {
+//            @Override
+//            public void onCaptureSuccess(@NonNull ImageProxy image) {
+//
+//
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                        binding.processingCapture.setVisibility(View.GONE);
+//                    }
+//                });
+//
+//
+//                ImageCropActivity.originalBitmap = BitmapUtils.imageProxyToBitmap(image);
+//                ImageCropActivity.rotationDegrees = image.getImageInfo().getRotationDegrees();
+//
+//
+//                Intent intent = new Intent(CameraScanActivity.this, ImageCropActivity.class);
+//
+//                HashMap<String, File> map = FileNav.newImageFile(scanDirPath);
+//
+//                isCapturing = false;
+//                runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//                        binding.processingCapture.setVisibility(View.GONE);
+//                    }
+//                });
+//
+//
+//                try {
+//                    String originalFileName = map.get(FileNav.ORIGINAL_IMAGE_FILE).getCanonicalPath();
+//                    String processedImageFileName = map.get(FileNav.PROCESSED_IMAGE_FILE).getCanonicalPath();
+//
+//
+//                    intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
+//                    intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
+//
+//                    intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
+//                    super.onCaptureSuccess(image);
+//                    startActivityForResult(intent, CROP_ACTIVITY_CODE);
+//
+//
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//
+//
+//            }
+//        });
 
 
     }
@@ -1194,7 +1307,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                                     }
 
-                                    Log.d("aaaaaaaaaaaaa", scanDirPath + File.separator + "thumbnail.jpg");
 
                                     Imgcodecs.imwrite(scanDirPath + File.separator + "thumbnail.jpg", mat);
                                     mat.release();
@@ -1332,6 +1444,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         super.onResume();
 
+        isCapturing = false;
 
         if (executorService == null || executorService.isTerminated()) {
             executorService = Executors.newFixedThreadPool(2);

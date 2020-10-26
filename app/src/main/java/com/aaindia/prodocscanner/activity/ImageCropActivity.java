@@ -110,7 +110,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     public static final String COLOR_IS_GRAY = "color_is_gray";
     public static final String CORNERS = "corners";
 
-    public static Bitmap originalBitmap = null;
     private Bitmap displayBitmap = null;
 
 
@@ -198,10 +197,20 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onStartTrackingTouch(@NonNull Slider slider) {
 
+
+
             }
 
             @Override
             public void onStopTrackingTouch(@NonNull Slider slider) {
+
+                if (!isLoaded){
+                    slider.setValue(    colorTune);
+                    return;
+                }
+
+
+
 
 
                 colorTune = (int) slider.getValue();
@@ -220,10 +229,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     return;
 
 
-                colorGray = b;
+                if (isLoaded) {
+                    colorGray = b;
+                    processDisplayImage();
 
-
-                processDisplayImage();
+                }
+                else {
+                    binding.colorGrayCheck.setChecked(!b);
+                }
             }
         });
 
@@ -238,14 +251,16 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     private void checkIfBitmapInMemory() {
 
 
-        if (originalBitmap == null || originalImageFilename == null || processedMat == null || lastCroppedMat == null) {
+        if ( originalImageFilename == null ||    (onceProcessed  && (processedMat.height()==0 || displayMat.height()==0 || displayBitmap.getHeight()==0)  ) || (originalMat!=null && originalMat.height()==0)) {
 
-            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
+//            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
+//
+//            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//
+//            startActivity(intent);
+//            finish();
 
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-            startActivity(intent);
-            finish();
+            loadOptimalImage();
 
         }
     }
@@ -253,7 +268,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     private void loadOptimalImage() {
 
+
+        isLoaded = false;
+        binding.protector.setVisibility(View.VISIBLE);
+
         binding.processing.setVisibility(View.VISIBLE);
+
+
+        binding.polygonView.autoCropped = false;
 
 
         // set image view margin beforehand
@@ -266,16 +288,20 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             public void run() {
 
                 // copy original bitmap to "originalMat" and recycle the bitmap later on
-                originalMat = new Mat();
-                Utils.bitmapToMat(originalBitmap, originalMat);
+
+                File imageFile = FileNav.getTempFile(ImageCropActivity.this,"single_mode_capture.jpg");
+                originalMat = Imgcodecs.imread(imageFile.getAbsolutePath());
+
+
 
                 if (originalMat.channels() == 4)
                     Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
 
 
+
                 //get optimal imageview size
-                Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(originalBitmap.getWidth(), originalBitmap.getHeight()), binding.theImage.getMeasuredWidth(), binding.theImage.getMeasuredHeight());
-                originalBitmap.recycle(); // original bitmap recycled
+                Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(originalMat.width(), originalMat.height()), binding.theImage.getMeasuredWidth(), binding.theImage.getMeasuredHeight());
+               // original bitmap recycled
 
                 displayMat = new Mat();
                 Imgproc.resize(originalMat, displayMat, optimalImageSizeForDisplay);
@@ -344,6 +370,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+
 
                             nextCropEnableDisable(true);
                             RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) binding.theImage.getLayoutParams();
@@ -481,8 +508,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     }
 
 
+    boolean onceProcessed = false;
+
     private void processDisplayImage() {
 
+        onceProcessed = true;
 
         nextClickec = true;
         binding.processing.setVisibility(View.VISIBLE);
@@ -570,6 +600,10 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                     if (processedDisplayImageThreadStop)
                         return;
+
+
+
+
                     Imgproc.warpPerspective(originalMat, processedMat, transform, originalMat.size());
 
                     if (processedDisplayImageThreadStop)
@@ -1077,6 +1111,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         binding.polygonView.scaleDrawing(scale);
 
 
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override

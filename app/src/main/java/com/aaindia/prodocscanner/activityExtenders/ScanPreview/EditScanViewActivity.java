@@ -50,7 +50,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (holder.isBusy) {
 
 
-
             new GuideView.Builder(EditScanViewActivity.this)
                     .setTitle("Crop")
                     .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
@@ -79,8 +78,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
         }
-
-
 
 
         Thread t = new Thread(new Runnable() {
@@ -141,7 +138,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         menu.add(0, MatFilter.COLOR_CONTRAST, 0, contrast);
         menu.add(0, MatFilter.COLOR_PAPER, 0, paperStyle);
         menu.add(0, MatFilter.COLOR_WHITEBOARD, 0, whiteBoardStyle);
-      //  menu.add(0, MatFilter.COLOR_TEXT, 0, textStyle );
+        //  menu.add(0, MatFilter.COLOR_TEXT, 0, textStyle );
 
         boolean finalColorGray = colorGray;
         setColorTuneListen(true);
@@ -151,7 +148,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-
 
 
                 try {
@@ -198,7 +194,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
     @Override
     public void crop(ScanPreviewAdapter.ViewHolder holder, int position, boolean noCrop) {
-
 
 
         holder.isBusy = true;
@@ -266,7 +261,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                                                     tempY = (int) (j - y);
 
                                                     if (tempX <= 79 && tempX <= 79)
-                                                        bitmapTemp.setPixel(tempX, tempY ,holder.displayBitmap.getPixel(i, j));
+                                                        bitmapTemp.setPixel(tempX, tempY, holder.displayBitmap.getPixel(i, j));
 
                                                 }
 
@@ -336,6 +331,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
     }
 
 
+    boolean nullEffectTempFixEnable = true;
+
     private void initCrop(int position, ScanPreviewAdapter.ViewHolder holder, boolean noCrop) {
 
         holder.polygonView.setVisibility(View.VISIBLE);
@@ -352,6 +349,18 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
         Effects effects = getImageDetails().getEffects(new File(getOriginalFilepaths().get(position)).getName());
+
+        if (nullEffectTempFixEnable) {
+            if (effects == null || effects.corners == null) {
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadInitialData();
+                    }
+                });
+            }
+        }
 
 
         double scaleX = holder.displayBitmap.getWidth() * 1.0 / holder.originalMat.width();
@@ -406,12 +415,12 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         effects.colorTune = MatFilter.getDefaultTune(effects.color);
 
 
-        if (noCrop){
+        if (noCrop) {
 
-            cropbounds.put(0, new PointF(0,0));
-            cropbounds.put(1, new PointF(holder.displayBitmap.getWidth(),0));
-            cropbounds.put(2, new PointF(0,holder.displayBitmap.getHeight()));
-            cropbounds.put(3, new PointF(holder.displayBitmap.getWidth(),holder.displayBitmap.getHeight()));
+            cropbounds.put(0, new PointF(0, 0));
+            cropbounds.put(1, new PointF(holder.displayBitmap.getWidth(), 0));
+            cropbounds.put(2, new PointF(0, holder.displayBitmap.getHeight()));
+            cropbounds.put(3, new PointF(holder.displayBitmap.getWidth(), holder.displayBitmap.getHeight()));
         }
 
         holder.polygonView.setPoints(cropbounds);
@@ -447,8 +456,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (Math.abs(globalRotation) == 90 || Math.abs(globalRotation) == 270) {
 
 
-            int maxWidth = (int) (holder.imageViewParent.getMeasuredWidth()*0.93);
-            int maxHeight = (int) (holder.imageViewParent.getMeasuredHeight()*0.93);
+            int maxWidth = (int) (holder.imageViewParent.getMeasuredWidth() * 0.93);
+            int maxHeight = (int) (holder.imageViewParent.getMeasuredHeight() * 0.93);
 
             int currentWidth = holder.displayBitmap.getHeight();
             int currentHeight = holder.displayBitmap.getWidth();
@@ -469,7 +478,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             scale = newHeight * 1.0f / currentHeight * 1.0f;
 
 
-
         }
 
 
@@ -479,14 +487,12 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         holder.imageViewParent.setScaleY((float) scale);
 
 
-
     }
 
     @Override
     public void colorGrayChanged(ScanPreviewAdapter.ViewHolder holder, int position, boolean b) {
 
         if (holder.isBusy) {
-
 
 
             new GuideView.Builder(EditScanViewActivity.this)
@@ -515,7 +521,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (holder.isBusy) {
 
 
-
             new GuideView.Builder(EditScanViewActivity.this)
                     .setTitle("Crop")
                     .setContentSpan((Spannable) Html.fromHtml("<b>Crop</b> the image at first."))
@@ -541,9 +546,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         super.rotate(holder, position);
 
 
-
         if (holder.isBusy) {
-
 
 
             new GuideView.Builder(EditScanViewActivity.this)

@@ -278,8 +278,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         super.onCreate(savedInstanceState);
 
 
+        // I HAVE ADDED THIS NEW COMMENT JUST NOW
 
-        Toast.makeText(getApplicationContext(), "CHANGEEEE!!! ", Toast.LENGTH_LONG).show();
+
+
         Utils.checkOpenCV(this);
 
         executor = Executors.newFixedThreadPool(1);

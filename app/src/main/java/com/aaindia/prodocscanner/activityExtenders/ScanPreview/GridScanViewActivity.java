@@ -577,7 +577,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
             try {
 
-                new Thread(new Runnable() {
+                executorService2.execute(new Runnable() {
                     @Override
                     public void run() {
 
@@ -615,7 +615,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
                     }
-                }).start();
+                });
 
 
             } catch (Exception e) {
@@ -910,7 +910,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
         double finalSize = size;
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -950,7 +950,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
             }
-        }).start();
+        });
 
 
     }
@@ -1014,6 +1014,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             syncDataAcrossViews();
             binding.recyclerView.getAdapter().notifyDataSetChanged();
             adapter.notifyDataSetChanged();
+
+            generateThumbnail();
 
 
         });

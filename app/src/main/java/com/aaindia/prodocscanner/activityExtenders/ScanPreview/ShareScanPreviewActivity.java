@@ -190,7 +190,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
 
         final boolean[] notProcessedAvailable = {false};
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -237,7 +237,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -286,7 +286,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         set.addAll(getImageDetails().getOrdering());
 
 
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -340,7 +340,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -360,14 +360,14 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
             public void share(boolean isPDF, double quality, String password) {
 
 
-                new Thread(new Runnable() {
+                executorService2.execute(new Runnable() {
                     @Override
                     public void run() {
 
                         prepareDoc(files, isPDF, quality, pd, isExport, password);
 
                     }
-                }).start();
+                });
 
             }
         }).build(isExport).show();
@@ -571,7 +571,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
 
         double finalSize = size;
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -622,7 +622,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                             public void share(boolean isPDF, double quality, String password) {
 
 
-                                new Thread(new Runnable() {
+                                executorService2.execute(new Runnable() {
                                     @Override
                                     public void run() {
 
@@ -722,7 +722,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
 
                                     }
-                                }).start();
+                                });
 
                             }
                         }).typeView().build(false).show();
@@ -732,7 +732,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 });
 
             }
-        }).start();
+        });
 
 
     }

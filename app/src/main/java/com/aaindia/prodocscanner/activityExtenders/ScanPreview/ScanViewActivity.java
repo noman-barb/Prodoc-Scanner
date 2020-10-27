@@ -61,6 +61,10 @@ import com.jsibbold.zoomage.ZoomageView;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -71,6 +75,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
@@ -138,10 +144,15 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public static final int PERMISION_REQUEST_CODE_ALL = 2912;
 
 
+   public ExecutorService executorService2;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        executorService2 = Executors.newFixedThreadPool(3);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_scan_view);
 
@@ -335,7 +346,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         pd.setCancelable(false);
 
 
-        new Thread(new Runnable() {
+       executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -435,7 +446,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
 
             }
-        }).start();
+        });
 
 
     }
@@ -795,7 +806,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         pd1.show();
 
 
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -873,7 +884,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1012,6 +1023,55 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 //        }
 
 
+    }
+
+
+    public void generateThumbnail(){
+        try {
+
+            executorService2.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    try {
+
+                        File originalFile = new File(getOriginalFilepaths().get(0));
+
+                        File processedFile = new File(getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + getImageDetails().getAt(0));
+
+
+                        File toCopy = processedFile.exists() ? processedFile : originalFile;
+
+                        if(!toCopy.exists())
+                            return;
+
+                        Mat mat = Imgcodecs.imread(toCopy.getAbsolutePath());
+
+                        int width = mat.width();
+                        int height = mat.height();
+
+                        float mp = (float) ((mat.width() / 1000.0) * (mat.height() / 1000.0));
+                        if (mp > 2) {
+                            float scale = 2.0f / mp;
+
+                            Imgproc.resize(mat, mat, new Size(width * scale, height * scale), Imgproc.INTER_AREA);
+
+                        }
+
+                        Imgcodecs.imwrite(getScanDirPath() + File.separator + "thumbnail.jpg", mat);
+                        mat.release();
+
+
+                    } catch (Exception e) {
+                    }
+
+
+                }
+            });
+
+
+        } catch (Exception e) {
+        }
     }
 
     public void zoomageEnableDisable(ScanPreviewAdapter.ViewHolder holder, boolean enable) {

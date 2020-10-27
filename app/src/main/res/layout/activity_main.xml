@@ -370,6 +370,8 @@
 
                     android:id="@+id/search_view"
 
+                    android:outlineProvider="none"
+                    android:elevation="10dp"
                     style="@style/SearchViewStyle"
                     android:layout_width="wrap_content"
 

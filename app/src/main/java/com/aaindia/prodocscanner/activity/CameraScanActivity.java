@@ -186,7 +186,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
                 int colorCode = (int) data.getExtras().get(ImageCropActivity.COLOR_CODE);
-                colorCode = MatFilter.DEFAULT_COLOR_CODE;
+
                 int globalRotation = (int) data.getExtras().get(ImageCropActivity.GLOBAL_ROTATION);
                 boolean isColorGray = (boolean) data.getExtras().get(ImageCropActivity.COLOR_IS_GRAY);
 
@@ -194,15 +194,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                 Effects effects = new Effects(cropBoundsOriginalMap, colorCode, isColorGray, globalRotation, colorTune);
 
-                imageSaved(null, new File(originalImageFilename).getName(), effects);
+
+                imageSaved(null, new File(originalImageFilename).getName(), effects, true);
 
                 // newly added
-
-                if (importImages || intentResult) {
-
-                    imageDetails.sync();
-                    next(binding.next);
-                }
 
 
             } else if (resultCode == Activity.RESULT_CANCELED) {
@@ -379,7 +374,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                             out.close();
                             in.close();
 
-                            imageSaved(null, originalFile.getName(), null);
+                            imageSaved(null, originalFile.getName(), null, false);
 
                         } catch (Exception e) {
 
@@ -401,9 +396,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                             // newly added
 
                             if (importImages) {
-                                // goToDocViewer();
-                                //  finish();
-
                                 next(binding.next);
                             }
                         }
@@ -429,7 +421,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             InputStream in = getContentResolver().openInputStream(uri);
 
 
-            File temp = FileNav.getTempFile(getApplicationContext(), "temp1.jpg");
+            File temp = FileNav.getTempFile(getApplicationContext(), "single_mode_capture.jpg");
             OutputStream out = new FileOutputStream(temp);
 
             byte[] buf = new byte[1024];
@@ -443,8 +435,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             recycleImageCropActivityBitmap();
 
-      //      ImageCropActivity.originalBitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
-            ImageCropActivity.rotationDegrees = BitmapUtils.exifRotationDegrees(temp.getAbsolutePath());
+            //      ImageCropActivity.originalBitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
+            ImageCropActivity.rotationDegrees = 0;
 
 
             HashMap<String, File> map = FileNav.newImageFile(scanDirPath);
@@ -491,6 +483,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
 
 
         Utils.checkOpenCV(this);
@@ -642,6 +635,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
     boolean nextClicked = false;
+
     @Override
     public void next(Button view) {
         super.next(view);
@@ -653,7 +647,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             return;
 
 
-        if (nextClicked){
+        if (nextClicked) {
             return;
         }
 
@@ -674,7 +668,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             @Override
             public void run() {
 
-                if(executorService!=null) {
+                if (executorService != null) {
 
                     runOnUiThread(new Runnable() {
                         @Override
@@ -682,8 +676,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                             try {
                                 pd.show();
+                            } catch (Exception e) {
                             }
-                            catch (Exception e){}
 
                         }
                     });
@@ -951,7 +945,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
-                    imageSaved(imageFile, imageFile.getName(), null);
+                    imageSaved(imageFile, imageFile.getName(), null, false);
 
 
                     isCapturing = false;
@@ -989,9 +983,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-
-        File imageFile = FileNav.getTempFile(CameraScanActivity.this,"single_mode_capture.jpg");
-
+        File imageFile = FileNav.getTempFile(CameraScanActivity.this, "single_mode_capture.jpg");
 
 
         ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
@@ -1010,7 +1002,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 });
 
 
-
                 ImageCropActivity.rotationDegrees = 0;
 
 
@@ -1025,7 +1016,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         binding.processingCapture.setVisibility(View.GONE);
                     }
                 });
-
 
 
                 try {
@@ -1046,9 +1036,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 }
 
 
-
-
-
             }
 
 
@@ -1066,23 +1053,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 });
 
 
-
-
-
             }
         });
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         ///////////////////////////////////////////////////////
@@ -1208,9 +1180,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
 
-    private void imageSaved(File filepath, String filename, Effects effects) {
-
-
+    private void imageSaved(File filepath, String filename, Effects effects, boolean isNext) {
 
 
         runOnUiThread(new Runnable() {
@@ -1274,11 +1244,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 imageDetails.getOrdering().add(insertAt, filename);
 
 
+                if (filename != null && insertAt == 0 && executorService != null && !executorService.isTerminated() && scanDirPath != null) {
 
 
-
-
-                if (filename != null && insertAt == 0 && executorService!=null && !executorService.isTerminated() && scanDirPath!=null) {
 
                     try {
 
@@ -1293,7 +1261,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                                     if (!originalFile.exists())
                                         return;
-                                    Log.d("aaaaaaaaaaaaa", originalFile.getAbsolutePath());
+
                                     Mat mat = Imgcodecs.imread(originalFile.getAbsolutePath());
 
                                     int width = mat.width();
@@ -1326,18 +1294,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
                 if (isRetakeImage && insertAt > 0) {
 
                     String oldImageName = imageDetails.getAt(insertAt - 1);
@@ -1366,6 +1322,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     // autocropThis(filepath.getAbsolutePath(), imageDetails);
                     imageDetails.sync();
                     goToDocViewer();
+                    return;
+
                 } else {
 
 
@@ -1383,6 +1341,24 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                             }
                         });
+
+
+                    } else {
+
+
+                        if (importImages || intentResult) {
+
+                            if (isNext) {
+                                incrementPageCounters();
+                                isCapturing = false;
+
+
+                                imageDetails.sync();
+                                next(binding.next);
+
+                                return;
+                            }
+                        }
 
 
                     }

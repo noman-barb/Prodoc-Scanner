@@ -295,7 +295,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
 
                 if (originalMat.channels() == 4)
-                    Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
+                    Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2RGB);
+                else if (originalMat.channels()==3)
+                    Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGR2RGB);
 
 
 

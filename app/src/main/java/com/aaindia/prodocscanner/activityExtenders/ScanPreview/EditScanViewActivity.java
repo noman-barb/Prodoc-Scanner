@@ -80,7 +80,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         }
 
 
-        Thread t = new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
                 prepareMat(holder, position);
@@ -94,7 +94,6 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             }
         });
 
-        t.start();
 
 
         Effects effects = getImageDetails().getEffects(getImageDetails().getAt(position));
@@ -150,11 +149,10 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
             public boolean onMenuItemClick(MenuItem item) {
 
 
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
 
-                }
+
+
+
 
                 int id = item.getItemId();
                 runOnUiThread(new Runnable() {
@@ -205,7 +203,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         recyclerViewActivateDeact(false);
         getBinding().protector.setVisibility(View.VISIBLE);
 
-        new Thread(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -326,7 +324,7 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
 
 
             }
-        }).start();
+        });
 
     }
 

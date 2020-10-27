@@ -109,6 +109,7 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
         holder.isBusy = false;
 
+        holder.isPreparingMat = false;
        // holder.imageView.recycle();
         holder.polygonView.setVisibility(View.GONE);
 
@@ -411,6 +412,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
 
         public int matPosition = -1;
+
+        public boolean isPreparingMat = false;
 
 
         public ViewHolder(@NonNull View itemView) {

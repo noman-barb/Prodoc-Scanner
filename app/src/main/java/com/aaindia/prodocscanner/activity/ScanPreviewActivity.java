@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.Executors;
 
 public class ScanPreviewActivity extends ShareScanPreviewActivity implements View.OnClickListener {
 
@@ -48,8 +49,6 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     public static final int EXPORT_TO_DEVICE_CODE = 826;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +58,6 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
 
         if (getIntent() != null && getIntent().getExtras() != null) {
-
 
 
             int scrollTo = getIntent().getExtras().getInt(SCROLL_TO, 0);
@@ -96,6 +94,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         Utils.checkOpenCV(this);
         super.onResume();
+
+        if (executorService2==null || executorService2.isTerminated()){
+            executorService2 = Executors.newFixedThreadPool(3);
+            Toast.makeText(getApplicationContext(),"ewgeg",0).show();
+        }
 
 
     }
@@ -171,7 +174,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         getOriginalFilepaths().remove(position);
 
-       // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
+        // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
 
 
         getImageDetails().removePage(position);
@@ -206,6 +209,8 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
                 getRecyclerView().scrollToPosition(Math.max(position - 1, 0));
             }
+
+            generateThumbnail();
         }
     }
 
@@ -352,7 +357,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
             pd.show();
 
 
-            new Thread(new Runnable() {
+            executorService2.execute(new Runnable() {
                 @Override
                 public void run() {
 
@@ -388,7 +393,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
                     setPDFOutputPathExport(null);
 
                 }
-            }).start();
+            });
 
 
         }
@@ -442,6 +447,29 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         super.onProcessed(holder, position);
 
 
+    }
+
+
+    @Override
+    protected void onDestroy() {
+
+        Log.d("aaaaaaaaaaaaaa", "destro before");
+        super.onDestroy();
+
+        try {
+            if (executorService2 != null && !executorService2.isTerminated()) {
+                executorService2.shutdownNow();
+
+                while (!executorService2.isTerminated()) {
+
+                    Log.d("aaaaaaaaaaaaaa", "destro1111");
+                }
+            }
+        } catch (Exception e) {
+        }
+
+
+        Log.d("aaaaaaaaaaaaaa", "destroy after");
 
     }
 }

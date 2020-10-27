@@ -1,4 +1,4 @@
-include ':mediapickerlib'
+
 include ':sdk'
 include ':app'
 rootProject.name = "Prodoc Scanner"

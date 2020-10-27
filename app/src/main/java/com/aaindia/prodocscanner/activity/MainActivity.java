@@ -277,6 +277,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         super.onCreate(savedInstanceState);
 
+
+
+        Toast.makeText(getApplicationContext(), "CHANGEEEE!!! ", Toast.LENGTH_LONG).show();
         Utils.checkOpenCV(this);
 
         executor = Executors.newFixedThreadPool(1);
@@ -398,11 +401,17 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                                     Boolean isUpdate = result.get("isUpdate").getAsBoolean();
 
+
+
                                     if (id != null && news != null) {
+
+
 
                                         long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
 
                                         if (id > curId) {
+
+
 
                                             AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
                                             builder.setTitle(Html.fromHtml(header));
@@ -431,8 +440,13 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                                         } else {
 
-                                            if (isUpdate != null && isUpdate)
+
+
+                                            if (isUpdate != null && isUpdate) {
+
                                                 inAppUpdateManager();
+
+                                            }
 
 
                                         }

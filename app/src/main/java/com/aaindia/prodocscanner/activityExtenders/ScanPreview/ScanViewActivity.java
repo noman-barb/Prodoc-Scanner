@@ -144,8 +144,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public static final int PERMISION_REQUEST_CODE_ALL = 2912;
 
 
-   public ExecutorService executorService2;
-
+    public ExecutorService executorService2;
 
 
     @Override
@@ -346,7 +345,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         pd.setCancelable(false);
 
 
-       executorService2.execute(new Runnable() {
+        executorService2.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -369,7 +368,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                     if (!set.contains(f.getName())) {
 
+                        if (f.length()>0)
                         linkedList.add(f.getName());
+                        else
+                            FileUtils.deleteQuietly(f);
                     }
 
                 }
@@ -379,11 +381,14 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                 listIterator = linkedList.listIterator();
 
+                int count = 0;
 
-                for (int i = 0; i < linkedList.size(); i++) {
+                File currentFile;
+
+                while ((listIterator.hasNext())) {
 
 
-                    int finalI = i;
+                    int finalI = count;
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -392,9 +397,17 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                     });
 
 
-                    String filename = linkedList.get(i);
+                    String filename = listIterator.next();
 
                     String path = originalDirFile.getAbsolutePath() + File.separator + filename;
+
+                    currentFile = new File(path);
+
+                    if ( currentFile.length() <= 0) {
+                        linkedList.remove(path);
+                        FileUtils.deleteQuietly(currentFile);
+                        continue;
+                    }
 
                     originalFilepaths.add(path);
 
@@ -872,8 +885,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                         try {
                             pd1.dismiss();
+                        } catch (Exception e) {
                         }
-                        catch (Exception e){}
                         loadInitialData();
 
                         Toast.makeText(getApplicationContext(), "Pasted", Toast.LENGTH_SHORT).show();
@@ -1026,7 +1039,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
-    public void generateThumbnail(){
+    public void generateThumbnail() {
         try {
 
             executorService2.execute(new Runnable() {
@@ -1042,7 +1055,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                         File toCopy = processedFile.exists() ? processedFile : originalFile;
 
-                        if(!toCopy.exists())
+                        if (!toCopy.exists())
                             return;
 
                         Mat mat = Imgcodecs.imread(toCopy.getAbsolutePath());

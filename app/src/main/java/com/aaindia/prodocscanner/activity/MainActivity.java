@@ -278,8 +278,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         super.onCreate(savedInstanceState);
 
 
-        // I HAVE ADDED THIS NEW COMMENT JUST NOW
-
 
 
         Utils.checkOpenCV(this);

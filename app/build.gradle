@@ -38,6 +38,7 @@ android {
 
     buildTypes {
         debug {
+            shrinkResources false
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

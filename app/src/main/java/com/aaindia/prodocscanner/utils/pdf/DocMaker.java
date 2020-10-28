@@ -103,7 +103,7 @@ public class DocMaker {
                             public void run() {
                                 executorService.shutdown();
 
-                                while (!executorService.isTerminated()) {
+                                while (! (executorService.isTerminated() || executorService.isShutdown() ) ) {
                                 }
 
                                 update.onComplete(output);

@@ -66,6 +66,7 @@ import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.gson.JsonObject;
@@ -108,6 +109,7 @@ import angtrim.com.fivestarslibrary.ReviewListener;
 
 import eu.dkaratzas.android.inapp.update.Constants;
 import eu.dkaratzas.android.inapp.update.InAppUpdateManager;
+import eu.dkaratzas.android.inapp.update.InAppUpdateStatus;
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
 import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
@@ -211,15 +213,20 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private FirebaseAnalytics firebaseInstance;
 
     ExecutorService executor;
+    private InAppUpdateManager inAppUpdateManager;
 
     @Override
     public void onResume() {
 
 
+        super.onResume();
 
         Utils.checkOpenCV(this);
 
-        super.onResume();
+
+        if (executor == null || executor.isTerminated() || executor.isShutdown()) {
+            executor = Executors.newFixedThreadPool(2);
+        }
 
 
 //        if (executor != null) {
@@ -258,17 +265,16 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     @Override
     protected void onDestroy() {
 
-
+        super.onDestroy();
         try {
             executor.shutdown();
 
-            while (!executor.isTerminated()) {
+            while (!(executor.isTerminated() || executor.isShutdown())) {
             }
         } catch (Exception e) {
         }
 
 
-        super.onDestroy();
     }
 
     @Override
@@ -278,11 +284,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         super.onCreate(savedInstanceState);
 
 
-
-
         Utils.checkOpenCV(this);
 
-        executor = Executors.newFixedThreadPool(1);
+        executor = Executors.newFixedThreadPool(2);
 
         firebaseInstance = FirebaseAnalytics.getInstance(MainActivity.this);
 
@@ -402,15 +406,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                     Boolean isUpdate = result.get("isUpdate").getAsBoolean();
 
 
-
                                     if (id != null && news != null) {
-
 
 
                                         long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
 
                                         if (id > curId) {
-
 
 
                                             AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
@@ -439,7 +440,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                             builder.show();
 
                                         } else {
-
 
 
                                             if (isUpdate != null && isUpdate) {
@@ -471,11 +471,88 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             @Override
             public void run() {
 
-                InAppUpdateManager inAppUpdateManager = InAppUpdateManager.Builder(MainActivity.this, REQ_CODE_VERSION_UPDATE)
+                inAppUpdateManager = InAppUpdateManager.Builder(MainActivity.this, REQ_CODE_VERSION_UPDATE)
                         .resumeUpdates(true)
                         .mode(Constants.UpdateMode.FLEXIBLE)
                         .snackBarMessage("An update has just been downloaded.")
-                        .snackBarAction("RESTART");
+                        .snackBarAction("RESTART")
+                        .handler(new InAppUpdateManager.InAppUpdateHandler() {
+                            @Override
+                            public void onInAppUpdateError(int code, Throwable error) {
+
+                            }
+
+                            @Override
+                            public void onInAppUpdateStatus(InAppUpdateStatus status) {
+
+
+                                if (status.isDownloaded()) {
+
+//                                    View rootView = getWindow().getDecorView().findViewById(android.R.id.content);
+//
+//                                    Snackbar snackbar = Snackbar.make(rootView,
+//                                            "An update has just been downloaded.",
+//                                            Snackbar.LENGTH_INDEFINITE);
+//
+//                                    snackbar.setAction("RESTART", view -> {
+//
+//                                        // Triggers the completion of the update of the app for the flexible flow.
+//
+//                                        if (inAppUpdateManager != null)
+//                                            inAppUpdateManager.completeUpdate();
+//
+//                                    });
+//
+//                                    snackbar.show();
+
+
+                                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                                    builder.setTitle("Update downloaded");
+                                    builder.setMessage("An update has just been downloaded.\nApp restart is recommended.");
+                                    builder.setNegativeButton("Later", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                                        }
+                                    });
+                                    builder.setPositiveButton("Restart Now", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+
+
+                                            ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                                            pd.setTitle("Finishing Update");
+                                            pd.setMessage("Just a moment");
+                                            pd.setCancelable(false);
+                                            pd.show();
+
+
+                                            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+
+                                                            if (inAppUpdateManager != null) {
+                                                                inAppUpdateManager.completeUpdate();
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            }, 2800);
+
+
+                                        }
+                                    });
+
+                                    builder.show();
+
+
+                                }
+
+                            }
+                        });
 
                 inAppUpdateManager.checkForAppUpdate();
             }
@@ -807,7 +884,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.show();
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -858,7 +935,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -873,7 +950,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.setCancelable(false);
         pd.show();
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -926,7 +1003,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1001,7 +1078,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             pd.setMessage("");
             pd.setCancelable(false);
             pd.show();
-            new Thread(() -> {
+            executor.execute(() -> {
 
 
                 for (int i = 0; i < clipboard.filepaths.size(); i++) {
@@ -1072,7 +1149,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
 
-            }).start();
+            });
 
 
         } else {
@@ -1261,7 +1338,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         binding.middleOptionsText.setText(ALL_DOCS);
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -1281,7 +1358,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1682,7 +1759,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd1.setCancelable(false);
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -1769,12 +1846,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                                 pd.show();
                                 double finalQuality = quality;
-                                new Thread(new Runnable() {
+                                executor.execute(new Runnable() {
                                     @Override
                                     public void run() {
                                         makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF, password);
                                     }
-                                }).start();
+                                });
 
 
                             }
@@ -1788,7 +1865,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             }
-        }).start();
+        });
 
 
     }
@@ -2296,16 +2373,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             PdfRenderer.Page page = renderer.openPage(i);
 
 
-
             int width = 4 * page.getWidth();
             int height = 4 * page.getHeight();
 
 
-            if (width<2500){
-                double scale = 2500.0/width;
+            if (width < 2500) {
+                double scale = 2500.0 / width;
 
-                width*=scale;
-                height*=scale;
+                width *= scale;
+                height *= scale;
             }
 
 
@@ -2427,9 +2503,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         try {
 
 
-                            service.shutdownNow();
+                            service.shutdown();
 
-                            while (!service.isTerminated()) {
+                            while (!(service.isTerminated() || service.isShutdown())) {
                             }
 
 
@@ -2452,7 +2528,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.show();
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -2644,9 +2720,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             }
-        }).
-
-                start();
+        });
 
 
     }

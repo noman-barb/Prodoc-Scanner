@@ -522,6 +522,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
             ocrThread.start();
 
 
+
         }
 
     }

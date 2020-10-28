@@ -14,6 +14,7 @@ import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -66,7 +67,21 @@ import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.InstallState;
+import com.google.android.play.core.install.InstallStateUpdatedListener;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.InstallStatus;
+import com.google.android.play.core.install.model.UpdateAvailability;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+import com.google.android.play.core.tasks.OnSuccessListener;
+import com.google.android.play.core.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.gson.JsonObject;
 import com.koushikdutta.async.future.FutureCallback;
@@ -106,8 +121,6 @@ import angtrim.com.fivestarslibrary.FiveStarsDialog;
 import angtrim.com.fivestarslibrary.NegativeReviewListener;
 import angtrim.com.fivestarslibrary.ReviewListener;
 
-import eu.dkaratzas.android.inapp.update.Constants;
-import eu.dkaratzas.android.inapp.update.InAppUpdateManager;
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
 import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
@@ -212,14 +225,98 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     ExecutorService executor;
 
+    private int IN_APP_UPDATE_REQUEST_CODE = 9261;
+
+    AppUpdateManager appUpdateManager = null;
+
+    InstallStateUpdatedListener listener = null;
+
+    boolean updateDownloaded = false;
+
+    boolean isPaused = false;
+
+
+    private void installUpdate() {
+
+
+        if (isPaused) {
+
+            updateDownloaded = true;
+            return;
+        }
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                Utils.vibrate(MainActivity.this, 40);
+
+                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                builder.setTitle("Install update");
+                builder.setMessage("An update was downloaded.\nInstalling the update will only take a few seconds.");
+                builder.setCancelable(false);
+                builder.setNegativeButton("Later", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+
+                    }
+                });
+                builder.setPositiveButton("Install Now", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+
+                        ProgressDialog pd = new ProgressDialog(MainActivity.this);
+                        pd.setTitle("Preparing Update");
+                        pd.setMessage("Just a moment");
+                        pd.setCancelable(false);
+                        pd.show();
+
+
+                        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+
+                                        updateDownloaded = false;
+                                        appUpdateManager.completeUpdate();
+                                    }
+                                });
+                            }
+                        }, 2800);
+
+                    }
+                });
+
+                builder.show();
+
+            }
+        });
+
+
+    }
+
     @Override
     public void onResume() {
 
 
+        super.onResume();
 
+        isPaused = false;
         Utils.checkOpenCV(this);
 
-        super.onResume();
+
+        if (executor == null || executor.isTerminated() || executor.isShutdown()) {
+            executor = Executors.newFixedThreadPool(2);
+        }
+
+        if (updateDownloaded) {
+            installUpdate();
+        }
 
 
 //        if (executor != null) {
@@ -258,18 +355,20 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     @Override
     protected void onDestroy() {
 
-
+        super.onDestroy();
         try {
             executor.shutdown();
 
-            while (!executor.isTerminated()) {
+            while (!(executor.isTerminated() || executor.isShutdown())) {
             }
         } catch (Exception e) {
         }
 
 
-        super.onDestroy();
     }
+
+
+    boolean showDownloadingUpdateInBackground = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -278,43 +377,31 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         super.onCreate(savedInstanceState);
 
 
-
-        Toast.makeText(getApplicationContext(), "CHANGEEEE!!! ", Toast.LENGTH_LONG).show();
         Utils.checkOpenCV(this);
 
-        executor = Executors.newFixedThreadPool(1);
+        executor = Executors.newFixedThreadPool(2);
 
         firebaseInstance = FirebaseAnalytics.getInstance(MainActivity.this);
 
-        FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(this, "");
-        fiveStarsDialog.setRateText("How was your experience with this app?")
-                .setTitle("Rate us")
-                .setForceMode(false)
-                .setUpperBound(4)
-                .setNegativeReviewListener(new NegativeReviewListener() {
-                    @Override
-                    public void onNegativeReview(int i) {
+        appUpdateManager = AppUpdateManagerFactory.create(MainActivity.this);
 
-                        Bundle params = new Bundle();
-                        params.putString("star_rating", String.valueOf(i));
+        listener = new InstallStateUpdatedListener() {
+            @Override
+            public void onStateUpdate(InstallState state) {
+                if (state.installStatus() == InstallStatus.DOWNLOADED) {
 
-                        firebaseInstance.logEvent("negative_rating", params);
+                    installUpdate();
+                }
 
+                if (state.installStatus() == InstallStatus.DOWNLOADING) {
 
-                    }
-                })
-                .setReviewListener(new ReviewListener() {
-                    @Override
-                    public void onReview(int i) {
+                    if (showDownloadingUpdateInBackground)
+                        Toast.makeText(getApplicationContext(), "Downloading update in background", Toast.LENGTH_LONG).show();
 
-                        Bundle params = new Bundle();
-                        params.putString("star_rating", String.valueOf(i));
-
-                        firebaseInstance.logEvent("positive_rating", params);
-
-                    }
-                })
-                .showAfter(5);
+                    showDownloadingUpdateInBackground = false;
+                }
+            }
+        };
 
 
         FileNav.createBaseDir(this);
@@ -378,11 +465,19 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         showcase();
 
+        netRequestDetails();
+
+
+    }
+
+    private void netRequestDetails() {
+
 
         if (Prefs.firstTimeSeenScreen(MainActivity.this, "first_time_app_open_ion_main_activity_news")) {
 
             Ion.with(this)
-                    .load("http://prodocstatic.awessamapps.com/news/news.json")
+                    //  .load("http://prodocstatic.awessamapps.com/news/news.json")
+                    .load("https://raw.githubusercontent.com/awessamapps/awessamapps.github.io/master/fewi.json")
                     .asJsonObject()
                     .setCallback(new FutureCallback<JsonObject>() {
                         @Override
@@ -402,15 +497,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                     Boolean isUpdate = result.get("isUpdate").getAsBoolean();
 
 
-
                                     if (id != null && news != null) {
-
 
 
                                         long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
 
                                         if (id > curId) {
-
 
 
                                             AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
@@ -439,12 +531,17 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                             builder.show();
 
                                         } else {
-
-
+                                            int acceptRating = result.get("acceptRating").getAsInt();
 
                                             if (isUpdate != null && isUpdate) {
 
-                                                inAppUpdateManager();
+                                                inAppUpdateManager(acceptRating);
+
+
+                                            } else {
+
+
+                                                inAppReview(acceptRating);
 
                                             }
 
@@ -463,26 +560,152 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         }
 
+
     }
 
-    private void inAppUpdateManager() {
+
+    private void inAppReview(int acceptRating) {
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                InAppUpdateManager inAppUpdateManager = InAppUpdateManager.Builder(MainActivity.this, REQ_CODE_VERSION_UPDATE)
-                        .resumeUpdates(true)
-                        .mode(Constants.UpdateMode.FLEXIBLE)
-                        .snackBarMessage("An update has just been downloaded.")
-                        .snackBarAction("RESTART");
+                FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(MainActivity.this, "");
+                fiveStarsDialog.setRateText("How was your experience with this app?")
+                        .setTitle("Rate app")
+                        .setForceMode(false)
+                        .setUpperBound(8)
+                        .setNegativeReviewListener(new NegativeReviewListener() {
+                            @Override
+                            public void onNegativeReview(int i) {
 
-                inAppUpdateManager.checkForAppUpdate();
+                            }
+                        })
+                        .setReviewListener(new ReviewListener() {
+                            @Override
+                            public void onReview(int i) {
+
+                                Bundle params = new Bundle();
+                                params.putString("star_rating", String.valueOf(i));
+
+
+                                if (i == 1) {
+                                    firebaseInstance.logEvent("one_star_rating", params);
+                                } else if (i == 2) {
+                                    firebaseInstance.logEvent("two_star_rating", params);
+                                } else if (i == 3) {
+                                    firebaseInstance.logEvent("three_star_rating", params);
+                                } else if (i == 4) {
+                                    firebaseInstance.logEvent("four_star_rating", params);
+                                } else if (i == 5) {
+                                    firebaseInstance.logEvent("five_star_rating", params);
+                                }
+
+
+                                if (i >= acceptRating) {
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+
+
+                                            Utils.vibrate(MainActivity.this, 40);
+                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(getApplicationContext(), "Please also submit your rating to Google Play", Toast.LENGTH_LONG).show();
+
+
+                                            ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
+                                            Task<ReviewInfo> request = manager.requestReviewFlow();
+                                            request.addOnCompleteListener(task -> {
+                                                if (task.isSuccessful()) {
+                                                    // We can get the ReviewInfo object
+                                                    ReviewInfo reviewInfo = task.getResult();
+
+
+                                                    Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
+                                                    flow.addOnCompleteListener(task2 -> {
+
+                                                    });
+
+
+                                                } else {
+
+                                                }
+                                            });
+
+
+                                        }
+                                    });
+
+
+                                } else {
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+
+                                }
+
+
+                            }
+                        })
+                        .showAfter(5);
+
+
+            }
+        });
+
+    }
+
+    private void inAppUpdateManager(int acceptRating) {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+
+                appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+
+
+                    if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
+                        installUpdate();
+
+                    } else if ((appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                            || appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+
+                        try {
+                            appUpdateManager.startUpdateFlowForResult(
+                                    // Pass the intent that is returned by 'getAppUpdateInfo()'.
+                                    appUpdateInfo,
+                                    // Or 'AppUpdateType.FLEXIBLE' for flexible updates.
+                                    AppUpdateType.FLEXIBLE,
+                                    // The current activity making the update request.
+                                    MainActivity.this,
+                                    // Include a request code to later monitor this update request.
+                                    IN_APP_UPDATE_REQUEST_CODE);
+
+                            appUpdateManager.registerListener(listener);
+
+                        } catch (Exception e) {
+
+                        }
+                    } else {
+                        inAppReview(acceptRating);
+                    }
+
+                });
+
             }
         });
 
 
     }
+
 
     private void showcase() {
 
@@ -807,7 +1030,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.show();
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -858,7 +1081,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -873,7 +1096,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.setCancelable(false);
         pd.show();
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -926,7 +1149,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1001,7 +1224,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             pd.setMessage("");
             pd.setCancelable(false);
             pd.show();
-            new Thread(() -> {
+            executor.execute(() -> {
 
 
                 for (int i = 0; i < clipboard.filepaths.size(); i++) {
@@ -1072,7 +1295,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
 
-            }).start();
+            });
 
 
         } else {
@@ -1261,7 +1484,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         binding.middleOptionsText.setText(ALL_DOCS);
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -1281,7 +1504,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -1682,7 +1905,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd1.setCancelable(false);
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -1769,12 +1992,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                                 pd.show();
                                 double finalQuality = quality;
-                                new Thread(new Runnable() {
+                                executor.execute(new Runnable() {
                                     @Override
                                     public void run() {
                                         makeAllPDFs(selectedDocs, imageDetailsArrayList, finalQuality, pd, isPDF, password);
                                     }
-                                }).start();
+                                });
 
 
                             }
@@ -1788,7 +2011,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             }
-        }).start();
+        });
 
 
     }
@@ -2296,16 +2519,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             PdfRenderer.Page page = renderer.openPage(i);
 
 
-
             int width = 4 * page.getWidth();
             int height = 4 * page.getHeight();
 
 
-            if (width<2500){
-                double scale = 2500.0/width;
+            if (width < 2500) {
+                double scale = 2500.0 / width;
 
-                width*=scale;
-                height*=scale;
+                width *= scale;
+                height *= scale;
             }
 
 
@@ -2427,9 +2649,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         try {
 
 
-                            service.shutdownNow();
+                            service.shutdown();
 
-                            while (!service.isTerminated()) {
+                            while (!(service.isTerminated() || service.isShutdown())) {
                             }
 
 
@@ -2452,7 +2674,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         pd.show();
 
 
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -2644,9 +2866,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
             }
-        }).
-
-                start();
+        });
 
 
     }
@@ -2789,8 +3009,17 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 processImportLocalBackup(uri);
 
             }
+        } else if (requestCode == IN_APP_UPDATE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
         }
 
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        isPaused = true;
     }
 
     private void processExport(Uri uri) {

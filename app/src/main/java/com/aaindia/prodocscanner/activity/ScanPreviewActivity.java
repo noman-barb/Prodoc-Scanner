@@ -95,7 +95,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         Utils.checkOpenCV(this);
         super.onResume();
 
-        if (executorService2==null || executorService2.isTerminated()){
+        if (executorService2==null || executorService2.isTerminated() || executorService2.isShutdown()){
             executorService2 = Executors.newFixedThreadPool(3);
             Toast.makeText(getApplicationContext(),"ewgeg",0).show();
         }
@@ -453,23 +453,23 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     @Override
     protected void onDestroy() {
 
-        Log.d("aaaaaaaaaaaaaa", "destro before");
+
         super.onDestroy();
 
         try {
-            if (executorService2 != null && !executorService2.isTerminated()) {
-                executorService2.shutdownNow();
+            if (executorService2 != null && ! (executorService2.isTerminated() || executorService2.isShutdown())) {
+                executorService2.shutdown();
 
-                while (!executorService2.isTerminated()) {
+                while (!(executorService2.isTerminated() || executorService2.isShutdown() ) ) {
 
-                    Log.d("aaaaaaaaaaaaaa", "destro1111");
+
                 }
             }
         } catch (Exception e) {
         }
 
 
-        Log.d("aaaaaaaaaaaaaa", "destroy after");
 
     }
+
 }

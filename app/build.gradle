@@ -21,8 +21,8 @@ android {
         applicationId "com.aaindia.prodocscanner"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 44
-        versionName "3.2.0"
+        versionCode 82
+        versionName "3.1.33"
 
 
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -132,9 +132,8 @@ dependencies {
 
     implementation 'com.github.mreram:showcaseview:1.1'
     implementation 'com.google.android.play:core:1.8.2'
-    implementation 'eu.dkaratzas:android-inapp-update:1.0.5'
 
-    // implementation "com.github.ChiliLabs:ChiliPhotoPicker:0.3.1"
+
 
     implementation 'com.github.nguyenhoanglam:ImagePicker:1.4.3'
 

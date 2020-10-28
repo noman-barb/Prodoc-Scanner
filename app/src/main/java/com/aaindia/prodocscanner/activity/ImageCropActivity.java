@@ -93,6 +93,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import smartdevelop.ir.eram.showcaseviewlib.GuideView;
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType;
@@ -131,16 +133,23 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     HashMap<Integer, PointF> cropBoundsOriginalMap = null;
 
-    private boolean processedImageThreadStop = false;
-    private boolean processedDisplayImageThreadStop = false;
+
+
     private Thread processThread;
     private String originalImageFilename;
     private String processedImageFilename;
-    private Thread displayImageProcessThread;
 
     public static final String DOCUMENT_TYPE_KEY = "document_type";
 
     boolean isLoaded = false;
+
+    boolean initialCropApplied = false;
+    boolean isNextClicked = false;
+
+
+    ExecutorService executorService;
+
+    boolean isProcessing = false;
 
 
     @Override
@@ -158,6 +167,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
+        executorService = Executors.newFixedThreadPool(2);
 
         com.aaindia.prodocscanner.utils.Utils.checkOpenCV(this);
 
@@ -198,19 +209,15 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             public void onStartTrackingTouch(@NonNull Slider slider) {
 
 
-
             }
 
             @Override
             public void onStopTrackingTouch(@NonNull Slider slider) {
 
-                if (!isLoaded){
-                    slider.setValue(    colorTune);
+                if (!isLoaded) {
+                    slider.setValue(colorTune);
                     return;
                 }
-
-
-
 
 
                 colorTune = (int) slider.getValue();
@@ -229,12 +236,18 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     return;
 
 
+                if (isProcessing){
+
+                    binding.colorGrayCheck.setChecked(!b);
+                    return;
+                }
+
+
                 if (isLoaded) {
                     colorGray = b;
                     processDisplayImage();
 
-                }
-                else {
+                } else {
                     binding.colorGrayCheck.setChecked(!b);
                 }
             }
@@ -251,7 +264,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     private void checkIfBitmapInMemory() {
 
 
-        if ( originalImageFilename == null ||    (onceProcessed  && (processedMat.height()==0 || displayMat.height()==0 || displayBitmap.getHeight()==0)  ) || (originalMat!=null && originalMat.height()==0)) {
+        if (originalImageFilename == null || (onceProcessed && (processedMat.height() == 0 || displayMat.height() == 0 || displayBitmap.getHeight() == 0)) || (originalMat != null && originalMat.height() == 0)) {
 
 //            Intent intent = new Intent(ImageCropActivity.this, MainActivity.class);
 //
@@ -283,27 +296,25 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         ((RelativeLayout.LayoutParams) binding.theImage.getLayoutParams()).setMargins(margin, margin, margin, margin);
         binding.theImage.requestLayout();
 
-        new Thread(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
 
                 // copy original bitmap to "originalMat" and recycle the bitmap later on
 
-                File imageFile = FileNav.getTempFile(ImageCropActivity.this,"single_mode_capture.jpg");
+                File imageFile = FileNav.getTempFile(ImageCropActivity.this, "single_mode_capture.jpg");
                 originalMat = Imgcodecs.imread(imageFile.getAbsolutePath());
-
 
 
                 if (originalMat.channels() == 4)
                     Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2RGB);
-                else if (originalMat.channels()==3)
+                else if (originalMat.channels() == 3)
                     Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGR2RGB);
-
 
 
                 //get optimal imageview size
                 Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(originalMat.width(), originalMat.height()), binding.theImage.getMeasuredWidth(), binding.theImage.getMeasuredHeight());
-               // original bitmap recycled
+                // original bitmap recycled
 
                 displayMat = new Mat();
                 Imgproc.resize(originalMat, displayMat, optimalImageSizeForDisplay);
@@ -314,16 +325,16 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(displayMat, displayBitmap);
 
-                Thread thread = Thread.currentThread();
+                //Thread thread = Thread.currentThread();
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            thread.join();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+//                        try {
+//                            thread.join();
+//                        } catch (InterruptedException e) {
+//                            e.printStackTrace();
+//                        }
 
                         binding.theImage.getLayoutParams().width = (int) displayBitmap.getWidth();
                         binding.theImage.getLayoutParams().height = (int) displayBitmap.getHeight();
@@ -337,7 +348,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -349,10 +360,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         zoomageEnable(false);
         nextCropEnableDisable(true);
         cropStart = true;
+        initialCropApplied = false;
 
 
         if (!binding.polygonView.autoCropped) {
-            new Thread(new Runnable() {
+            executorService.execute(new Runnable() {
                 @Override
                 public void run() {
 
@@ -365,8 +377,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     for (int i = 0; i < sortedPoints.length; i++) {
                         cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));
                     }
-
-
 
 
                     runOnUiThread(new Runnable() {
@@ -494,7 +504,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     });
 
                 }
-            }).start();
+            });
         } else {
             nextCropEnableDisable(true);
         }
@@ -512,33 +522,28 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
     boolean onceProcessed = false;
 
-    private void processDisplayImage() {
+    private synchronized void processDisplayImage() {
+
+
+        if (isProcessing)
+            return;
+
+        isProcessing = true;
+
+        isNextClicked = true;
+
 
         onceProcessed = true;
 
-        nextClickec = true;
         binding.processing.setVisibility(View.VISIBLE);
+        binding.protector.setVisibility(View.VISIBLE);
 
         binding.colorTuneSK.setValue(colorTune);
 
         binding.colorGrayCheck.setChecked(colorGray);
 
 
-        if (displayImageProcessThread != null) {
-            processedDisplayImageThreadStop = true;
-
-
-            try {
-                displayImageProcessThread.join();
-            } catch (InterruptedException e) {
-                // e.printStackTrace();
-            }
-
-            processedDisplayImageThreadStop = false;
-
-        }
-
-        displayImageProcessThread = new Thread(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -553,7 +558,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     Map<Integer, PointF> cropBoundsMap = binding.polygonView.getPoints();
 
 
-                    if (cropBoundsMap==null || cropBoundsMap.get(0)==null){
+                    if (cropBoundsMap == null || cropBoundsMap.get(0) == null) {
                         cropStart = false;
                         return;
                     }
@@ -574,8 +579,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                     }
 
-                    if (processedDisplayImageThreadStop)
-                        return;
 
 
                     Point point1 = new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y);
@@ -587,60 +590,44 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     int diffHeight = (int) ((Math.sqrt((point2.x - point3.x) * (point2.x - point3.x) + (point2.y - point3.y) * (point2.y - point3.y)) / 2) + (Math.sqrt((point2.x - point3.x) * (point2.x - point3.x) + (point2.y - point3.y) * (point2.y - point3.y)) / 2));
 
 
-                    if (processedDisplayImageThreadStop)
-                        return;
 
 
                     Mat src = new MatOfPoint2f(new Point(cropBoundsMap.get(0).x, cropBoundsMap.get(0).y), new Point(cropBoundsMap.get(1).x, cropBoundsMap.get(1).y), new Point(cropBoundsMap.get(3).x, cropBoundsMap.get(3).y), new Point(cropBoundsMap.get(2).x, cropBoundsMap.get(2).y));
                     Mat dst = new MatOfPoint2f(new Point(0, 0), new Point(originalMat.width() - 1, 0), new Point(originalMat.width() - 1, originalMat.height() - 1), new Point(0, originalMat.height() - 1));
 
 
-                    if (processedDisplayImageThreadStop)
-                        return;
 
                     Mat transform = Imgproc.getPerspectiveTransform(src, dst);
-
-                    if (processedDisplayImageThreadStop)
-                        return;
 
 
 
 
                     Imgproc.warpPerspective(originalMat, processedMat, transform, originalMat.size());
 
-                    if (processedDisplayImageThreadStop)
-                        return;
+
                     Imgproc.resize(processedMat, processedMat, new Size(diffWidth, diffHeight));
 
-                    if (processedDisplayImageThreadStop)
-                        return;
+
 
                     processedMat.copyTo(lastCroppedMat);
 
-                    if (processedDisplayImageThreadStop)
-                        return;
+
 
 
                 } else {
 
-                    if (processedDisplayImageThreadStop)
-                        return;
+
                     lastCroppedMat.copyTo(processedMat);
 
-                    if (processedDisplayImageThreadStop)
-                        return;
+
 
                 }
 
 
-                if (processedDisplayImageThreadStop)
-                    return;
 
 
                 MatFilter.colorize(processedMat, colorCode, colorTune, colorGray);
 
-                if (processedDisplayImageThreadStop)
-                    return;
 
 
                 Size optimalImageSizeForDisplay = BitmapUtils.getReducedBitmapSize(new Size(processedMat.width(), processedMat.height()), binding.theImage.getMeasuredWidth(), binding.theImage.getMeasuredHeight());
@@ -652,12 +639,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 displayBitmap = Bitmap.createBitmap((int) optimalImageSizeForDisplay.width, (int) optimalImageSizeForDisplay.height, Bitmap.Config.ARGB_8888);
 
 
-                if (processedDisplayImageThreadStop)
-                    return;
                 Utils.matToBitmap(displayMat, displayBitmap);
 
-                if (processedDisplayImageThreadStop)
-                    return;
+
 
 
                 cropStart = false;
@@ -673,50 +657,42 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                         nextCropEnableDisable(false);
 
                         zoomageEnable(true);
-                        nextClickec = false;
+                        isNextClicked = false;
+                        isProcessing = false;
 
+                        binding.protector.setVisibility(View.GONE);
                     }
                 });
 
             }
         });
 
-        displayImageProcessThread.start();
-
 
     }
-
 
 
     private synchronized void processImage() {
 
 
-        if (processedImageThreadStop)
+
+        if (isProcessing)
             return;
+
+
 
         BitmapUtils.rotateMatDegrees(processedMat, globalRotation);
 
 
-        if (processedImageThreadStop)
-            return;
 
         if (originalMat.channels() == 3)
             Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGR2RGB);
 
-        if (processedImageThreadStop)
-            return;
 
 
-        //BitmapUtils.setExifRotationDegrees(originalImageFilename, globalRotation);
-
-        if (processedImageThreadStop)
-            return;
 
         if (processedMat.channels() == 3)
             Imgproc.cvtColor(processedMat, processedMat, Imgproc.COLOR_BGR2RGB);
 
-        if (processedImageThreadStop)
-            return;
 
 
         int[] parameters = {Imgcodecs.IMWRITE_JPEG_QUALITY, 90};
@@ -799,18 +775,13 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     }
 
 
-    private boolean nextClickec = false;
+
 
     private void next() {
 
-        if (nextClickec)
-            return;
-        ;
-
-        nextClickec = true;
         binding.processing.setVisibility(View.VISIBLE);
 
-        new Thread(new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
 
@@ -842,7 +813,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 });
 
             }
-        }).start();
+        });
 
 
     }
@@ -884,6 +855,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.noCropRL:
 
+                if (isProcessing)
+                    return;
 
                 if (!isLoaded)
                     return;
@@ -938,6 +911,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.nextCropIB:
 
+                if (isProcessing)
+                    return;
+
+                if (initialCropApplied){
+                    return;
+                }
+
+                initialCropApplied = true;
 
                 if (!isLoaded)
                     return;
@@ -947,6 +928,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.nextIB:
 
+                if (isProcessing)
+                    return;
+
+                if (isNextClicked){
+                    return;
+                }
+
+                isNextClicked = true;
 
                 if (!isLoaded)
                     return;
@@ -960,6 +949,9 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.CropRL:
 
+
+                if (isProcessing)
+                    return;
 
                 if (!isLoaded)
                     return;
@@ -983,6 +975,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
             case R.id.colorRL:
 
+                if (isProcessing)
+                    return;
 
                 if (!isLoaded)
                     return;
@@ -1010,13 +1004,15 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             case R.id.retakeRL:
 
 
-
                 onBackPressed();
 
                 break;
 
             case R.id.rotateRL:
 
+
+                if (isProcessing)
+                    return;
 
                 if (!isLoaded)
                     return;
@@ -1069,8 +1065,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         if (Math.abs(globalRotation) == 90 || Math.abs(globalRotation) == 270) {
 
 
-            int maxWidth = (int) ((int) (binding.theImageParentParent.getMeasuredWidth())*0.93);
-            int maxHeight = (int) ((int) (binding.theImageParentParent.getMeasuredHeight())*0.93);
+            int maxWidth = (int) ((int) (binding.theImageParentParent.getMeasuredWidth()) * 0.93);
+            int maxHeight = (int) ((int) (binding.theImageParentParent.getMeasuredHeight()) * 0.93);
 
             int currentWidth = displayBitmap.getHeight();
             int currentHeight = displayBitmap.getWidth();
@@ -1092,17 +1088,10 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             scale = newHeight * 1.0f / currentHeight * 1.0f;
 
 
+        } else if (Math.abs(globalRotation) == 0 || Math.abs(globalRotation) == 180) {
 
 
         }
-        else if (Math.abs(globalRotation) == 0 || Math.abs(globalRotation) == 180){
-
-
-
-
-
-        }
-
 
 
         binding.theImageParent.setRotation(globalRotation);
@@ -1123,11 +1112,32 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onResume() {
 
+        super.onResume();
 
         com.aaindia.prodocscanner.utils.Utils.checkOpenCV(this);
 
         checkIfBitmapInMemory();
-        super.onResume();
+
+
+        if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
+            executorService = Executors.newFixedThreadPool(2);
+        }
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        super.onDestroy();
+
+        try {
+            executorService.shutdown();
+
+            while (!(executorService.isTerminated() || executorService.isShutdown())) {
+            }
+        } catch (Exception e) {
+        }
 
 
     }

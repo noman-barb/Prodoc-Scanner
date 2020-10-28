@@ -132,6 +132,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     @Override
     protected void onStop() {
+        super.onStop();
+
+
         recycleImageCropActivityBitmap();
 
 
@@ -149,13 +152,13 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-        if (executorService != null && !executorService.isTerminated()) {
+        if (executorService != null && !(executorService.isTerminated() || executorService.isShutdown() )  ) {
 
 
             if (!executorService.isShutdown())
                 executorService.shutdown();
 
-            while (!executorService.isTerminated()) {
+            while (! (executorService.isTerminated() || executorService.isShutdown() ) ) {
             }
 
             if (imageDetails != null) {
@@ -165,7 +168,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
         executorService = null;
-        super.onStop();
+
 
     }
 
@@ -338,7 +341,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             initializeDir();
 
 
-            new Thread(new Runnable() {
+            executorService.execute(new Runnable() {
                 @Override
                 public void run() {
 
@@ -402,7 +405,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     });
 
                 }
-            }).start();
+            });
 
 
         } catch (Exception e) {
@@ -661,8 +664,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
         pd.setCancelable(false);
 
 
-        if (executorService != null && !executorService.isTerminated())
+        if (executorService != null && !(executorService.isTerminated() || executorService.isShutdown()))
             executorService.shutdown();
+
+
+
 
         new Thread(new Runnable() {
             @Override
@@ -682,7 +688,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         }
                     });
 
-                    while (!executorService.isTerminated()) {
+                    while (! (executorService.isTerminated() || executorService.isShutdown() ) ) {
 
                     }
                 }
@@ -1244,7 +1250,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 imageDetails.getOrdering().add(insertAt, filename);
 
 
-                if (filename != null && insertAt == 0 && executorService != null && !executorService.isTerminated() && scanDirPath != null) {
+                if (filename != null && insertAt == 0 && executorService != null && !(executorService.isTerminated() || executorService.isShutdown()) && scanDirPath != null) {
 
 
 
@@ -1422,7 +1428,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         isCapturing = false;
 
-        if (executorService == null || executorService.isTerminated()) {
+        if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
             executorService = Executors.newFixedThreadPool(2);
         }
 

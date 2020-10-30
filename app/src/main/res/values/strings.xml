@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Prodoc Scanner</string>
     <string name="app_name_short">Prodoc</string>
-    <string name="main_activity_label">Prodoc PDF</string>
-    <string name="scan_activity_label">Prodoc Image</string>
-    <string name="ocr_activity_label">Prodoc OCR</string>
+    <string name="main_activity_label">Import PDF</string>
+    <string name="scan_activity_label">Import Image</string>
+    <string name="ocr_activity_label">OCR Image</string>
 
 </resources>

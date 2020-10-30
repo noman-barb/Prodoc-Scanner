@@ -351,12 +351,9 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         if (nullEffectTempFixEnable) {
             if (effects == null || effects.corners == null) {
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadInitialData();
-                    }
-                });
+                nullEffectTempFixEnable = false;
+                loadInitialData();
+                return;
             }
         }
 
@@ -424,9 +421,11 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
         holder.polygonView.setPoints(cropbounds);
         holder.polygonView.requestLayout();
 
-        holder.nextAction.setVisibility(View.VISIBLE);
+
         rotateImageView(0, effects.rotation, holder, false);
 
+
+        holder.nextAction.setVisibility(View.VISIBLE);
         getBinding().protector.setVisibility(View.GONE);
         holder.processing.setVisibility(View.GONE);
 

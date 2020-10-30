@@ -135,7 +135,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 try {
                     dialog.dismiss();
                 } catch (Exception e) {
-                    //e.printStackTrace();
+
                 }
             });
 

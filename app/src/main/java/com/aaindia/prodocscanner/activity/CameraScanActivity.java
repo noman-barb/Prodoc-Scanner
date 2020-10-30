@@ -176,6 +176,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
+            executorService = Executors.newFixedThreadPool(2);
+        }
+
+
         isCapturing = false;
 
         if (requestCode == CROP_ACTIVITY_CODE) {
@@ -261,7 +266,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         try {
                             dialog.dismiss();
                         } catch (Exception e) {
-                            //e.printStackTrace();
+
                         }
                     });
 
@@ -288,6 +293,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
+
         if (uris.size() > 0) {
 
 
@@ -304,6 +310,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     private void onExternalSafImport(Intent data) {
 
+
         if (data.getClipData() != null) {
 
             if (data.getClipData().getItemCount() == 1) {
@@ -314,7 +321,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
 
+
                     uris.add(data.getClipData().getItemAt(i).getUri());
+
                 }
 
                 importMultipleImages(uris);
@@ -382,6 +391,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         } catch (Exception e) {
 
 
+
                         }
 
 
@@ -420,6 +430,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
             initializeDir();
+
+
+
 
             InputStream in = getContentResolver().openInputStream(uri);
 
@@ -490,6 +503,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
         Utils.checkOpenCV(this);
+        executorService = Executors.newFixedThreadPool(2);
 
         showGuide = !Prefs.firstTimeSeenScreen(CameraScanActivity.this, "camera_scan_act");
 
@@ -534,30 +548,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (importImages) {
 
 
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && Build.SUPPORTED_64_BIT_ABIS.length > 0) {
-//                importImages();
-//            } else {
-//                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//
-//                                importImages();
-//                            }
-//                        });
-//                    }
-//                }, 300);
-//            }
-
-
             importImages();
 
         }
 
-        executorService = Executors.newFixedThreadPool(2);
+
 
 
         if (intentResult) {
@@ -1038,7 +1033,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+
                 }
 
 
@@ -1110,7 +1105,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 //
 //
 //                } catch (IOException e) {
-//                    e.printStackTrace();
+
 //                }
 //
 //
@@ -1421,18 +1416,24 @@ public class CameraScanActivity extends CameraPreviewActivity {
     @Override
     public void onResume() {
 
+        super.onResume();
 
         Utils.checkOpenCV(this);
 
-        super.onResume();
+
 
         isCapturing = false;
+
+
 
         if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
             executorService = Executors.newFixedThreadPool(2);
         }
 
 
+
+
+        Log.d("aaaaaaa", "resume");
         if (cameraShutterSound == null) {
             try {
 

@@ -248,7 +248,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
 
 
@@ -955,7 +955,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
                         try {
                             dialog.dismiss();
                         } catch (Exception e) {
-                            //e.printStackTrace();
+
                         }
                     });
 

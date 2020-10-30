@@ -214,6 +214,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onStopTrackingTouch(@NonNull Slider slider) {
 
+
+                if (isNextClicked){
+                    return;
+                }
+
                 if (!isLoaded) {
                     slider.setValue(colorTune);
                     return;
@@ -231,6 +236,12 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         binding.colorGrayCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
+
+                if (isNextClicked){
+                    return;
+                }
+
 
                 if (!compoundButton.isPressed())
                     return;
@@ -305,6 +316,17 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 File imageFile = FileNav.getTempFile(ImageCropActivity.this, "single_mode_capture.jpg");
                 originalMat = Imgcodecs.imread(imageFile.getAbsolutePath());
 
+                if (originalMat==null || originalMat.width()==0){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(),"Not an image file",Toast.LENGTH_LONG).show();
+                            finish();
+                        }
+                    });
+
+                    return;
+                }
 
                 if (originalMat.channels() == 4)
                     Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2RGB);
@@ -330,11 +352,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-//                        try {
-//                            thread.join();
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
+
 
                         binding.theImage.getLayoutParams().width = (int) displayBitmap.getWidth();
                         binding.theImage.getLayoutParams().height = (int) displayBitmap.getHeight();
@@ -850,6 +868,11 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
         int id = view.getId();
 
 
+        if (isNextClicked){
+            return;
+        }
+
+
         switch (id) {
 
 
@@ -931,9 +954,6 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 if (isProcessing)
                     return;
 
-                if (isNextClicked){
-                    return;
-                }
 
                 isNextClicked = true;
 

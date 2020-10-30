@@ -219,9 +219,9 @@ public class FileNav {
                 fis.close();
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
 
 
@@ -760,7 +760,7 @@ public class FileNav {
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
 
         return null;

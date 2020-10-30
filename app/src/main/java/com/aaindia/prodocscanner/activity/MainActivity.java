@@ -15,6 +15,7 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -250,16 +251,16 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             public void run() {
 
 
-                Utils.vibrate(MainActivity.this, 40);
+                Utils.vibrate(MainActivity.this, 80);
 
                 MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
                 builder.setTitle("Install update");
-                builder.setMessage("An update was downloaded.\nInstalling the update will only take a few seconds.");
+                builder.setMessage("\nA newer version of Prodoc Scanner was downloaded.\n\nInstalling the update will only take a few seconds.\n");
                 builder.setCancelable(false);
                 builder.setNegativeButton("Later", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
+                        updateDownloaded = true;
 
                     }
                 });
@@ -269,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
                         ProgressDialog pd = new ProgressDialog(MainActivity.this);
-                        pd.setTitle("Preparing Update");
+                        pd.setTitle("Preparing update");
                         pd.setMessage("Just a moment");
                         pd.setCancelable(false);
                         pd.show();
@@ -476,8 +477,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         if (Prefs.firstTimeSeenScreen(MainActivity.this, "first_time_app_open_ion_main_activity_news")) {
 
             Ion.with(this)
-                    //  .load("http://prodocstatic.awessamapps.com/news/news.json")
-                    .load("https://raw.githubusercontent.com/awessamapps/awessamapps.github.io/master/fewi.json")
+                    .load("http://prodocstatic.awessamapps.com/news/news.json")
+                    //.load("https://raw.githubusercontent.com/awessamapps/awessamapps.github.io/master/fewi.json")
                     .asJsonObject()
                     .setCallback(new FutureCallback<JsonObject>() {
                         @Override
@@ -609,8 +610,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                                         public void run() {
 
 
-                                            Utils.vibrate(MainActivity.this, 40);
-                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
+                                            Utils.vibrate(MainActivity.this, 80);
+                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_LONG).show();
                                             Toast.makeText(getApplicationContext(), "Please also submit your rating to Google Play", Toast.LENGTH_LONG).show();
 
 
@@ -755,6 +756,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
     private void importPdf(Intent intent) {
+
+        System.gc();
 
 
         if (intent.getClipData() != null) {
@@ -1060,10 +1063,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 } catch (FileNotFoundException e1) {
 
 
-                    e1.printStackTrace();
                 } catch (IOException e2) {
 
-                    e2.printStackTrace();
 
                 }
 
@@ -1127,9 +1128,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         outputStream.close();
 
                 } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+
                 } catch (IOException e) {
-                    e.printStackTrace();
+
                 } finally {
 
                 }
@@ -1186,12 +1187,30 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
     private void rateThisApp() {
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
-        } catch (ActivityNotFoundException e) {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
-        }
 
+
+        ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
+        Task<ReviewInfo> request = manager.requestReviewFlow();
+        request.addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // We can get the ReviewInfo object
+                ReviewInfo reviewInfo = task.getResult();
+
+
+                Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
+                flow.addOnCompleteListener(task2 -> {
+
+                    SharedPreferences shared = getSharedPreferences(getPackageName(), 0);
+                    SharedPreferences.Editor editor = shared.edit();
+                    editor.putBoolean("disabled", true);
+                    editor.apply();
+                });
+
+
+            } else {
+
+            }
+        });
     }
 
     private void openSyncSettings() {
@@ -2973,6 +2992,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
         super.onActivityResult(requestCode, resultCode, resultData);
+
+        if (executor == null || executor.isTerminated() || executor.isShutdown()) {
+            executor = Executors.newFixedThreadPool(2);
+        }
+
 
         if (requestCode == REQUEST_CODE_IMPORT_LOCAL_PDF
                 && resultCode == Activity.RESULT_OK) {

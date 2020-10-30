@@ -97,7 +97,6 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
         if (executorService2==null || executorService2.isTerminated() || executorService2.isShutdown()){
             executorService2 = Executors.newFixedThreadPool(3);
-            Toast.makeText(getApplicationContext(),"ewgeg",0).show();
         }
 
 
@@ -126,7 +125,7 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
 
 
@@ -314,6 +313,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         super.onActivityResult(requestCode, resultCode, data);
 
 
+        if (executorService2==null || executorService2.isTerminated() || executorService2.isShutdown()){
+            executorService2 = Executors.newFixedThreadPool(3);
+        }
+
+
         if (requestCode == ADD_PAGES_ACTIVITY_RESULT_CODE && resultCode == Activity.RESULT_OK) {
 
             MainActivity.listingModified = true;
@@ -370,10 +374,10 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
 
                     } catch (FileNotFoundException e) {
 
-                        e.printStackTrace();
+
                     } catch (IOException e) {
 
-                        e.printStackTrace();
+
                     } finally {
                         runOnUiThread(new Runnable() {
                             @Override

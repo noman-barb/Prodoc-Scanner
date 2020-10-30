@@ -44,17 +44,12 @@ public class ProcessScanViewActivity extends ScanViewActivity {
     ActivityManager am;
 
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-
-
-
 
 
     }
@@ -64,7 +59,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
     @Override
-    public void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
+    public synchronized void processImage(ScanPreviewAdapter.ViewHolder holder, int position, boolean colorOnly) {
 
 
         if (currentProcessing.contains(position))
@@ -91,6 +86,12 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
                 Mat processedMat = new Mat();
+
+
+                if (holder.originalMat == null || holder.originalMat.height() == 0 || holder.originalMat.width() == 0 || holder.displayBitmap == null || holder.displayBitmap.isRecycled() || holder.displayBitmap.getWidth() == 0) {
+                    prepareMat(holder, position);
+                }
+
                 float widthScaleFactor = holder.originalMat.width() * 1.0f / holder.displayBitmap.getWidth();
                 float heightScaleFactor = holder.originalMat.height() * 1.0f / holder.displayBitmap.getHeight();
 
@@ -206,7 +207,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                         isProcessing = false;
 
-                        if (position==0){
+                        if (position == 0) {
                             generateThumbnail();
                         }
                     }
@@ -313,6 +314,8 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
 
         org.opencv.android.Utils.matToBitmap(displayMat, holder.displayBitmap);
+
+
 
 
         lastPreparedFilename = getImageDetails().getAt(position);

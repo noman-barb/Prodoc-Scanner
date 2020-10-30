@@ -230,7 +230,7 @@ public class BitmapUtils {
 
             done = true;
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
 
 
@@ -251,7 +251,7 @@ public class BitmapUtils {
         try {
             ei = new ExifInterface(path);
         } catch (IOException e) {
-            e.printStackTrace();
+
         }
 
 

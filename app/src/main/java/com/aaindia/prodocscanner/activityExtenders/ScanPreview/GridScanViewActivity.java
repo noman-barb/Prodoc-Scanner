@@ -846,7 +846,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                 try {
                     dialog.dismiss();
                 } catch (Exception e) {
-                    //e.printStackTrace();
+
                 }
             });
 

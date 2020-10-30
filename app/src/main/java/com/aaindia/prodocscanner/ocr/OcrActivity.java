@@ -645,7 +645,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
             try {
                 ocrThread.interrupt();
             } catch (Exception e) {
-                e.printStackTrace();
+
             }
 
 

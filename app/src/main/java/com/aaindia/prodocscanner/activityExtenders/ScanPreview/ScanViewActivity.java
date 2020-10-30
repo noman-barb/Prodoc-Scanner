@@ -381,18 +381,19 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                 listIterator = linkedList.listIterator();
 
-                int count = 0;
+                final int[] count = {1};
 
                 File currentFile;
 
                 while ((listIterator.hasNext())) {
 
 
-                    int finalI = count;
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            pd.setMessage("Detecting document edges " + (finalI + 1) + "/" + linkedList.size());
+                            pd.setMessage("Detecting document edges " + count[0] + "/" + linkedList.size());
+                            count[0]++;
                         }
                     });
 

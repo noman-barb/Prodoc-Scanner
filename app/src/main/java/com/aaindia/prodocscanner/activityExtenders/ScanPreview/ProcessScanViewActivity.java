@@ -182,7 +182,7 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
                 processedMat.release();
 
-                System.gc();
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -210,7 +210,9 @@ public class ProcessScanViewActivity extends ScanViewActivity {
                         if (position == 0) {
                             generateThumbnail();
                         }
+                        //   System.gc();
                     }
+
                 });
 
             }
@@ -224,17 +226,63 @@ public class ProcessScanViewActivity extends ScanViewActivity {
 
         Mat originalMat = Imgcodecs.imread(path);
 
+
+
+        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
+
+
+        if (originalMat == null || originalMat.width() == 0 || originalMat.height() == 0) {
+
+
+            cropBoundsMap.put(0, new PointF(0, 0));
+
+            cropBoundsMap.put(1, new PointF(400, 0));
+            cropBoundsMap.put(2, new PointF(0, 400));
+            cropBoundsMap.put(3, new PointF(400, 400));
+
+            Effects effects1 = new Effects(cropBoundsMap, MatFilter.DEFAULT_COLOR_CODE, false, 0, 0);
+
+            getImageDetails().putEffects(new File(path).getName(), effects1);
+
+
+            return;
+
+
+        }
+
+
         if (originalMat.channels() == 4)
             Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
 
         MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
 
 
-        MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+        Point[] sortedPoints = null;
+
+        try {
+            MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+
+            sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
+        } catch (Exception e) {
+
+            sortedPoints = new Point[4];
+
+            sortedPoints[0] = new Point(0, 0);
+            sortedPoints[1] = new Point(originalMat.width(), 0);
+            sortedPoints[2] = new Point(0, originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(), originalMat.height());
 
 
-        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
+        } catch (Error e1) {
+
+
+            sortedPoints = new Point[4];
+
+            sortedPoints[0] = new Point(0, 0);
+            sortedPoints[1] = new Point(originalMat.width(), 0);
+            sortedPoints[2] = new Point(0, originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(), originalMat.height());
+        }
 
 
         for (int i = 0; i < 4; i++) {
@@ -306,16 +354,16 @@ public class ProcessScanViewActivity extends ScanViewActivity {
         if (displayMat.channels() == 4)
             Imgproc.cvtColor(displayMat, displayMat, Imgproc.COLOR_BGRA2RGB);
 
-        if (holder.displayBitmap != null) {
-            holder.displayBitmap.recycle();
+//        if (holder.displayBitmap != null) {
+//            holder.displayBitmap.recycle();
+//
+//        }
 
-        }
+
         holder.displayBitmap = Bitmap.createBitmap(displayMat.width(), displayMat.height(), Bitmap.Config.ARGB_8888);
 
 
         org.opencv.android.Utils.matToBitmap(displayMat, holder.displayBitmap);
-
-
 
 
         lastPreparedFilename = getImageDetails().getAt(position);

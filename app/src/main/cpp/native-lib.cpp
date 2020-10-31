@@ -909,20 +909,26 @@ Java_com_aaindia_prodocscanner_utils_MatFilter_cropV1Native(JNIEnv *env, jclass 
                                                             jlong matAddr,
                                                             jlong native_obj_addr1) {
 
-    // get Mat from raw address
-    Mat &image_original = *(Mat *) matAddr;
 
-    Mat &crop_bounds = *(Mat *) native_obj_addr1;
-
-
-    Mat image;
-    resize(image_original, image, Size(512, 512));
-    image.convertTo(image, CV_8U);
-
-    vector<Point> corners;
 
 
     try {
+
+
+
+        // get Mat from raw address
+        Mat &image_original = *(Mat *) matAddr;
+
+        Mat &crop_bounds = *(Mat *) native_obj_addr1;
+
+
+        Mat image;
+        resize(image_original, image, Size(512, 512));
+        image.convertTo(image, CV_8U);
+
+        vector<Point> corners;
+
+
         find_corners(image, corners);
 
 

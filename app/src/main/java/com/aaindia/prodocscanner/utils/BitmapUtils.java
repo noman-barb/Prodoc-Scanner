@@ -321,74 +321,111 @@ public class BitmapUtils {
 //
 
     public static Point[] sortMatofPoints2f(MatOfPoint2f approx, Size size) {
-        //calculate the center of mass of our contour image using moments
-        Moments moment = Imgproc.moments(approx);
 
 
-        int x = (int) (moment.get_m10() / moment.get_m00());
-        int y = (int) (moment.get_m01() / moment.get_m00());
+        // todo handle crash
 
-        Point[] sortedPoints = new Point[4];
-
-        Point[] sortedPoints2 = new Point[4];
-
-        sortedPoints2[0] = new Point(0, 0);
-        sortedPoints2[1] = new Point(size.width, 0);
-        sortedPoints2[2] = new Point(0, size.height);
-        sortedPoints2[3] = new Point(size.width, size.height);
+        try {
+            //calculate the center of mass of our contour image using moments
+            Moments moment = Imgproc.moments(approx);
 
 
-        double[] data;
-        int count = 0;
-        for (int i = 0; i < approx.rows(); i++) {
-            data = approx.get(i, 0);
-            double datax = data[0];
-            double datay = data[1];
+            int x = (int) (moment.get_m10() / moment.get_m00());
+            int y = (int) (moment.get_m01() / moment.get_m00());
+
+            Point[] sortedPoints = new Point[4];
+
+            Point[] sortedPoints2 = new Point[4];
+
+            sortedPoints2[0] = new Point(0, 0);
+            sortedPoints2[1] = new Point(size.width, 0);
+            sortedPoints2[2] = new Point(0, size.height);
+            sortedPoints2[3] = new Point(size.width, size.height);
 
 
-            if (datax < x && datay < y) {
-                sortedPoints[0] = new Point(datax, datay);
-                count++;
+            double[] data;
+            int count = 0;
+            for (int i = 0; i < approx.rows(); i++) {
+                data = approx.get(i, 0);
+                double datax = data[0];
+                double datay = data[1];
+
+
+                if (datax < x && datay < y) {
+                    sortedPoints[0] = new Point(datax, datay);
+                    count++;
+                }
+                if (datax > x && datay < y) {
+                    sortedPoints[1] = new Point(datax, datay);
+                    count++;
+                }
+                if (datax < x && datay > y) {
+                    sortedPoints[2] = new Point(datax, datay);
+                    count++;
+                }
+                if (datax > x && datay > y) {
+                    sortedPoints[3] = new Point(datax, datay);
+                    count++;
+                }
             }
-            if (datax > x && datay < y) {
-                sortedPoints[1] = new Point(datax, datay);
-                count++;
+
+            for (int i = 0; i < 4; i++) {
+
+                if (sortedPoints[i] == null) {
+                    return sortedPoints2;
+                }
             }
-            if (datax < x && datay > y) {
-                sortedPoints[2] = new Point(datax, datay);
-                count++;
-            }
-            if (datax > x && datay > y) {
-                sortedPoints[3] = new Point(datax, datay);
-                count++;
-            }
+
+
+            int x10 = (int) (size.width*0.005);
+            int y10 = (int) (size.height*0.005);
+
+            sortedPoints[0].x = Math.max( sortedPoints[0].x - x10, 0 );
+            sortedPoints[0].y = Math.max( sortedPoints[0].y - y10, 0 );
+
+
+            sortedPoints[1].x = Math.min( sortedPoints[1].x + x10, size.width );
+            sortedPoints[1].y = Math.max( sortedPoints[1].y - y10, 0 );
+
+            sortedPoints[2].x = Math.max( sortedPoints[2].x - x10, 0 );
+            sortedPoints[2].y = Math.min( sortedPoints[2].y + y10, size.height );
+
+            sortedPoints[3].x = Math.min( sortedPoints[3].x + x10, size.width );
+            sortedPoints[3].y = Math.min( sortedPoints[3].y + y10, size.height );
+
+            return sortedPoints;
         }
 
-        for (int i = 0; i < 4; i++) {
+        catch (Exception e){
+            Point[] sortedPoints = new Point[4];
 
-            if (sortedPoints[i] == null) {
-                return sortedPoints2;
-            }
+            sortedPoints[0] = new Point(0,0);
+            sortedPoints[1] = new Point(size.width,0);
+            sortedPoints[2] = new Point(0,size.height);
+            sortedPoints[3] = new Point(size.width,size.height);
+
+            return sortedPoints;
+
+
+
+
+        }
+        catch (Error e2){
+
+
+            Point[] sortedPoints = new Point[4];
+
+            sortedPoints[0] = new Point(0,0);
+            sortedPoints[1] = new Point(size.width,0);
+            sortedPoints[2] = new Point(0,size.height);
+            sortedPoints[3] = new Point(size.width,size.height);
+
+            return sortedPoints;
+
         }
 
 
-        int x10 = (int) (size.width*0.005);
-        int y10 = (int) (size.height*0.005);
 
-        sortedPoints[0].x = Math.max( sortedPoints[0].x - x10, 0 );
-        sortedPoints[0].y = Math.max( sortedPoints[0].y - y10, 0 );
-
-
-        sortedPoints[1].x = Math.min( sortedPoints[1].x + x10, size.width );
-        sortedPoints[1].y = Math.max( sortedPoints[1].y - y10, 0 );
-
-        sortedPoints[2].x = Math.max( sortedPoints[2].x - x10, 0 );
-        sortedPoints[2].y = Math.min( sortedPoints[2].y + y10, size.height );
-
-        sortedPoints[3].x = Math.min( sortedPoints[3].x + x10, size.width );
-        sortedPoints[3].y = Math.min( sortedPoints[3].y + y10, size.height );
-
-        return sortedPoints;
     }
 
 

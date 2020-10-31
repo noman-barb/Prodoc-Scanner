@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -107,7 +108,9 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
 
-                    bitmapUris.add(data.getClipData().getItemAt(i).getUri());
+                    if (data.getClipData().getItemAt(i).getUri() != null)
+
+                        bitmapUris.add(data.getClipData().getItemAt(i).getUri());
                 }
 
 
@@ -115,6 +118,39 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
                 bitmapUris.add(data.getData());
             }
+
+
+            ContentResolver resolver = getContentResolver();
+
+            boolean nonImages = false;
+
+            for (Uri uri : bitmapUris) {
+
+                String mime = resolver.getType(uri);
+
+
+                if (uri == null || mime == null || !mime.contains("image")) {
+
+                    if (bitmapUris.size() == 1) {
+                        Toast.makeText(getApplicationContext(), "Not an image file", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Contains non image file(s)", Toast.LENGTH_LONG).show();
+                    }
+
+                    nonImages = true;
+
+                    break;
+                }
+
+
+            }
+
+
+            if (nonImages) {
+                finish();
+                return;
+            }
+
         }
 
 
@@ -409,7 +445,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
                     for (int i = 0; i < size; i++) {
 
-                        if (threadEnd){
+                        if (threadEnd) {
                             break;
                         }
 
@@ -479,13 +515,13 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
                                         }
                                     }).submit().get();
 
-                            if (threadEnd){
+                            if (threadEnd) {
                                 break;
                             }
 
 
                         } catch (Exception e) {
-                            if (threadEnd){
+                            if (threadEnd) {
                                 break;
                             }
 
@@ -506,7 +542,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
 
                             }
 
-                            if (extractedText==null)
+                            if (extractedText == null)
                                 return;
 
                             ((TextInputEditText) (OcrActivity.this.findViewById(R.id.ocrTxt))).setText(Html.fromHtml(extractedText.toString()));
@@ -520,7 +556,6 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
             });
 
             ocrThread.start();
-
 
 
         }

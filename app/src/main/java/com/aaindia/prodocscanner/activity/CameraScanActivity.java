@@ -12,6 +12,7 @@ import android.Manifest;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -152,13 +153,19 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-        if (executorService != null && !(executorService.isTerminated() || executorService.isShutdown() )  ) {
+        if (executorService != null && !(executorService.isTerminated() || executorService.isShutdown())) {
 
 
             if (!executorService.isShutdown())
                 executorService.shutdown();
 
-            while (! (executorService.isTerminated() || executorService.isShutdown() ) ) {
+            int i = 0;
+            while (!(executorService.isTerminated() || executorService.isShutdown())) {
+                i++;
+
+                if (i>5000){
+                    break;
+                }
             }
 
             if (imageDetails != null) {
@@ -167,7 +174,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         }
 
-        executorService = null;
+        // change
+      //  executorService = null;
 
 
     }
@@ -293,7 +301,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-
         if (uris.size() > 0) {
 
 
@@ -345,6 +352,37 @@ public class CameraScanActivity extends CameraPreviewActivity {
         progressDialog.show();
 
 
+        ContentResolver resolver = getContentResolver();
+
+
+        boolean nonImages = false;
+        for (Uri uri : uris) {
+
+            String mime = resolver.getType(uri);
+
+            if (uri == null || mime == null || !mime.contains("image")) {
+
+                if (uris.size() == 1) {
+                    Toast.makeText(getApplicationContext(), "Not an image file", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Contains non image file(s)", Toast.LENGTH_LONG).show();
+                }
+
+                nonImages = true;
+
+                break;
+            }
+
+
+        }
+
+
+        if (nonImages) {
+            progressDialog.dismiss();
+            return;
+        }
+
+
         try {
 
             initializeDir();
@@ -391,7 +429,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         } catch (Exception e) {
 
 
-
                         }
 
 
@@ -431,7 +468,15 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             initializeDir();
 
+            String mime = getContentResolver().getType(uri);
 
+            if (uri == null || mime == null || !mime.contains("image")) {
+
+
+                Toast.makeText(getApplicationContext(), "Not an image file", Toast.LENGTH_LONG).show();
+                return;
+
+            }
 
 
             InputStream in = getContentResolver().openInputStream(uri);
@@ -501,7 +546,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
 
-
         Utils.checkOpenCV(this);
         executorService = Executors.newFixedThreadPool(2);
 
@@ -551,8 +595,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
             importImages();
 
         }
-
-
 
 
         if (intentResult) {
@@ -663,8 +705,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
             executorService.shutdown();
 
 
-
-
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -683,7 +723,14 @@ public class CameraScanActivity extends CameraPreviewActivity {
                         }
                     });
 
-                    while (! (executorService.isTerminated() || executorService.isShutdown() ) ) {
+                    int i = 0;
+
+                    while (!(executorService.isTerminated() || executorService.isShutdown())) {
+                        i++;
+
+                        if (i>5000){
+                            break;
+                        }
 
                     }
                 }
@@ -949,6 +996,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     imageSaved(imageFile, imageFile.getName(), null, false);
 
 
+
                     isCapturing = false;
 
                     runOnUiThread(new Runnable() {
@@ -1184,6 +1232,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
     private void imageSaved(File filepath, String filename, Effects effects, boolean isNext) {
 
 
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1248,7 +1297,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
                 if (filename != null && insertAt == 0 && executorService != null && !(executorService.isTerminated() || executorService.isShutdown()) && scanDirPath != null) {
 
 
-
                     try {
 
                         executorService.execute(new Runnable() {
@@ -1291,6 +1339,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                     } catch (Exception e) {
                     }
+
+
+
 
                 }
 
@@ -1381,17 +1432,68 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         Mat originalMat = Imgcodecs.imread(path);
 
+
+        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
+
+        if (originalMat == null || originalMat.width() == 0 || originalMat.height() == 0) {
+
+
+            cropBoundsMap.put(0, new PointF(0, 0));
+
+            cropBoundsMap.put(1, new PointF(400, 0));
+            cropBoundsMap.put(2, new PointF(0, 400));
+            cropBoundsMap.put(3, new PointF(400, 400));
+
+            Effects effects1 = new Effects(cropBoundsMap, MatFilter.DEFAULT_COLOR_CODE, false, 0, 0);
+
+            imageDetails.putEffects(new File(path).getName(), effects1);
+
+
+            return;
+
+
+        }
+
+
+
         if (originalMat.channels() == 4)
             Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
 
         MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
 
+        Point[] sortedPoints = null;
 
-        MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+
+        try {
+            MatFilter.cropV1(originalMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+            sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
 
 
-        HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-        Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
+        }
+
+        catch (Exception e){
+
+            sortedPoints = new Point[4];
+
+            sortedPoints[0] = new Point(0,0);
+            sortedPoints[1] = new Point(originalMat.width(),0);
+            sortedPoints[2] = new Point(0,originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+
+
+        }
+        catch (Error e1){
+
+            sortedPoints = new Point[4];
+
+            sortedPoints[0] = new Point(0,0);
+            sortedPoints[1] = new Point(originalMat.width(),0);
+            sortedPoints[2] = new Point(0,originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+
+        }
+
+
 
 
         for (int i = 0; i < 4; i++) {
@@ -1421,16 +1523,12 @@ public class CameraScanActivity extends CameraPreviewActivity {
         Utils.checkOpenCV(this);
 
 
-
         isCapturing = false;
-
 
 
         if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
             executorService = Executors.newFixedThreadPool(2);
         }
-
-
 
 
         Log.d("aaaaaaa", "resume");

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -1189,28 +1190,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void rateThisApp() {
 
 
-        ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
-        Task<ReviewInfo> request = manager.requestReviewFlow();
-        request.addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                // We can get the ReviewInfo object
-                ReviewInfo reviewInfo = task.getResult();
-
-
-                Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
-                flow.addOnCompleteListener(task2 -> {
-
-                    SharedPreferences shared = getSharedPreferences(getPackageName(), 0);
-                    SharedPreferences.Editor editor = shared.edit();
-                    editor.putBoolean("disabled", true);
-                    editor.apply();
-                });
-
-
-            } else {
-
-            }
-        });
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
+        } catch (ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+        }
     }
 
     private void openSyncSettings() {
@@ -2652,6 +2636,36 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void processImportLocalPdf(ArrayList<Uri> uris) {
 
 
+        ContentResolver resolver = getContentResolver();
+
+        boolean nonPDFs = false;
+
+        for (Uri uri : uris){
+
+            String mime = resolver.getType(uri);
+
+            if (uri == null || mime == null || !mime.contains("pdf")) {
+
+                if (uris.size()==1){
+                    Toast.makeText(getApplicationContext(), "Not an PDF file", Toast.LENGTH_LONG).show();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Contains non PDF file(s)", Toast.LENGTH_LONG).show();
+                }
+
+                nonPDFs = true;
+
+                break;
+            }
+        }
+
+        if (nonPDFs){
+            finish();
+            return;
+        }
+
+
+
         ExecutorService service = Executors.newFixedThreadPool(1);
 
 
@@ -2668,7 +2682,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         try {
 
 
-                            service.shutdown();
+                            service.shutdownNow();
 
                             while (!(service.isTerminated() || service.isShutdown())) {
                             }

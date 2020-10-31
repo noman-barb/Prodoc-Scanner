@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.aaindia.prodocscanner.constants.Constants;
 
+import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -40,8 +41,6 @@ public class MatFilter {
 
     private static native void brightnessContrastNative(long nativeObjAddr, long percentage);
 
-    private static native void paperizeNative(long nativeObjAddr, float percentage);
-
     private static native void cleanTextNative(long nativeObjAddr, float percentage);
 
 
@@ -70,6 +69,8 @@ public class MatFilter {
 
         loadLibrary();
 
+
+
         cropV1Native(nativeObjAddr, nativeObjAddr1);
 
     }
@@ -80,9 +81,12 @@ public class MatFilter {
         try {
             doNothing();
         } catch (Error error) {
+
+            OpenCVLoader.initDebug();
              System.loadLibrary("native-lib");
         }
         catch (Exception e){
+            OpenCVLoader.initDebug();
             System.loadLibrary("native-lib");
         }
 

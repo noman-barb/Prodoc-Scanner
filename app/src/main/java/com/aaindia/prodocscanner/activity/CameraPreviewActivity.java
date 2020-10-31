@@ -185,10 +185,13 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         setEnterSharedElementCallback(new MaterialContainerTransformSharedElementCallback());
 
 
-        CameraManager cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
+
 
 
         try {
+
+            CameraManager cameraManager = (CameraManager) getSystemService(CAMERA_SERVICE);
+
             String[] cameraList = cameraManager.getCameraIdList();
 
 

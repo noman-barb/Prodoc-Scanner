@@ -21,8 +21,8 @@ android {
         applicationId "com.aaindia.prodocscanner"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 93
-        versionName "3.3.2"
+        versionCode 95
+        versionName "3.3.22"
 
 
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

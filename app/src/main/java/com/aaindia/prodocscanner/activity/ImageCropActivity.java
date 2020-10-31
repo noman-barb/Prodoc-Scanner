@@ -387,10 +387,47 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 public void run() {
 
                     MatOfPoint2f cropBoundsMat = new MatOfPoint2f();
-                    MatFilter.cropV1(displayMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
 
                     HashMap<Integer, PointF> cropBoundsMap = new HashMap<>();
-                    Point[] sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(displayMat.width(), displayMat.height()));
+                    Point[] sortedPoints = null;
+
+                    try {
+                        MatFilter.cropV1(displayMat.getNativeObjAddr(), cropBoundsMat.getNativeObjAddr());
+
+                       sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(displayMat.width(), displayMat.height()));
+
+
+                    }
+
+                    catch (Exception e){
+
+                        sortedPoints = new Point[4];
+
+                        sortedPoints[0] = new Point(0,0);
+                        sortedPoints[1] = new Point(originalMat.width(),0);
+                        sortedPoints[2] = new Point(0,originalMat.height());
+                        sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+
+                    }
+
+                    catch (Error e2){
+
+                        sortedPoints = new Point[4];
+
+                        sortedPoints[0] = new Point(0,0);
+                        sortedPoints[1] = new Point(originalMat.width(),0);
+                        sortedPoints[2] = new Point(0,originalMat.height());
+                        sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+
+
+                    }
+
+
+
+
+
+
+
 
                     for (int i = 0; i < sortedPoints.length; i++) {
                         cropBoundsMap.put(i, new PointF((float) sortedPoints[i].x, (float) sortedPoints[i].y));

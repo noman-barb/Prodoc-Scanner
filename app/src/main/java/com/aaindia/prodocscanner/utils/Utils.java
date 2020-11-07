@@ -172,6 +172,7 @@ public class Utils {
             System.loadLibrary("native-lib");
         }
 
+
         MatFilter.loadLibrary();
 
     }
@@ -180,10 +181,10 @@ public class Utils {
     public static void vibrate(Activity context, long millis) {
 
 
-        millis = Math.max(20,millis);
+        millis = Math.max(20, millis);
         try {
             Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-            if (!v.hasVibrator()){
+            if (!v.hasVibrator()) {
                 return;
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -192,8 +193,8 @@ public class Utils {
                 //deprecated in API 26
                 v.vibrate(millis);
             }
+        } catch (Exception e) {
         }
-        catch (Exception e){}
 
 
     }

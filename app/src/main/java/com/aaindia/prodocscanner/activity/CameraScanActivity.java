@@ -120,6 +120,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     ExecutorService executorService;
 
+    ExecutorService imageCaptureExecutorService = null;
+
 
     private boolean showGuide = false;
 
@@ -163,7 +165,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
             while (!(executorService.isTerminated() || executorService.isShutdown())) {
                 i++;
 
-                if (i>5000){
+                if (i > 5000) {
                     break;
                 }
             }
@@ -174,9 +176,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         }
 
-        // change
-      //  executorService = null;
-
 
     }
 
@@ -184,9 +183,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
-            executorService = Executors.newFixedThreadPool(2);
-        }
+
+        executorService = initializeExecutor(executorService, 3);
 
 
         isCapturing = false;
@@ -387,6 +385,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             initializeDir();
 
+            executorService = initializeExecutor(executorService, 3);
+
 
             executorService.execute(new Runnable() {
                 @Override
@@ -547,7 +547,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
         Utils.checkOpenCV(this);
-        executorService = Executors.newFixedThreadPool(2);
+        executorService = initializeExecutor(executorService, 3);
 
         showGuide = !Prefs.firstTimeSeenScreen(CameraScanActivity.this, "camera_scan_act");
 
@@ -728,7 +728,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     while (!(executorService.isTerminated() || executorService.isShutdown())) {
                         i++;
 
-                        if (i>5000){
+                        if (i > 5000) {
                             break;
                         }
 
@@ -965,6 +965,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
         if (isCapturing)
             return;
 
+
+        imageCaptureExecutorService = initializeExecutor(imageCaptureExecutorService, 1);
+
         cameraShutterAnimation();
         binding.processingCapture.setVisibility(View.VISIBLE);
         view.setAlpha(0.4f);
@@ -989,12 +992,11 @@ public class CameraScanActivity extends CameraPreviewActivity {
             ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
 
 
-            getImageCapture().takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+            getImageCapture().takePicture(outputFileOptions, imageCaptureExecutorService, new ImageCapture.OnImageSavedCallback() {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
                     imageSaved(imageFile, imageFile.getName(), null, false);
-
 
 
                     isCapturing = false;
@@ -1038,7 +1040,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
         ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
 
 
-        getImageCapture().takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+        getImageCapture().takePicture(outputFileOptions, imageCaptureExecutorService, new ImageCapture.OnImageSavedCallback() {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
@@ -1104,61 +1106,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             }
         });
-
-
-        ///////////////////////////////////////////////////////
-//        getImageCapture().takePicture(Executors.newSingleThreadExecutor(), new ImageCapture.OnImageCapturedCallback() {
-//            @Override
-//            public void onCaptureSuccess(@NonNull ImageProxy image) {
-//
-//
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                        binding.processingCapture.setVisibility(View.GONE);
-//                    }
-//                });
-//
-//
-//                ImageCropActivity.originalBitmap = BitmapUtils.imageProxyToBitmap(image);
-//                ImageCropActivity.rotationDegrees = image.getImageInfo().getRotationDegrees();
-//
-//
-//                Intent intent = new Intent(CameraScanActivity.this, ImageCropActivity.class);
-//
-//                HashMap<String, File> map = FileNav.newImageFile(scanDirPath);
-//
-//                isCapturing = false;
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                        binding.processingCapture.setVisibility(View.GONE);
-//                    }
-//                });
-//
-//
-//                try {
-//                    String originalFileName = map.get(FileNav.ORIGINAL_IMAGE_FILE).getCanonicalPath();
-//                    String processedImageFileName = map.get(FileNav.PROCESSED_IMAGE_FILE).getCanonicalPath();
-//
-//
-//                    intent.putExtra(FileNav.ORIGINAL_IMAGE_FILE, originalFileName);
-//                    intent.putExtra(FileNav.PROCESSED_IMAGE_FILE, processedImageFileName);
-//
-//                    intent.putExtra(ImageCropActivity.DOCUMENT_TYPE_KEY, getDocumentType());
-//                    super.onCaptureSuccess(image);
-//                    startActivityForResult(intent, CROP_ACTIVITY_CODE);
-//
-//
-//                } catch (IOException e) {
-
-//                }
-//
-//
-//            }
-//        });
 
 
     }
@@ -1231,6 +1178,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     private void imageSaved(File filepath, String filename, Effects effects, boolean isNext) {
 
+
+        executorService = initializeExecutor(executorService, 3);
 
 
         runOnUiThread(new Runnable() {
@@ -1331,6 +1280,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                                 } catch (Exception e) {
                                 }
+                                catch (Error e2){}
 
 
                             }
@@ -1339,8 +1289,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
                     } catch (Exception e) {
                     }
-
-
+                    catch (Error e3){}
 
 
                 }
@@ -1382,17 +1331,25 @@ public class CameraScanActivity extends CameraPreviewActivity {
                     if (filepath != null) {
 
 
-                        executorService.execute(new Runnable() {
-                            @Override
-                            public void run() {
+                        try {
 
-                                try {
-                                    autocropThis(filepath.getAbsolutePath(), imageDetails);
-                                } catch (Exception e) {
+                            executorService.execute(new Runnable() {
+                                @Override
+                                public void run() {
+
+                                    try {
+                                        autocropThis(filepath.getAbsolutePath(), imageDetails);
+                                    } catch (Exception e) {
+                                    }
+                                    catch (Error e2){}
+
                                 }
+                            });
+                        }
+                        catch (Exception e){}
+                        catch (Error e2){}
 
-                            }
-                        });
+
 
 
                     } else {
@@ -1455,7 +1412,6 @@ public class CameraScanActivity extends CameraPreviewActivity {
         }
 
 
-
         if (originalMat.channels() == 4)
             Imgproc.cvtColor(originalMat, originalMat, Imgproc.COLOR_BGRA2BGR);
 
@@ -1469,31 +1425,26 @@ public class CameraScanActivity extends CameraPreviewActivity {
             sortedPoints = BitmapUtils.sortMatofPoints2f(cropBoundsMat, new Size(originalMat.width(), originalMat.height()));
 
 
-        }
-
-        catch (Exception e){
+        } catch (Exception e) {
 
             sortedPoints = new Point[4];
 
-            sortedPoints[0] = new Point(0,0);
-            sortedPoints[1] = new Point(originalMat.width(),0);
-            sortedPoints[2] = new Point(0,originalMat.height());
-            sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+            sortedPoints[0] = new Point(0, 0);
+            sortedPoints[1] = new Point(originalMat.width(), 0);
+            sortedPoints[2] = new Point(0, originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(), originalMat.height());
 
 
-        }
-        catch (Error e1){
+        } catch (Error e1) {
 
             sortedPoints = new Point[4];
 
-            sortedPoints[0] = new Point(0,0);
-            sortedPoints[1] = new Point(originalMat.width(),0);
-            sortedPoints[2] = new Point(0,originalMat.height());
-            sortedPoints[3] = new Point(originalMat.width(),originalMat.height());
+            sortedPoints[0] = new Point(0, 0);
+            sortedPoints[1] = new Point(originalMat.width(), 0);
+            sortedPoints[2] = new Point(0, originalMat.height());
+            sortedPoints[3] = new Point(originalMat.width(), originalMat.height());
 
         }
-
-
 
 
         for (int i = 0; i < 4; i++) {
@@ -1526,12 +1477,9 @@ public class CameraScanActivity extends CameraPreviewActivity {
         isCapturing = false;
 
 
-        if (executorService == null || executorService.isTerminated() || executorService.isShutdown()) {
-            executorService = Executors.newFixedThreadPool(2);
-        }
+        executorService = initializeExecutor(executorService, 3);
 
 
-        Log.d("aaaaaaa", "resume");
         if (cameraShutterSound == null) {
             try {
 
@@ -1543,6 +1491,17 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
             }
         }
+
+    }
+
+    private ExecutorService initializeExecutor(ExecutorService service, int poolSize) {
+
+        if (service == null || service.isTerminated() || service.isShutdown()) {
+            service = Executors.newFixedThreadPool(poolSize);
+        }
+
+
+        return service;
 
     }
 

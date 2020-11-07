@@ -170,7 +170,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
         executorService = Executors.newFixedThreadPool(2);
 
-        com.aaindia.prodocscanner.utils.Utils.checkOpenCV(this);
+
 
 
         originalImageFilename = getIntent().getExtras().getString(FileNav.ORIGINAL_IMAGE_FILE);
@@ -921,6 +921,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                 if (!isLoaded)
                     return;
 
+                initialCropApplied  = false;
                 zoomageEnable(true);
 
                 if (displayBitmap != null)
@@ -982,6 +983,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
                 if (!isLoaded)
                     return;
+
+
 
                 processDisplayImage();
                 break;

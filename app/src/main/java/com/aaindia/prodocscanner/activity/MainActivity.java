@@ -321,35 +321,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         }
 
 
-//        if (executor != null) {
-//
-//
-//            try {
-//                executor.execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                        ArrayList<ListFIlesInfo> x = FileNav.getDirInfo(currentPath, null);
-//
-//                        runOnUiThread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//
-//                                if (listingModified || x.size() != adapter.data.size()) {
-//
-//
-//
-//                                    listingModified = false;
-//                                }
-//                            }
-//                        });
-//                    }
-//                });
-//            } catch (Exception e) {
-//            }
-//        }
-
-
         nagivateTo(currentPath);
 
     }
@@ -441,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
             currentPath = getIntent().getExtras().getString(CURRENT_DIR_PATH);
 
-            nagivateTo(currentPath);
+           // nagivateTo(currentPath);
         }
 
 
@@ -455,7 +426,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         binding.emptyStartScanning.setOnClickListener(this::onClick);
         searchHandle(binding.searchView);
 
-        nagivateTo(currentPath);
+        //nagivateTo(currentPath);
 
 
         if (getIntent() != null && getIntent().getType() != null) {
@@ -1454,7 +1425,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     }
 
-    private void sortScans() {
+    private synchronized void sortScans() {
 
         int sortInt = Prefs.displayPrefs.getSort(getApplicationContext());
 
@@ -1537,7 +1508,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     }
 
-    public void nagivateTo(String path) {
+    public synchronized void nagivateTo(String path) {
+
+
+        if (path==null || path.equals(""))
+            return;
 
         Prefs.displayPrefs.setDisplayStyle(this, Prefs.displayPrefs.GROUPPED);
 
@@ -1550,38 +1525,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 @Override
                 public void run() {
 
-                    fIlesInfos = FileNav.getDirInfo(path, null);
-                    adapter.data = fIlesInfos;
-                    sortScans();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-
-                            if (adapter.data.size() > 0) {
-                                binding.emptyDocumentImage.setVisibility(View.GONE);
-                            } else {
-
-                                binding.emptyDocumentImage.setVisibility(View.VISIBLE);
-
-                                if (!currentPath.equals(baseDirPath)) {
-                                    binding.emptyDocumentTV.setText("FOLDER IS EMPTY");
-                                    binding.emptyDocumentTV1.setText("SCAN NOW");
-
-                                } else {
-                                    binding.emptyDocumentTV.setText("IT'S EMPTY HERE");
-                                    binding.emptyDocumentTV1.setText("START SCANNING");
-                                }
-                            }
-
-
-                            toogleBackArrow(!path.equals(baseDirPath));
-
-                            binding.scanList.getAdapter().notifyDataSetChanged();
-
-                        }
-                    });
+                   refreshPath(path);
 
                 }
             });
@@ -1589,6 +1533,42 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         }
 
 
+    }
+
+    private synchronized void refreshPath(String path) {
+
+        fIlesInfos = FileNav.getDirInfo(path, null);
+        adapter.data = fIlesInfos;
+        sortScans();
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                if (adapter.data.size() > 0) {
+                    binding.emptyDocumentImage.setVisibility(View.GONE);
+                } else {
+
+                    binding.emptyDocumentImage.setVisibility(View.VISIBLE);
+
+                    if (!currentPath.equals(baseDirPath)) {
+                        binding.emptyDocumentTV.setText("FOLDER IS EMPTY");
+                        binding.emptyDocumentTV1.setText("SCAN NOW");
+
+                    } else {
+                        binding.emptyDocumentTV.setText("IT'S EMPTY HERE");
+                        binding.emptyDocumentTV1.setText("START SCANNING");
+                    }
+                }
+
+
+                toogleBackArrow(!path.equals(baseDirPath));
+
+                binding.scanList.getAdapter().notifyDataSetChanged();
+
+            }
+        });
     }
 
     public void onDirClick(String dirPath) {

@@ -115,14 +115,16 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentBottom="true"
                         android:layout_centerHorizontal="true"
-                        android:layout_margin="2dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginRight="2dp"
                         android:layout_marginBottom="5dp"
                         android:layout_toLeftOf="@id/numPagesRl"
                         android:fontFamily="sans-serif-condensed-light"
                         android:lines="1"
                         android:maxLines="1"
                         android:text="02/05/19"
-                        android:textAlignment="center"
+                        android:textAlignment="viewStart"
                         android:textColor="@color/colorWhite"
                         android:textSize="10sp"></com.google.android.material.textview.MaterialTextView>
 
@@ -137,12 +139,12 @@
                         android:layout_marginTop="2dp"
                         android:layout_toLeftOf="@id/moreOptions"
                         android:fontFamily="sans-serif-condensed-medium"
-                        android:lines="2"
-                        android:maxLines="2"
+
+                        android:maxLines="3"
                         android:text="Folder 1 Important Files dont delete"
                         android:textAlignment="center"
                         android:textColor="@color/colorWhite"
-                        android:textSize="12sp"></com.google.android.material.textview.MaterialTextView>
+                        android:textSize="11sp"></com.google.android.material.textview.MaterialTextView>
 
 
                 </RelativeLayout>

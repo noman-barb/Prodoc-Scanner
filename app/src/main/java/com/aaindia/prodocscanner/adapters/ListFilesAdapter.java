@@ -48,7 +48,7 @@ public class ListFilesAdapter extends RecyclerView.Adapter<ListFilesAdapter.View
         this.context = context;
         this.scanClickListener = scanClickListener;
 
-        simpleDateFormat = new SimpleDateFormat("dd/MM/yy HH:mm");
+        simpleDateFormat = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
     }
 
 

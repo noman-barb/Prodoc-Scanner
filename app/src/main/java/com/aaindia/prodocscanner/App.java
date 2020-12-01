@@ -11,6 +11,7 @@ import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.wrappers.CompleteEffectHolder;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.MobileAds;
 import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 import java.util.HashMap;
@@ -27,16 +28,9 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
 
-//        ChiliPhotoPicker.INSTANCE.init(new ImageLoader() {
-//            @Override
-//            public void loadImage(Context context, ImageView imageView, Uri uri) {
-//                Glide.with(context)
-//                        .asBitmap()
-//                        .load(uri)
-//                        .centerCrop()
-//                        .into(imageView);
-//            }
-//        }, "");
+
+        MobileAds.initialize(this);
+
         PDFBoxResourceLoader.init(getApplicationContext());
         Utils.checkOpenCV();
     }

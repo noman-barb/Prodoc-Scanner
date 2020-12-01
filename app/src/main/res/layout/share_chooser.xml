@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/colorWhite"
     android:orientation="vertical">
+
+
+    <com.google.android.ads.nativetemplates.TemplateView
+        android:visibility="gone"
+        android:id="@+id/ad_template_1"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:gnt_template_type="@layout/gnt_small_template_view" />
 
 
     <LinearLayout

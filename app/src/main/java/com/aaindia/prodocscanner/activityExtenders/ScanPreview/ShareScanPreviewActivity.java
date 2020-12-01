@@ -113,7 +113,9 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         }
 
 
-                    } else if (requestCode == PERMISION_REQUEST_CODE_SELECTED) {
+                    } else if (requestCode == PERMISION_REQUEST_CODE_ALL) {
+
+
                         share(true);
                     }
 
@@ -264,7 +266,11 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         PackageManager.PERMISSION_GRANTED) {
 
 
+
+
                 } else {
+
+
                     requestStoragePermission(PERMISION_REQUEST_CODE_ALL);
                     return;
                 }
@@ -355,7 +361,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         pd.setCancelable(false);
 
 
-        new ShareDialog(this, (int) size, new ShareDialog.OnShareDialogListener() {
+        new ShareDialog(this, (int) size, getAdObsevable(),new ShareDialog.OnShareDialogListener() {
             @Override
             public void share(boolean isPDF, double quality, String password) {
 
@@ -617,7 +623,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         pd.setCancelable(false);
 
 
-                        new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize, new ShareDialog.OnShareDialogListener() {
+                        new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize, getAdObsevable() ,new ShareDialog.OnShareDialogListener() {
                             @Override
                             public void share(boolean isPDF, double quality, String password) {
 

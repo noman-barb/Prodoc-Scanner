@@ -44,9 +44,6 @@ public class DocMaker {
         this.password = password;
     }
 
-    Mat m;
-    MatOfInt matOfInt;
-
 
     public void makeImages(String outputDir, OnPDFMakerUpdate update) {
 
@@ -71,10 +68,10 @@ public class DocMaker {
                 public void run() {
 
 
-                    m = Imgcodecs.imread(f.getAbsolutePath());
+                   Mat m = Imgcodecs.imread(f.getAbsolutePath());
 
 
-                    matOfInt = new MatOfInt(new int[]{Imgcodecs.IMWRITE_JPEG_QUALITY, (int) q});
+                   MatOfInt matOfInt = new MatOfInt(new int[]{Imgcodecs.IMWRITE_JPEG_QUALITY, (int) q});
 
                     String fname = outputDir + File.separator + images.indexOf(f) + ".jpg";
                     Imgcodecs.imwrite(fname, m, matOfInt);

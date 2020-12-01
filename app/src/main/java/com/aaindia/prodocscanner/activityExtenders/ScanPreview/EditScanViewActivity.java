@@ -22,6 +22,7 @@ import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.wrappers.Effects;
 
 
+
 import java.io.File;
 import java.util.HashMap;
 
@@ -219,6 +220,8 @@ public class EditScanViewActivity extends ProcessScanViewActivity {
                         holder.imageView.getLayoutParams().width = (int) holder.displayBitmap.getWidth();
                         holder.imageView.getLayoutParams().height = (int) holder.displayBitmap.getHeight();
                         holder.imageView.setImageBitmap(holder.displayBitmap);
+
+                       // holder.imageView.setImage(ImageSource.bitmap(holder.displayBitmap));
 
                         holder.imageView.requestLayout();
 

@@ -1,5 +1,6 @@
 package com.aaindia.prodocscanner.activity;
 
+import androidx.annotation.LongDef;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -65,6 +66,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -116,6 +118,7 @@ import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
 public class CameraPreviewActivity extends AppCompatActivity implements View.OnClickListener {
 
 
+
     private static final int PERMISION_REQUEST_CODE = 313;
     private ActivityCameraScanBinding binding;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture = null;
@@ -152,6 +155,7 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
         super.onResume();
 
         binding.cameraCapture.setAlpha(1.0f);
+
 
     }
 
@@ -215,6 +219,8 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
 
             }
 
+
+
             // nearest resolution search
 
             long targetResolution = 4000l * 3000l;
@@ -228,7 +234,11 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             for (Size size : cameraSize) {
 
 
+
+
                 long res = size.getHeight() * size.getWidth() * 1l;
+
+
 
                 long absError = Math.abs(res - targetResolution);
 
@@ -242,7 +252,10 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             targetHeight = targetSize.getHeight();
             targetWidth = targetSize.getWidth();
 
-            if (targetWidth * targetHeight < (2500 * 3200)) {
+
+            float aspectRatio = targetHeight>targetWidth? targetHeight*1.0f/targetWidth : targetWidth*1.0f/targetHeight;
+
+            if (targetWidth * targetHeight < (2500 * 3200) || aspectRatio<1.1 || aspectRatio>1.5) {
                 targetHeight = -1;
                 targetWidth = -1;
             }
@@ -737,6 +750,11 @@ public class CameraPreviewActivity extends AppCompatActivity implements View.OnC
             importImages();
         } else if (id == R.id.torchIV) {
 
+
+            if (lensFacing == CameraSelector.LENS_FACING_FRONT){
+                Toast.makeText(getApplicationContext(),"Cannot enable torch while using front camera",Toast.LENGTH_LONG).show();
+                return;
+            }
             torchEnabled = !torchEnabled;
             camera.getCameraControl().enableTorch(torchEnabled);
 

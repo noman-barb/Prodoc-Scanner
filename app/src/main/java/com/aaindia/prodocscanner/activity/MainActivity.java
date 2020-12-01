@@ -52,6 +52,7 @@ import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.GridScanViewActivity;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ListFilesAdapter;
+import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
@@ -68,6 +69,13 @@ import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+import com.aaindia.prodocscanner.wrappers.UnifiedNativeAdObsevable;
+import com.google.android.ads.nativetemplates.NativeTemplateStyle;
+import com.google.android.ads.nativetemplates.TemplateView;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -238,6 +246,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     boolean isPaused = false;
 
 
+    private UnifiedNativeAdObsevable adObsevable = null;
+
     private void installUpdate() {
 
 
@@ -321,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         }
 
 
-        nagivateTo(currentPath);
+        navigateTo(currentPath);
 
     }
 
@@ -412,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
             currentPath = getIntent().getExtras().getString(CURRENT_DIR_PATH);
 
-           // nagivateTo(currentPath);
+            // navigateTo(currentPath);
         }
 
 
@@ -426,7 +436,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         binding.emptyStartScanning.setOnClickListener(this::onClick);
         searchHandle(binding.searchView);
 
-        //nagivateTo(currentPath);
+        //navigateTo(currentPath);
 
 
         if (getIntent() != null && getIntent().getType() != null) {
@@ -439,6 +449,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         showcase();
 
         netRequestDetails();
+
+        loadAd2();
+
+
 
 
     }
@@ -765,7 +779,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             public boolean onClose() {
 
 
-                nagivateTo(currentPath);
+                navigateTo(currentPath);
                 return false;
             }
         });
@@ -1049,7 +1063,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         }
 
-                        nagivateTo(currentPath);
+                        navigateTo(currentPath);
                     }
                 });
 
@@ -1263,7 +1277,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         } catch (Exception e) {
 
                         }
-                        nagivateTo(currentPath);
+                        navigateTo(currentPath);
 
                     }
                 });
@@ -1310,7 +1324,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             switch (created) {
 
                 case FileNav.DIR_CREATED:
-                    nagivateTo(currentPath);
+                    navigateTo(currentPath);
                     break;
 
                 case FileNav.DIR_ALREADY_EXISTS:
@@ -1391,7 +1405,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                     Prefs.displayPrefs.setDisplayStyle(getApplicationContext(), Prefs.displayPrefs.GROUPPED);
                     binding.middleOptionsText.setText(GROUPED);
-                    nagivateTo(currentPath);
+                    navigateTo(currentPath);
 
                 } else if (itemId == ALL_DOCS_ITEM_ID) {
 
@@ -1501,17 +1515,17 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             newPath = new File(currentPath + "/../").getCanonicalPath();
 
             if (!currentPath.equals(baseDirPath))
-                nagivateTo(newPath);
+                navigateTo(newPath);
         } catch (IOException e) {
 
         }
 
     }
 
-    public synchronized void nagivateTo(String path) {
+    public synchronized void navigateTo(String path) {
 
 
-        if (path==null || path.equals(""))
+        if (path == null || path.equals(""))
             return;
 
         Prefs.displayPrefs.setDisplayStyle(this, Prefs.displayPrefs.GROUPPED);
@@ -1525,7 +1539,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 @Override
                 public void run() {
 
-                   refreshPath(path);
+                    refreshPath(path);
 
                 }
             });
@@ -1535,6 +1549,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     }
 
+
+
+
+
+    
     private synchronized void refreshPath(String path) {
 
         fIlesInfos = FileNav.getDirInfo(path, null);
@@ -1544,6 +1563,14 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
+
+                if (adapter.data.size() > 2) {
+
+                    loadAd1();
+                }
+
+
 
 
                 if (adapter.data.size() > 0) {
@@ -1567,16 +1594,62 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 binding.scanList.getAdapter().notifyDataSetChanged();
 
+
+
             }
         });
     }
+
+
+    private void loadAd2(){
+        adObsevable = new UnifiedNativeAdObsevable();
+
+
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SHARER_AD_1_ID)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+
+                        adObsevable.setAd(unifiedNativeAd);
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void loadAd1() {
+
+        binding.adTemplate1.setVisibility(View.VISIBLE);
+
+        MobileAds.initialize(MainActivity.this);
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.MAINACTIVITY_AD_1_ID)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+                        NativeTemplateStyle styles = new
+                                NativeTemplateStyle.Builder().build();
+
+                        binding.adTemplate1.setVisibility(View.VISIBLE);
+                        TemplateView template = binding.adTemplate1;
+                        template.setStyles(styles);
+                        template.setNativeAd(unifiedNativeAd);
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
 
     public void onDirClick(String dirPath) {
 
         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
-                nagivateTo(dirPath);
+                navigateTo(dirPath);
 
             }
         }, 100);
@@ -1966,7 +2039,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         pd.setCancelable(false);
 
 
-                        new ShareDialog(MainActivity.this, finalSize, new ShareDialog.OnShareDialogListener() {
+                        new ShareDialog(MainActivity.this, finalSize, adObsevable,new ShareDialog.OnShareDialogListener() {
                             @Override
                             public void share(boolean isPDF, double quality, String password) {
 
@@ -2425,7 +2498,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 //   FileUtils.deleteDirectory(new File(filepath));
 
                 FileNav.deleteDirectoryQuietely(new File(filepath));
-                nagivateTo(currentPath);
+                navigateTo(currentPath);
                 simpleToast("Deleted");
                 deselectAll();
             } catch (Exception e) {
@@ -2604,7 +2677,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                 } catch (Exception e) {
                 }
 
-                nagivateTo(currentPath);
+                navigateTo(currentPath);
 
             }
         });
@@ -2620,16 +2693,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         boolean nonPDFs = false;
 
-        for (Uri uri : uris){
+        for (Uri uri : uris) {
 
             String mime = resolver.getType(uri);
 
             if (uri == null || mime == null || !mime.contains("pdf")) {
 
-                if (uris.size()==1){
+                if (uris.size() == 1) {
                     Toast.makeText(getApplicationContext(), "Not an PDF file", Toast.LENGTH_LONG).show();
-                }
-                else {
+                } else {
                     Toast.makeText(getApplicationContext(), "Contains non PDF file(s)", Toast.LENGTH_LONG).show();
                 }
 
@@ -2639,11 +2711,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
             }
         }
 
-        if (nonPDFs){
+        if (nonPDFs) {
             finish();
             return;
         }
-
 
 
         ExecutorService service = Executors.newFixedThreadPool(1);
@@ -2677,7 +2748,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         } catch (Exception e) {
                         }
 
-                        nagivateTo(currentPath);
+                        navigateTo(currentPath);
                     }
                 });
 

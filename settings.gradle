@@ -1,5 +1,6 @@
-
+include ':nativetemplates'
 include ':sdk'
 include ':app'
 rootProject.name = "Prodoc Scanner"
 project(':sdk').projectDir = new File(opencvsdk + '/sdk')
+project(':nativetemplates').projectDir = new File(rootDir, 'googleads-mobile-android-native-templates-master/nativetemplates/')

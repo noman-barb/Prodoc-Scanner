@@ -41,6 +41,7 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+
 import com.jsibbold.zoomage.ZoomageView;
 
 
@@ -226,6 +227,11 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                 } else {
 
 
+
+
+
+
+
                     Glide.with(context)
 
                             .load(imageShowPath[0])
@@ -333,6 +339,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
                         //
 
                         if (!touchLock && holder.imageView.getCurrentScaleFactor() < 1.1) {
+
+//                        if (!touchLock && holder.imageView.getScale() < 1.1) {
                             touchLock = event.getPointerCount() > 1;
                             x2 = event.getX();
 
@@ -349,6 +357,8 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
 
 
                         if (!touchLock && holder.imageView.getCurrentScaleFactor() < 1.1) {
+
+                      //  if (!touchLock && holder.imageView.getScale() < 1.1) {
 
                             if (Math.abs(deltaSum) > THRESH_DISTANCE) {
 
@@ -402,6 +412,9 @@ public class ScanPreviewAdapter extends RecyclerView.Adapter<ScanPreviewAdapter.
         public ImageView clearAction;
 
         public boolean isBusy = false;
+
+
+     //   public SubsamplingScaleImageView imageView;
 
 
         public Bitmap displayBitmap = null;

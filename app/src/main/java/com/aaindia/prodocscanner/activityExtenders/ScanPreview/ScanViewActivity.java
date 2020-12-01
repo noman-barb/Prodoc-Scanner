@@ -40,6 +40,7 @@ import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
+import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.databinding.ActivityScanViewBinding;
 import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
@@ -53,6 +54,11 @@ import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 
+import com.aaindia.prodocscanner.wrappers.UnifiedNativeAdObsevable;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
@@ -146,6 +152,13 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     public ExecutorService executorService2;
 
+
+    private UnifiedNativeAdObsevable adObsevable = null;
+
+
+    public UnifiedNativeAdObsevable getAdObsevable(){
+        return adObsevable;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -262,6 +275,34 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         bottomsheetBehaviour();
 
+
+        loadAds();
+
+    }
+
+
+    public void onAdLoaded(UnifiedNativeAd unifiedNativeAd){
+
+        adObsevable.setAd(unifiedNativeAd);
+    }
+
+    private void loadAds() {
+
+        adObsevable = new UnifiedNativeAdObsevable();
+
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SHARER_AD_1_ID)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+
+                        onAdLoaded(unifiedNativeAd);
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
     }
 
     public BottomSheetBehavior getBottomMenu1() {
@@ -1094,6 +1135,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
         ((ZoomageView) holder.imageView).setZoomable(enable);
         holder.imageView.setDoubleTapToZoom(enable);
         holder.imageView.setTranslatable(enable);
+
+//        holder.imageView.resetScaleAndCenter();
+//        holder.imageView.setZoomEnabled(enable);
+//        holder.imageView.setPanEnabled(enable);
 
 
     }

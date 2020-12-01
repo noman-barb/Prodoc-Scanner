@@ -13,6 +13,7 @@
             <option value="F:/Important_Repo/opencv-4.3.0-android-sdk/OpenCV-android-sdk/sdk" />
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/googleads-mobile-android-native-templates-master/nativetemplates" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

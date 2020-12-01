@@ -15,13 +15,23 @@ import android.view.animation.ScaleAnimation;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import com.aaindia.prodocscanner.R;
+import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.adapters.ListFilesAdapter;
+import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.wrappers.UnifiedNativeAdObsevable;
+import com.google.android.ads.nativetemplates.NativeTemplateStyle;
+import com.google.android.ads.nativetemplates.TemplateView;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.radiobutton.MaterialRadioButton;
@@ -33,9 +43,13 @@ import com.google.android.material.textview.MaterialTextView;
 
 import org.opencv.core.Mat;
 
+import java.util.Observable;
+import java.util.Observer;
+
 public class ShareDialog {
 
 
+    private Observer adObserver;
     private MaterialAlertDialogBuilder builder;
     Activity context;
     LinearLayout linearLayout;
@@ -62,13 +76,15 @@ public class ShareDialog {
     SwitchMaterial passwordProtect;
     int qualityControlHeight = 0;
 
-    public ShareDialog(Activity context, double initialSizeKB, OnShareDialogListener listener) {
+    UnifiedNativeAdObsevable adObsevable;
+
+    public ShareDialog(Activity context, double initialSizeKB, UnifiedNativeAdObsevable adObsevable, OnShareDialogListener listener) {
 
         this.context = context;
 
         this.initialSizeKB = initialSizeKB;
         this.listener = listener;
-
+        this.adObsevable = adObsevable;
 
         linearLayout = (LinearLayout) context.getLayoutInflater().inflate(R.layout.share_chooser, null);
 
@@ -124,8 +140,6 @@ public class ShareDialog {
                     linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.GONE);
 
 
-
-
                 }
 
 
@@ -139,7 +153,6 @@ public class ShareDialog {
                 if (compoundButton.isPressed()) {
 
                     imgRadio.setChecked(!b);
-
 
 
                     linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.VISIBLE);
@@ -158,9 +171,6 @@ public class ShareDialog {
                 pdfRadio.setChecked(false);
 
                 linearLayout.findViewById(R.id.passwordProtectRootLL).setVisibility(View.GONE);
-
-
-
 
 
             }
@@ -226,6 +236,42 @@ public class ShareDialog {
         setSizeTxt(qualitySlider.getValue() / 100.0);
 
 
+        adObserver = new Observer() {
+            @Override
+            public void update(Observable observable, Object o) {
+
+                showAd(((UnifiedNativeAdObsevable) observable).getAd());
+
+                adObsevable.deleteObserver(this);
+
+            }
+        };
+
+
+        UnifiedNativeAd unifiedNativeAd = adObsevable.getAd();
+
+        if (unifiedNativeAd != null) {
+            showAd(unifiedNativeAd);
+
+        } else {
+
+            adObsevable.addObserver(adObserver);
+        }
+
+
+    }
+
+    private void showAd(UnifiedNativeAd unifiedNativeAd) {
+
+        if (unifiedNativeAd == null)
+            return;
+
+        NativeTemplateStyle styles = new
+                NativeTemplateStyle.Builder().build();
+        linearLayout.findViewById(R.id.ad_template_1).setVisibility(View.VISIBLE);
+        TemplateView template = linearLayout.findViewById(R.id.ad_template_1);
+        template.setStyles(styles);
+        template.setNativeAd(unifiedNativeAd);
     }
 
 
@@ -233,8 +279,8 @@ public class ShareDialog {
 
 
         ((TextView) linearLayout.findViewById(R.id.shareTxt)).setText("Export as:");
-      //  ((TextView) linearLayout.findViewById(R.id.sharePDFTxt)).setText("PDF to device:");
-       // ((TextView) linearLayout.findViewById(R.id.shareImageTxt)).setText("Images to gallery");
+        //  ((TextView) linearLayout.findViewById(R.id.sharePDFTxt)).setText("PDF to device:");
+        // ((TextView) linearLayout.findViewById(R.id.shareImageTxt)).setText("Images to gallery");
         shareTxtBtnTxt = "Export";
 
         return this;
@@ -301,6 +347,18 @@ public class ShareDialog {
                     }
                 })
                 .setNegativeButton("Cancel", /* listener = */ null);
+
+        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+
+                try {
+                    if (adObserver != null)
+                        adObsevable.deleteObserver(adObserver);
+                } catch (Exception e) {
+                }
+            }
+        });
 
 
         return builder;

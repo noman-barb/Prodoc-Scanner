@@ -233,6 +233,9 @@ public class PolygonView extends FrameLayout {
     }
 
     private void setPointsCoordinates(Map<Integer, PointF> pointFMap) {
+
+
+
         pointer1.setX(pointFMap.get(0).x);
         pointer1.setY(pointFMap.get(0).y);
 

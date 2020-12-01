@@ -104,30 +104,54 @@
                 android:orientation="vertical">
 
 
-                <androidx.recyclerview.widget.RecyclerView
-
-
-                    android:id="@+id/scanList"
+                <androidx.core.widget.NestedScrollView
                     android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
-                    android:layout_height="match_parent"
-                    android:background="@color/colorBackground"
-                    android:clipToPadding="false"
-                    android:paddingBottom="100dp">
 
-                </androidx.recyclerview.widget.RecyclerView>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+
+                        <com.google.android.ads.nativetemplates.TemplateView
+                            android:visibility="gone"
+                            android:id="@+id/ad_template_1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:gnt_template_type="@layout/gnt_small_template_view" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+
+
+                            android:id="@+id/scanList"
+                            android:layout_width="match_parent"
+
+                            android:layout_height="match_parent"
+                            android:background="@color/colorBackground"
+                            android:clipToPadding="false"
+                            android:paddingBottom="100dp">
+
+                        </androidx.recyclerview.widget.RecyclerView>
+
+
+                    </LinearLayout>
+
+
+                </androidx.core.widget.NestedScrollView>
 
 
             </LinearLayout>
 
 
             <RelativeLayout
-                android:visibility="gone"
-
                 android:id="@+id/emptyDocumentImage"
+
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:elevation="8dp">
+                android:elevation="8dp"
+                android:visibility="gone">
 
 
                 <LinearLayout
@@ -154,16 +178,14 @@
 
 
                         <RelativeLayout
-                            android:elevation="5dp"
                             android:id="@+id/emptyStartScanning"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
                             android:background="@drawable/circular_xml_icon"
                             android:clickable="true"
+                            android:elevation="5dp"
                             android:foreground="?android:selectableItemBackgroundBorderless">
-
-
 
 
                             <LinearLayout
@@ -171,20 +193,6 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:orientation="vertical">
-
-
-                                <com.google.android.material.textview.MaterialTextView
-                                    android:id="@+id/emptyDocumentTV"
-                                    android:textSize="12sp"
-
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_gravity="center_horizontal"
-                                    android:text="It's empty here"
-                                    android:textColor="@color/colorWhite"
-                                    android:alpha="0.65"
-                                    android:padding="5dp"
-                                    android:textAlignment="center"></com.google.android.material.textview.MaterialTextView>
 
 
                                 <ImageView
@@ -200,24 +208,32 @@
                                 </ImageView>
 
 
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/emptyDocumentTV"
+                                    android:layout_width="wrap_content"
+
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_horizontal"
+                                    android:alpha="0.65"
+                                    android:padding="5dp"
+                                    android:text="It's empty here"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/colorWhite"
+                                    android:textSize="12sp"></com.google.android.material.textview.MaterialTextView>
+
 
                                 <com.google.android.material.textview.MaterialTextView
                                     android:id="@+id/emptyDocumentTV1"
                                     android:layout_width="wrap_content"
-                                    android:textStyle="bold"
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center_horizontal"
-                                    android:text="SCAN NOW"
-                                    android:textSize="12sp"
-                                    android:textColor="@color/colorWhite"
                                     android:alpha="0.8"
                                     android:padding="5dp"
-                                    android:textAlignment="center"></com.google.android.material.textview.MaterialTextView>
-
-
-
-
-
+                                    android:text="SCAN NOW"
+                                    android:textAlignment="center"
+                                    android:textColor="@color/colorWhite"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"></com.google.android.material.textview.MaterialTextView>
 
 
                             </LinearLayout>
@@ -370,17 +386,17 @@
 
                     android:id="@+id/search_view"
 
-                    android:outlineProvider="none"
-                    android:elevation="10dp"
                     style="@style/SearchViewStyle"
                     android:layout_width="wrap_content"
-
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
+
                     android:layout_toLeftOf="@id/more_options_rl"
                     android:addStatesFromChildren="false"
                     android:background="@color/colorPrimary"
+                    android:elevation="10dp"
                     android:foreground="?android:attr/selectableItemBackground"
+                    android:outlineProvider="none"
                     android:src="@drawable/baseline_more_vert_white_24">
 
 

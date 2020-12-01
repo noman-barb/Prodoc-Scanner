@@ -44,6 +44,9 @@ import com.aaindia.prodocscanner.wrappers.CompleteEffectHolder;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
+import com.google.android.ads.nativetemplates.NativeTemplateStyle;
+import com.google.android.ads.nativetemplates.TemplateView;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -77,6 +80,29 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     private boolean singlePageMode = false;
     private BottomSheetBehavior<RelativeLayout> bottomSheetBehaviour;
 
+    private boolean isAdLoaded = false;
+
+    @Override
+    public void onAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+        super.onAdLoaded(unifiedNativeAd);
+
+        isAdLoaded = true;
+
+        if (adapter.model.dataProvider().size() > 2)
+            binding.adTemplateGrid.setVisibility(View.VISIBLE);
+
+
+        NativeTemplateStyle styles = new
+                NativeTemplateStyle.Builder().build();
+
+        TemplateView template = binding.adTemplateGrid;
+        template.setStyles(styles);
+        template.setNativeAd(unifiedNativeAd);
+
+
+
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +123,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                 return getOriginalFilepaths();
             }
         }, this);
+
 
         binding.gridRecyclerView.setLayoutManager(new MyGridLayoytManager(this, 2));
         getBinding().gridRecyclerView.setAdapter(adapter);
@@ -121,12 +148,14 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         binding.ocrSelectedRL.setOnClickListener(this::onClick);
 
 
+
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT, 0) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
 
 
                 swap(recyclerView, viewHolder, target);
+
 
 
                 return false;
@@ -140,7 +169,22 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         };
 
 
+        binding.gridRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+               adapter.setScrolling(newState != RecyclerView.SCROLL_STATE_IDLE);
+
+
+            }
+        });
+
+
+
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+
+
         itemTouchHelper.attachToRecyclerView(binding.gridRecyclerView);
 
 
@@ -222,6 +266,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     @Override
     public void onTap(GridScanViewAdapter.ViewHolder holder, int position) {
 
+
         if (selectActive) {
 
 
@@ -278,6 +323,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         int yTrans = 70;
         if (showSIngleMode) {
 
+            binding.adTemplateGrid.setVisibility(View.GONE);
             getRecyclerView().getAdapter().notifyDataSetChanged();
 
             if (singleModeFirstTime) {
@@ -323,6 +369,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                         binding.imageOptionsRL.setScaleY(1);
                         binding.gridRecyclerView.setVisibility(View.GONE);
                         binding.imageOptionsRL.setVisibility(View.GONE);
+                        binding.nestedScrollviewGrid.setVisibility(View.GONE);
 
                         binding.gridRecyclerView.setAlpha(1);
 
@@ -386,6 +433,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             animator.start();
         } else {
 
+            if (adapter.model.dataProvider().size() > 2 && isAdLoaded)
+                binding.adTemplateGrid.setVisibility(View.VISIBLE);
 
             adapter.notifyDataSetChanged();
 
@@ -399,6 +448,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             }
 
 
+            binding.nestedScrollviewGrid.setVisibility(View.VISIBLE);
             ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
             animator.setInterpolator(new DecelerateInterpolator());
             animator.setDuration(200);
@@ -444,6 +494,11 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
     @Override
     public void onLongPress(GridScanViewAdapter.ViewHolder holder, int position) {
+
+
+
+
+
 
 
         if (firstTime) {
@@ -585,7 +640,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
                             File originalFile = new File(getOriginalFilepaths().get(0));
 
-                            File processedFile = new File(getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator+ getImageDetails().getAt(0));
+                            File processedFile = new File(getScanDirPath() + File.separator + FileNav.PROCESSED_IMAGE_DIR + File.separator + getImageDetails().getAt(0));
 
 
                             File toCopy = processedFile.exists() ? processedFile : originalFile;
@@ -646,7 +701,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
     private void syncDataAcrossViews() {
-       // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
+        // ((ScanPreviewAdapter) getRecyclerView().getAdapter()).originalFilepaths = getOriginalFilepaths();
 
     }
 

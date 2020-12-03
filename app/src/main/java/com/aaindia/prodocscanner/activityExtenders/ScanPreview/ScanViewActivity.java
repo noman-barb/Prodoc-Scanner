@@ -2,24 +2,15 @@ package com.aaindia.prodocscanner.activityExtenders.ScanPreview;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.SnapHelper;
 
-import android.Manifest;
-import android.animation.ValueAnimator;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Point;
-import android.graphics.PointF;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,17 +18,14 @@ import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.R;
-import com.aaindia.prodocscanner.activity.MainActivity;
 import com.aaindia.prodocscanner.activity.ScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
 import com.aaindia.prodocscanner.constants.AdIds;
@@ -47,37 +35,30 @@ import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.utils.ads.AdDialog;
 import com.aaindia.prodocscanner.views.TouchableReyclerView;
 import com.aaindia.prodocscanner.wrappers.CompleteEffectHolder;
 import com.aaindia.prodocscanner.wrappers.Effects;
-import com.aaindia.prodocscanner.wrappers.Interfaces;
 import com.aaindia.prodocscanner.wrappers.MyLinearLayoutManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
 
-import com.aaindia.prodocscanner.wrappers.UnifiedNativeAdObsevable;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.slider.Slider;
 import com.jsibbold.zoomage.ZoomageView;
 
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -153,12 +134,31 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     public ExecutorService executorService2;
 
 
-    private UnifiedNativeAdObsevable adObsevable = null;
+    public void loadAd1() {
 
 
-    public UnifiedNativeAdObsevable getAdObsevable(){
-        return adObsevable;
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SCAN_PREVIEW_ACTIVITY)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+
+
+                        try {
+                            new AdDialog(ScanViewActivity.this)
+                                    .setAd(unifiedNativeAd);
+                        }
+                        catch (Exception e){}
+
+
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -275,35 +275,11 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         bottomsheetBehaviour();
 
+        loadAd1();
 
-        loadAds();
 
     }
 
-
-    public void onAdLoaded(UnifiedNativeAd unifiedNativeAd){
-
-        adObsevable.setAd(unifiedNativeAd);
-    }
-
-    private void loadAds() {
-
-        adObsevable = new UnifiedNativeAdObsevable();
-
-        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SHARER_AD_1_ID)
-                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
-                    @Override
-                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-
-
-                        onAdLoaded(unifiedNativeAd);
-
-                    }
-                })
-                .build();
-
-        adLoader.loadAd(new AdRequest.Builder().build());
-    }
 
     public BottomSheetBehavior getBottomMenu1() {
         binding.pasteSingleRLSeperator.setVisibility(App.CLIPBOARD.isEmpty() ? View.GONE : View.VISIBLE);
@@ -409,8 +385,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                     if (!set.contains(f.getName())) {
 
-                        if (f.length()>0)
-                        linkedList.add(f.getName());
+                        if (f.length() > 0)
+                            linkedList.add(f.getName());
                         else
                             FileUtils.deleteQuietly(f);
                     }
@@ -429,7 +405,6 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 while ((listIterator.hasNext())) {
 
 
-
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -445,7 +420,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
                     currentFile = new File(path);
 
-                    if ( currentFile.length() <= 0) {
+                    if (currentFile.length() <= 0) {
                         linkedList.remove(path);
                         FileUtils.deleteQuietly(currentFile);
                         continue;

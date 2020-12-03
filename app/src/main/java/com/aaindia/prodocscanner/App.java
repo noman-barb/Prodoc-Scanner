@@ -15,6 +15,7 @@ import com.google.android.gms.ads.MobileAds;
 import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 
@@ -37,8 +38,10 @@ public class App extends Application {
 
 
 
+    public static int ADS_SHOWN_NO = 0;
 
     public static LinkedList<CompleteEffectHolder> CLIPBOARD = new LinkedList<>();
+
 
 
 

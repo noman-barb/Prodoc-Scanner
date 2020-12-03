@@ -6,8 +6,6 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -15,8 +13,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -24,7 +20,6 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -43,25 +38,22 @@ import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.BuildConfig;
 import com.aaindia.prodocscanner.R;
-import com.aaindia.prodocscanner.activityExtenders.ScanPreview.GridScanViewActivity;
-import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ShareScanPreviewActivity;
 import com.aaindia.prodocscanner.adapters.ListFilesAdapter;
 import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.ocr.OcrActivity;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.databinding.ActivityMainBinding;
-import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.utils.ads.AdDialog;
 import com.aaindia.prodocscanner.utils.pdf.DocMaker;
-import com.aaindia.prodocscanner.utils.pdf.PDFRendererWhiteBG;
 import com.aaindia.prodocscanner.utils.share.ShareDialog;
 import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.aaindia.prodocscanner.wrappers.Clipboard;
@@ -69,15 +61,10 @@ import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.ListFIlesInfo;
 import com.aaindia.prodocscanner.wrappers.MyGridLayoytManager;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
-import com.aaindia.prodocscanner.wrappers.UnifiedNativeAdObsevable;
-import com.google.android.ads.nativetemplates.NativeTemplateStyle;
-import com.google.android.ads.nativetemplates.TemplateView;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
@@ -90,29 +77,20 @@ import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
 import com.google.android.play.core.review.ReviewManagerFactory;
-import com.google.android.play.core.tasks.OnSuccessListener;
 import com.google.android.play.core.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.gson.JsonObject;
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
-import com.tom_roush.pdfbox.contentstream.operator.state.Save;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
-import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException;
-import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImage;
-import com.tom_roush.pdfbox.rendering.PDFRenderer;
 
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-
-import org.junit.internal.runners.statements.RunAfters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -244,9 +222,8 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     boolean updateDownloaded = false;
 
     boolean isPaused = false;
+    private boolean isFirstAdShown = false;
 
-
-    private UnifiedNativeAdObsevable adObsevable = null;
 
     private void installUpdate() {
 
@@ -318,6 +295,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         super.onResume();
 
+
+        if (adapter.data.size() > 2 && !isFirstAdShown) {
+
+
+            loadAd1();
+        }
+
+
+
         isPaused = false;
         Utils.checkOpenCV(this);
 
@@ -332,6 +318,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
         navigateTo(currentPath);
+
+
+
 
     }
 
@@ -449,10 +438,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         showcase();
 
         netRequestDetails();
-
-        loadAd2();
-
-
 
 
     }
@@ -1550,10 +1535,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
 
-
-
-
-    
     private synchronized void refreshPath(String path) {
 
         fIlesInfos = FileNav.getDirInfo(path, null);
@@ -1563,14 +1544,6 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
-
-                if (adapter.data.size() > 2) {
-
-                    loadAd1();
-                }
-
-
 
 
                 if (adapter.data.size() > 0) {
@@ -1592,7 +1565,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 toogleBackArrow(!path.equals(baseDirPath));
 
+
+
                 binding.scanList.getAdapter().notifyDataSetChanged();
+
+
 
 
 
@@ -1601,46 +1578,33 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
 
-    private void loadAd2(){
-        adObsevable = new UnifiedNativeAdObsevable();
-
-
-        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SHARER_AD_1_ID)
-                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
-                    @Override
-                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-
-
-                        adObsevable.setAd(unifiedNativeAd);
-                    }
-                })
-                .build();
-
-        adLoader.loadAd(new AdRequest.Builder().build());
-    }
-
     private void loadAd1() {
 
-        binding.adTemplate1.setVisibility(View.VISIBLE);
 
-        MobileAds.initialize(MainActivity.this);
-        AdLoader adLoader = new AdLoader.Builder(this, AdIds.MAINACTIVITY_AD_1_ID)
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.MAINACTIVITY)
                 .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
                     @Override
                     public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-                        NativeTemplateStyle styles = new
-                                NativeTemplateStyle.Builder().build();
 
-                        binding.adTemplate1.setVisibility(View.VISIBLE);
-                        TemplateView template = binding.adTemplate1;
-                        template.setStyles(styles);
-                        template.setNativeAd(unifiedNativeAd);
+
+
+                        try {
+                            new AdDialog(MainActivity.this)
+                                    .setAd(unifiedNativeAd);
+
+                            isFirstAdShown = true;
+                        }
+                        catch (Exception e){}
+
+
 
                     }
                 })
                 .build();
 
         adLoader.loadAd(new AdRequest.Builder().build());
+
+
     }
 
 
@@ -2039,7 +2003,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                         pd.setCancelable(false);
 
 
-                        new ShareDialog(MainActivity.this, finalSize, adObsevable,new ShareDialog.OnShareDialogListener() {
+                        new ShareDialog(MainActivity.this, finalSize, new ShareDialog.OnShareDialogListener() {
                             @Override
                             public void share(boolean isPDF, double quality, String password) {
 

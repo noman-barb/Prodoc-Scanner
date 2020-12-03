@@ -33,9 +33,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ScanViewActivity;
 import com.aaindia.prodocscanner.adapters.ScanPreviewAdapter;
+import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.databinding.ActivityCameraScanBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
@@ -43,8 +45,12 @@ import com.aaindia.prodocscanner.utils.GlobalConstants;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.Utils;
+import com.aaindia.prodocscanner.utils.ads.AdDialog;
 import com.aaindia.prodocscanner.wrappers.Effects;
 import com.aaindia.prodocscanner.wrappers.SavedImageDetails;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.nguyenhoanglam.imagepicker.model.Image;
 import com.nguyenhoanglam.imagepicker.ui.imagepicker.ImagePicker;
@@ -121,6 +127,8 @@ public class CameraScanActivity extends CameraPreviewActivity {
     ExecutorService executorService;
 
     ExecutorService imageCaptureExecutorService = null;
+
+    private int showAdAt = 5;
 
 
     private boolean showGuide = false;
@@ -955,7 +963,34 @@ public class CameraScanActivity extends CameraPreviewActivity {
     }
 
 
-    boolean aaa = false;
+
+
+    private void loadAd1() {
+
+
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.CAMERA_SCAN_ACTIVITY)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+
+
+                        try {
+                            new AdDialog(CameraScanActivity.this)
+                                    .setAd(unifiedNativeAd);
+                        }
+                        catch (Exception e){}
+
+
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+
+
+    }
 
     @Override
     public void captureImage(ImageView view) {
@@ -964,6 +999,16 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
         if (isCapturing)
             return;
+
+
+
+
+        if (numPages==showAdAt){
+
+            showAdAt*=2;
+            loadAd1();
+        }
+
 
 
         imageCaptureExecutorService = initializeExecutor(imageCaptureExecutorService, 1);
@@ -1514,6 +1559,13 @@ public class CameraScanActivity extends CameraPreviewActivity {
             @Override
             public void run() {
                 binding.numPagesTV.setText(numPages + "");
+
+
+
+
+
+
+
             }
         });
 

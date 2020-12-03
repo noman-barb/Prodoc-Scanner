@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical"
+    android:layout_gravity="center"
+
+    android:background="@color/colorWhite"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+
+
+    <TextView
+        android:fontFamily="sans-serif-condensed-medium"
+        android:alpha="0.6"
+        android:textStyle="normal"
+        android:textSize="15sp"
+        android:layout_marginTop="15dp"
+        android:text="This ad helps keep the app free"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"></TextView>
+
+
+    <com.google.android.ads.nativetemplates.TemplateView
+
+        android:padding="0dp"
+        android:layout_marginTop="30dp"
+        android:id="@+id/ad_template_dialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:gnt_template_type="@layout/gnt_medium_template_view" />
+
+
+
+    <RelativeLayout
+        android:layout_gravity="center_horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+
+
+
+
+    <com.google.android.material.button.MaterialButton
+        android:elevation="0dp"
+        android:text="CONTINUE TO APP"
+        android:clickable="false"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
+     android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:foreground="@drawable/active_btn"
+        android:background="@drawable/active_btn"></com.google.android.material.button.MaterialButton>
+
+        <com.google.android.material.button.MaterialButton
+            android:clickable="true"
+            android:id="@+id/ad_skip"
+            android:elevation="2dp"
+            android:text="CONTINUE TO APP"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="15dp"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:background="@color/colorTransparent">
+
+
+
+    </com.google.android.material.button.MaterialButton>
+
+
+
+    </RelativeLayout>
+
+
+
+
+
+
+</LinearLayout>

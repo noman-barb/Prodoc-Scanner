@@ -80,29 +80,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     private boolean singlePageMode = false;
     private BottomSheetBehavior<RelativeLayout> bottomSheetBehaviour;
 
-    private boolean isAdLoaded = false;
-
-    @Override
-    public void onAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-        super.onAdLoaded(unifiedNativeAd);
-
-        isAdLoaded = true;
-
-        if (adapter.model.dataProvider().size() > 2)
-            binding.adTemplateGrid.setVisibility(View.VISIBLE);
 
 
-        NativeTemplateStyle styles = new
-                NativeTemplateStyle.Builder().build();
-
-        TemplateView template = binding.adTemplateGrid;
-        template.setStyles(styles);
-        template.setNativeAd(unifiedNativeAd);
-
-
-
-
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -195,7 +174,10 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
             singlePageViewModeToggle(true, null, 0);
+
+
         } else {
+
 
             if (!adapter.firstTime) {
 
@@ -206,6 +188,9 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
             }
         }
+
+
+
 
 
     }
@@ -323,7 +308,6 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         int yTrans = 70;
         if (showSIngleMode) {
 
-            binding.adTemplateGrid.setVisibility(View.GONE);
             getRecyclerView().getAdapter().notifyDataSetChanged();
 
             if (singleModeFirstTime) {
@@ -369,7 +353,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
                         binding.imageOptionsRL.setScaleY(1);
                         binding.gridRecyclerView.setVisibility(View.GONE);
                         binding.imageOptionsRL.setVisibility(View.GONE);
-                        binding.nestedScrollviewGrid.setVisibility(View.GONE);
+
 
                         binding.gridRecyclerView.setAlpha(1);
 
@@ -433,8 +417,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             animator.start();
         } else {
 
-            if (adapter.model.dataProvider().size() > 2 && isAdLoaded)
-                binding.adTemplateGrid.setVisibility(View.VISIBLE);
+
 
             adapter.notifyDataSetChanged();
 
@@ -448,7 +431,7 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
             }
 
 
-            binding.nestedScrollviewGrid.setVisibility(View.VISIBLE);
+
             ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
             animator.setInterpolator(new DecelerateInterpolator());
             animator.setDuration(200);

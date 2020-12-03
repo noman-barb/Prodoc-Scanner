@@ -361,7 +361,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
         pd.setCancelable(false);
 
 
-        new ShareDialog(this, (int) size, getAdObsevable(),new ShareDialog.OnShareDialogListener() {
+        new ShareDialog(this, (int) size,new ShareDialog.OnShareDialogListener() {
             @Override
             public void share(boolean isPDF, double quality, String password) {
 
@@ -623,7 +623,7 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                         pd.setCancelable(false);
 
 
-                        new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize, getAdObsevable() ,new ShareDialog.OnShareDialogListener() {
+                        new ShareDialog(ShareScanPreviewActivity.this, (int) finalSize ,new ShareDialog.OnShareDialogListener() {
                             @Override
                             public void share(boolean isPDF, double quality, String password) {
 

@@ -1140,28 +1140,18 @@
 
 
 
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/nested_scrollview_grid"
-
-                android:elevation="2dp"
-                android:paddingLeft="6dp"
-                android:paddingTop="6dp"
-                android:paddingRight="6dp"
-                android:paddingBottom="100dp"
-                android:clipToPadding="false"
-                android:clipChildren="false"
-                android:layout_below="@id/header"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
-
 
                     <androidx.recyclerview.widget.RecyclerView
+
+
+
+                        android:elevation="2dp"
+                        android:paddingLeft="6dp"
+                        android:paddingTop="6dp"
+                        android:paddingRight="6dp"
+                        android:paddingBottom="100dp"
+                        android:clipChildren="false"
+                        android:layout_below="@id/header"
 
 
 
@@ -1178,23 +1168,7 @@
                     </androidx.recyclerview.widget.RecyclerView>
 
 
-                    <com.google.android.ads.nativetemplates.TemplateView
 
-                        android:visibility="gone"
-                        android:elevation="0dp"
-                        android:padding="0dp"
-                        android:layout_margin="0dp"
-                        android:id="@+id/ad_template_grid"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:gnt_template_type="@layout/gnt_medium_template_view" />
-
-
-                </LinearLayout>
-
-
-
-            </androidx.core.widget.NestedScrollView>
 
 
 
@@ -1242,6 +1216,8 @@
 
 
         </RelativeLayout>
+
+
 
 
         <RelativeLayout

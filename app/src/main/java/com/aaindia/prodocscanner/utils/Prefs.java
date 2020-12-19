@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 
 import androidx.camera.core.ImageCapture;
 
+import org.spongycastle.jcajce.provider.digest.SHA1;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +42,38 @@ public class Prefs {
 
 
     }
+
+
+
+    public static class InAppReviewPreference {
+
+        public static final String IN_APP_REVIEW_PREFS = "INAPPREVIEWPREFS";
+
+        public static final String SHOW_DIALOG = "SHOWDIALOG";
+
+        public static boolean isShowDialog(Context context) {
+
+            SharedPreferences prefs = context.getSharedPreferences(IN_APP_REVIEW_PREFS, context.MODE_PRIVATE);
+
+            return prefs.getBoolean(SHOW_DIALOG, false);
+
+
+        }
+
+
+        public static void setIsShow(Context context, boolean isShowDialog) {
+
+            SharedPreferences.Editor editor = context.getSharedPreferences(IN_APP_REVIEW_PREFS, context.MODE_PRIVATE).edit();
+            editor.putBoolean(SHOW_DIALOG, isShowDialog);
+
+
+            editor.commit();
+        }
+
+
+    }
+
+
 
 
     public static class OCRPreference {

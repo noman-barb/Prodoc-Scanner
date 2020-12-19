@@ -26,6 +26,7 @@ import com.aaindia.prodocscanner.utils.Utils;
 import com.aaindia.prodocscanner.utils.share.Sharer;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.spongycastle.jcajce.provider.asymmetric.ec.KeyFactorySpi;
 
@@ -156,6 +157,12 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
 
 
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("share_single_is_export_"+isExport, bundle);
+
+
+
         if (isExport) {
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -254,6 +261,13 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
 
     @Override
     public void share(boolean isExport) {
+
+
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString(FirebaseAnalytics.Param.QUANTITY, getImageDetails().getOrdering().size()+"");
+        getFirebaseInstance().logEvent("share_doc_is_export_"+isExport, bundle);
 
 
         if (isExport) {
@@ -393,6 +407,8 @@ public class ShareScanPreviewActivity extends GridScanViewActivity {
                 public void run() {
                     pd.setTitle("Making PDF");
                     pd.show();
+
+
                 }
             });
 

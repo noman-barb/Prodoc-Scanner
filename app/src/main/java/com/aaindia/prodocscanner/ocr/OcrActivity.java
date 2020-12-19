@@ -89,6 +89,7 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
         findViewById(R.id.saveRL).setOnClickListener(this::onClick);
 
         findViewById(R.id.langRL).setOnClickListener(this::onClick);
+        findViewById(R.id.backIV).setOnClickListener(this::onClick);
 
 
         if (getIntent() != null && getIntent().getBundleExtra(IMAGE_PATHS) != null) {
@@ -710,7 +711,11 @@ public class OcrActivity extends AppCompatActivity implements View.OnClickListen
         } else if (id == R.id.langRL) {
             languageSelect(null);
         }
+        else if (id==R.id.backIV){
+            this.onBackPressed();
+        }
     }
+
 
     private void save() {
 

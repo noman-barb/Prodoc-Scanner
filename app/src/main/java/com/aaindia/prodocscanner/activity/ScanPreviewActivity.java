@@ -106,6 +106,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     public void addPages(ScanPreviewAdapter.ViewHolder holder, int position, boolean retake) {
         super.addPages(holder, position, retake);
 
+
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("add_page_to_doc_retake_"+retake, bundle);
+
         MainActivity.listingModified = true;
 
         Intent intent = new Intent(ScanPreviewActivity.this, CameraScanActivity.class);
@@ -137,6 +142,9 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
         super.deleteFile(holder, position);
 
 
+
+
+
         SpannableString cancel = new SpannableString("Cancel");
         setSpanActionColor(cancel, 1, 1);
 
@@ -163,6 +171,11 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     }
 
     private void deleteFileFinal(ScanPreviewAdapter.ViewHolder holder, int position) {
+
+
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("delete_single_page", bundle);
 
 
         String originalFilePath = getOriginalFilepaths().get(position);
@@ -217,6 +230,10 @@ public class ScanPreviewActivity extends ShareScanPreviewActivity implements Vie
     @Override
     public void rename() {
         super.rename();
+
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("rename_scan", bundle);
 
         MainActivity.listingModified = true;
 

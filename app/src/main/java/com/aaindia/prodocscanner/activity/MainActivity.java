@@ -196,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private static final int REQ_CODE_VERSION_UPDATE = 1839;
     private static final int MENU_ITEM_MORE_OPTIONS_ABOUT = 16;
 
+
     public ActivityMainBinding binding;
     public ListFilesAdapter adapter;
 
@@ -222,8 +223,15 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     boolean updateDownloaded = false;
 
     boolean isPaused = false;
-    private boolean isFirstAdShown = false;
 
+    private boolean isAdShown = false;
+
+    private boolean canShowAdWhenLoaded = false;
+
+
+    private  UnifiedNativeAd unifiedNativeAd = null;
+
+    private boolean isAdRequested = false;
 
     private void installUpdate() {
 
@@ -296,11 +304,14 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         super.onResume();
 
 
-        if (adapter.data.size() > 2 && !isFirstAdShown) {
+        if (adapter.data.size() > 2 && !isAdShown && isPaused) {
 
 
-            loadAd1();
+            showAd();
         }
+
+
+
 
 
 
@@ -318,6 +329,31 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
         navigateTo(currentPath);
+
+
+
+
+    }
+
+    private void showAd() {
+
+
+        if (unifiedNativeAd!=null) {
+
+
+            try {
+                new AdDialog(MainActivity.this)
+                        .setAd(unifiedNativeAd);
+
+                isAdShown = true;
+            } catch (Exception e) {
+            }
+
+        }
+
+        else {
+            canShowAdWhenLoaded = true;
+        }
 
 
 
@@ -348,6 +384,9 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         super.onCreate(savedInstanceState);
 
+
+
+        startInAppReviewFlow();
 
         Utils.checkOpenCV(this);
 
@@ -447,88 +486,98 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
         if (Prefs.firstTimeSeenScreen(MainActivity.this, "first_time_app_open_ion_main_activity_news")) {
 
-            Ion.with(this)
-                    .load("http://prodocstatic.awessamapps.com/news/news.json")
-                    //.load("https://raw.githubusercontent.com/awessamapps/awessamapps.github.io/master/fewi.json")
-                    .asJsonObject()
-                    .setCallback(new FutureCallback<JsonObject>() {
-                        @Override
-                        public void onCompleted(Exception e, JsonObject result) {
 
 
-                            if (e == null) {
+            try {
+
+                Ion.with(this)
+                        .load("http://prodocstatic.awessamapps.com/news/news.json")
+                        //.load("https://raw.githubusercontent.com/awessamapps/awessamapps.github.io/master/fewi.json")
+                        .asJsonObject()
+                        .setCallback(new FutureCallback<JsonObject>() {
+                            @Override
+                            public void onCompleted(Exception e, JsonObject result) {
 
 
-                                try {
-
-                                    Long id = result.get("newsId").getAsLong();
-
-                                    String news = result.get("msg").getAsString();
-                                    String header = result.get("header").getAsString();
-
-                                    Boolean isUpdate = result.get("isUpdate").getAsBoolean();
+                                if (e == null) {
 
 
-                                    if (id != null && news != null) {
+                                    try {
+
+                                        Long id = result.get("newsId").getAsLong();
+
+                                        String news = result.get("msg").getAsString();
+                                        String header = result.get("header").getAsString();
+
+                                        Boolean isUpdate = result.get("isUpdate").getAsBoolean();
 
 
-                                        long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
-
-                                        if (id > curId) {
+                                        if (id != null && news != null) {
 
 
-                                            AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
-                                            builder.setTitle(Html.fromHtml(header));
+                                            long curId = Prefs.NewsPrefs.getLatestInt(MainActivity.this);
 
-                                            TextView textView = new TextView(MainActivity.this);
-
-                                            textView.setMovementMethod(LinkMovementMethod.getInstance());
-
-                                            textView.setText(Html.fromHtml(news));
-
-                                            textView.setPadding(50, 50, 50, 50);
-
-                                            builder.setView(textView);
-                                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                            if (id > curId) {
 
 
-                                                    Prefs.NewsPrefs.setLatestInt(MainActivity.this, id);
+                                                AlertDialog.Builder builder = new MaterialAlertDialogBuilder(MainActivity.this);
+                                                builder.setTitle(Html.fromHtml(header));
 
-                                                }
-                                            });
-                                            builder.setCancelable(false);
+                                                TextView textView = new TextView(MainActivity.this);
 
-                                            builder.show();
+                                                textView.setMovementMethod(LinkMovementMethod.getInstance());
 
-                                        } else {
-                                            int acceptRating = result.get("acceptRating").getAsInt();
+                                                textView.setText(Html.fromHtml(news));
 
-                                            if (isUpdate != null && isUpdate) {
+                                                textView.setPadding(50, 50, 50, 50);
 
-                                                inAppUpdateManager(acceptRating);
+                                                builder.setView(textView);
+                                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialogInterface, int i) {
 
+
+                                                        Prefs.NewsPrefs.setLatestInt(MainActivity.this, id);
+
+                                                    }
+                                                });
+                                                builder.setCancelable(false);
+
+                                                builder.show();
 
                                             } else {
+                                                int acceptRating = result.get("acceptRating").getAsInt();
+
+                                                if (isUpdate != null && isUpdate) {
+
+                                                    inAppUpdateManager(acceptRating);
 
 
-                                                inAppReview(acceptRating);
+                                                } else {
+
+
+                                                    inAppReview(acceptRating);
+
+                                                }
+
 
                                             }
-
-
                                         }
+                                    } catch (Exception e1) {
+                                    } catch (Error e2) {
                                     }
-                                } catch (Exception e1) {
-                                } catch (Error e2) {
+
+
                                 }
 
 
                             }
+                        });
 
-                        }
-                    });
+            }
+
+            catch (Exception e){}
+
 
         }
 
@@ -536,95 +585,131 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
 
+    private void startInAppReviewFlow(){
+
+
+        boolean isShow = Prefs.InAppReviewPreference.isShowDialog(MainActivity.this);
+
+        if (isShow){
+            startInAppReviewFlow(false);
+        }
+    }
+
+
+    private void startInAppReviewFlow(boolean saveFlag){
+
+        Toast.makeText(getApplicationContext(), "Please also tell Google Play how you feel about this app.", Toast.LENGTH_LONG).show();
+
+
+
+        ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
+        Task<ReviewInfo> request = manager.requestReviewFlow();
+        request.addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                // We can get the ReviewInfo object
+                ReviewInfo reviewInfo = task.getResult();
+
+
+                Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
+                flow.addOnCompleteListener(task2 -> {
+
+
+                });
+
+
+            } else {
+
+            }
+        });
+
+
+        Prefs.InAppReviewPreference.setIsShow(MainActivity.this, saveFlag);
+
+
+    }
+
     private void inAppReview(int acceptRating) {
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(MainActivity.this, "");
-                fiveStarsDialog.setRateText("How was your experience with this app?")
-                        .setTitle("Rate app")
-                        .setForceMode(false)
-                        .setUpperBound(8)
-                        .setNegativeReviewListener(new NegativeReviewListener() {
-                            @Override
-                            public void onNegativeReview(int i) {
 
-                            }
-                        })
-                        .setReviewListener(new ReviewListener() {
-                            @Override
-                            public void onReview(int i) {
-
-                                Bundle params = new Bundle();
-                                params.putString("star_rating", String.valueOf(i));
+                try {
 
 
-                                if (i == 1) {
-                                    firebaseInstance.logEvent("one_star_rating", params);
-                                } else if (i == 2) {
-                                    firebaseInstance.logEvent("two_star_rating", params);
-                                } else if (i == 3) {
-                                    firebaseInstance.logEvent("three_star_rating", params);
-                                } else if (i == 4) {
-                                    firebaseInstance.logEvent("four_star_rating", params);
-                                } else if (i == 5) {
-                                    firebaseInstance.logEvent("five_star_rating", params);
-                                }
-
-
-                                if (i >= acceptRating) {
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-
-                                            Utils.vibrate(MainActivity.this, 80);
-                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_LONG).show();
-                                            Toast.makeText(getApplicationContext(), "Please also submit your rating to Google Play", Toast.LENGTH_LONG).show();
-
-
-                                            ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
-                                            Task<ReviewInfo> request = manager.requestReviewFlow();
-                                            request.addOnCompleteListener(task -> {
-                                                if (task.isSuccessful()) {
-                                                    // We can get the ReviewInfo object
-                                                    ReviewInfo reviewInfo = task.getResult();
-
-
-                                                    Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
-                                                    flow.addOnCompleteListener(task2 -> {
-
-                                                    });
-
-
-                                                } else {
-
-                                                }
-                                            });
-
-
-                                        }
-                                    });
-
-
-                                } else {
-
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
-                                        }
-                                    });
+                    FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(MainActivity.this, "");
+                    fiveStarsDialog.setRateText("How was your experience with this app?")
+                            .setTitle("Rate app")
+                            .setForceMode(false)
+                            .setUpperBound(8)
+                            .setNegativeReviewListener(new NegativeReviewListener() {
+                                @Override
+                                public void onNegativeReview(int i) {
 
                                 }
+                            })
+                            .setReviewListener(new ReviewListener() {
+                                @Override
+                                public void onReview(int i) {
+
+                                    Bundle params = new Bundle();
+                                    params.putString("star_rating", String.valueOf(i));
 
 
-                            }
-                        })
-                        .showAfter(5);
+                                    if (i == 1) {
+                                        firebaseInstance.logEvent("one_star_rating", params);
+                                    } else if (i == 2) {
+                                        firebaseInstance.logEvent("two_star_rating", params);
+                                    } else if (i == 3) {
+                                        firebaseInstance.logEvent("three_star_rating", params);
+                                    } else if (i == 4) {
+                                        firebaseInstance.logEvent("four_star_rating", params);
+                                    } else if (i == 5) {
+                                        firebaseInstance.logEvent("five_star_rating", params);
+                                    }
+
+
+                                    if (i >= acceptRating) {
+
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+
+                                                Utils.vibrate(MainActivity.this, 80);
+                                                Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
+
+
+
+                                                startInAppReviewFlow(true);
+
+
+                                            }
+                                        });
+
+
+                                    } else {
+
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(getApplicationContext(), "Thank you for your feedback", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+
+                                    }
+
+
+                                }
+                            })
+                            .showAfter(5);
+
+
+                }
+
+                catch (Exception e){}
+
+
 
 
             }
@@ -773,6 +858,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
         searchView.setOnSearchClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+
+                Bundle bundle = new Bundle();
+
+                firebaseInstance.logEvent("search_docs", bundle);
 
                 fIlesInfos = adapter.data;
 
@@ -950,6 +1040,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                     case MENU_ITEM_MORE_OPTIONS_ABOUT:
 
+
+                        Bundle bundle = new Bundle();
+
+                        firebaseInstance.logEvent("show_about_main_act", bundle);
+
                         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(MainActivity.this);
                         builder.setTitle(Html.fromHtml("<h4>Prodoc Scanner <i>v" + BuildConfig.VERSION_NAME + "</i></h4>"));
 
@@ -996,6 +1091,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
     private void processImportLocalBackup(Uri uri) {
+
+
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("import_backup", bundle);
 
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
         pd.setTitle("Importing Backup");
@@ -1062,6 +1163,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void processExportLocalBackup(Uri uri) {
 
 
+
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("export_backup", bundle);
+
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
         pd.setTitle("Creating Backup");
         pd.setMessage("It may take a while");
@@ -1116,6 +1223,7 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                         }
 
+                        Utils.vibrate(MainActivity.this,30);
                         Toast.makeText(MainActivity.this, "Done", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -1143,6 +1251,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void shareThisApp() {
 
 
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("share_this_app", bundle);
+
+
         String SHARE_MESSAGE = "";
         String SHARE_MESSAGE_EXTRA = "";
 
@@ -1160,6 +1273,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void rateThisApp() {
 
 
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("rate_this_app", bundle);
+
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())));
         } catch (ActivityNotFoundException e) {
@@ -1172,6 +1289,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     }
 
     private void importLocalPdf() {
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("import_local_pdf", bundle);
 
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
 
@@ -1188,6 +1309,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
 
     private void pasteHere() {
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("paste_docs_main_act", bundle);
 
 
         if (clipboard.filepaths != null && clipboard.filepaths.size() != 0) {
@@ -1278,6 +1403,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private void newDir() {
 
+
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("create_new_folder", bundle);
 
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Folder name");
@@ -1447,6 +1577,12 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void allDocsDispay() {
 
 
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("show_all_docs", bundle);
+
+
         ProgressDialog pd = new ProgressDialog(MainActivity.this);
         pd.setMessage("Searching for docs...");
         pd.setCancelable(false);
@@ -1569,6 +1705,13 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
                 binding.scanList.getAdapter().notifyDataSetChanged();
 
+                // ads stuffs
+
+                if (adapter.data.size()>2 && !isAdRequested){
+
+                    loadAd1();
+                    isAdRequested = true;
+                }
 
 
 
@@ -1587,14 +1730,11 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
                     public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
 
 
+                        MainActivity.this.unifiedNativeAd = unifiedNativeAd;
 
-                        try {
-                            new AdDialog(MainActivity.this)
-                                    .setAd(unifiedNativeAd);
-
-                            isFirstAdShown = true;
+                        if (canShowAdWhenLoaded){
+                            showAd();
                         }
-                        catch (Exception e){}
 
 
 
@@ -1919,6 +2059,13 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
     private void shareDocs() {
 
 
+
+
+        Bundle bundle = new Bundle();
+
+       firebaseInstance.logEvent("share_from_main_act", bundle);
+
+
         ProgressDialog pd1 = new ProgressDialog(MainActivity.this);
         pd1.setTitle("Please wait");
         pd1.setMessage("Processing uncropped images");
@@ -2223,6 +2370,10 @@ public class MainActivity extends AppCompatActivity implements ListFilesAdapter.
 
     private void copyToClipBoard(boolean deleteAfter) {
 
+
+        Bundle bundle = new Bundle();
+
+        firebaseInstance.logEvent("copy_docs_main_act", bundle);
 
         simpleToast("Copied to clipboard");
         Utils.vibrate(MainActivity.this, 25);

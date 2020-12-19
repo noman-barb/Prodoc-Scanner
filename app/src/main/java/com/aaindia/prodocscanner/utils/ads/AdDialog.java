@@ -1,6 +1,8 @@
 package com.aaindia.prodocscanner.utils.ads;
 
 import android.app.Activity;
+import android.os.CountDownTimer;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +14,9 @@ import com.aaindia.prodocscanner.R;
 import com.google.android.ads.nativetemplates.TemplateView;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import java.util.Observable;
+import java.util.logging.Handler;
 
 public class AdDialog {
 
@@ -27,6 +32,8 @@ public class AdDialog {
 
         LinearLayout layout = (LinearLayout) li.inflate(R.layout.ad_dialog, null);
         template = layout.findViewById(R.id.ad_template_dialog);
+
+
 
         builder = new MaterialAlertDialogBuilder(context);
         builder.setCancelable(false);
@@ -45,12 +52,24 @@ public class AdDialog {
             }
         });
 
+        new CountDownTimer(2500, 500) {
+            public void onTick(long millisUntilFinished) {
+
+            }
+
+            public void onFinish() {
+                dialog.setCancelable(true);
+            }
+        }.start();
+
+
+
     }
 
 
-   public AdDialog setAd(UnifiedNativeAd nativeAd){
+    public AdDialog setAd(UnifiedNativeAd nativeAd) {
 
         template.setNativeAd(nativeAd);
         return this;
-   }
+    }
 }

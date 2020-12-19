@@ -44,14 +44,18 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
+import com.aaindia.prodocscanner.App;
 import com.aaindia.prodocscanner.R;
 import com.aaindia.prodocscanner.activityExtenders.ScanPreview.EditScanViewActivity;
+import com.aaindia.prodocscanner.activityExtenders.ScanPreview.ScanViewActivity;
+import com.aaindia.prodocscanner.constants.AdIds;
 import com.aaindia.prodocscanner.databinding.ActivityImageCropBinding;
 import com.aaindia.prodocscanner.utils.BitmapUtils;
 import com.aaindia.prodocscanner.utils.FileNav;
 import com.aaindia.prodocscanner.utils.MatFilter;
 import com.aaindia.prodocscanner.utils.Prefs;
 import com.aaindia.prodocscanner.utils.ViewUtils;
+import com.aaindia.prodocscanner.utils.ads.AdDialog;
 import com.aaindia.prodocscanner.views.PolygonView;
 import com.aaindia.prodocscanner.wrappers.BitmapMat;
 import com.aaindia.prodocscanner.wrappers.Effects;
@@ -66,7 +70,11 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.slider.Slider;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 
 import org.opencv.android.BaseLoaderCallback;
@@ -103,6 +111,7 @@ import smartdevelop.ir.eram.showcaseviewlib.config.Gravity;
 public class ImageCropActivity extends AppCompatActivity implements View.OnClickListener {
 
 
+
     public static final String GLOBAL_ROTATION = "global_rotation";
     public static final String COLOR_TUNE = "color_tune";
     ActivityImageCropBinding binding;
@@ -112,6 +121,7 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     public static final String COLOR_IS_GRAY = "color_is_gray";
     public static final String CORNERS = "corners";
 
+    public static final String ACTIVITY_NAME = "IMAGE_CROP_ACTIVITY";
     private Bitmap displayBitmap = null;
 
 
@@ -147,10 +157,14 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     boolean isNextClicked = false;
 
 
+
     ExecutorService executorService;
 
     boolean isProcessing = false;
 
+    public static int nTimesOpened=-1;
+    public static boolean adNeverShown = true;
+    private boolean adShown = false;
 
     @Override
     public void onBackPressed() {
@@ -163,9 +177,52 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
     }
 
 
+
+
+
+
+
+    public void showAd(){
+
+
+
+
+        if (CameraScanActivity.unifiedNativeAd ==null || adShown){
+            return;
+        }
+
+
+
+
+
+        if(adNeverShown || nTimesOpened==5 || nTimesOpened==10 || (nTimesOpened>10 && nTimesOpened%10==0) )
+
+        try {
+            new AdDialog(ImageCropActivity.this)
+                    .setAd(CameraScanActivity.unifiedNativeAd);
+            adShown = true;
+            adNeverShown = false;
+
+
+
+        }
+        catch (Exception e){}
+
+
+
+    }
+
+
+
+
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        nTimesOpened++;
+
 
 
         executorService = Executors.newFixedThreadPool(2);
@@ -271,6 +328,8 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
 
 
     }
+
+
 
     private void checkIfBitmapInMemory() {
 
@@ -979,13 +1038,13 @@ public class ImageCropActivity extends AppCompatActivity implements View.OnClick
                     return;
                 }
 
-                initialCropApplied = true;
 
                 if (!isLoaded)
                     return;
 
+                initialCropApplied = true;
 
-
+                showAd();
                 processDisplayImage();
                 break;
 

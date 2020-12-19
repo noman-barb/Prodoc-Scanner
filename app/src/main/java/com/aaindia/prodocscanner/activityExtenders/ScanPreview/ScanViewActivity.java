@@ -47,6 +47,7 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.slider.Slider;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.jsibbold.zoomage.ZoomageView;
 
 
@@ -96,6 +97,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     private boolean colorTuneListen = true;
     private BottomSheetBehavior<LinearLayout> sheetBehavior;
+    private FirebaseAnalytics firebaseInstance;
 
     public void setColorTuneListen(boolean b) {
         colorTuneListen = b;
@@ -133,8 +135,211 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     public ExecutorService executorService2;
 
+    private boolean isAdShown = false;
 
-    public void loadAd1() {
+    private boolean canShowAdOnLoad = false;
+
+    private UnifiedNativeAd nativeAd = null;
+
+
+    public void showAdOnInteraction(){
+
+
+
+        if (App.ADS_RECORD.containsKey(getScanDirPath()) &&
+
+                System.currentTimeMillis() - App.ADS_RECORD.get(getScanDirPath()) < 15*1000
+        ){
+
+            getFirebaseInstance().logEvent("ad_not_shown_limit_scan_view_2", new Bundle());
+            return;
+
+        }
+
+
+        if (isAdShown){
+            canShowAdOnLoad = true;
+            getFirebaseInstance().logEvent("ad_not_shown_adshown_scan_view_2", new Bundle());
+            return;
+        }
+
+        if (nativeAd ==null){
+            canShowAdOnLoad = true;
+            getFirebaseInstance().logEvent("ad_not_shown_null_scan_view_2", new Bundle());
+            return;
+        }
+
+
+        try {
+            new AdDialog(ScanViewActivity.this)
+                    .setAd(nativeAd);
+            App.ADS_RECORD.put(getScanDirPath(), System.currentTimeMillis());
+
+            isAdShown = true;
+            getFirebaseInstance().logEvent("ad_shown_scan_view_2", new Bundle());
+        }
+        catch (Exception e){}
+
+
+
+    }
+
+
+    public void showAdOnInteraction2(){
+
+
+
+        if (App.ADS_RECORD.containsKey(getScanDirPath()) &&
+
+                System.currentTimeMillis() - App.ADS_RECORD.get(getScanDirPath()) < 8*1000
+        ){
+
+            getFirebaseInstance().logEvent("ad_not_shown_limit_scan_view_3", new Bundle());
+            return;
+
+        }
+
+
+        if ( nativeAd == null){
+            getFirebaseInstance().logEvent("ad_not_shown_null_scan_view_3", new Bundle());
+            return;
+        }
+
+
+        try {
+            new AdDialog(ScanViewActivity.this)
+                    .setAd(nativeAd);
+            App.ADS_RECORD.put(getScanDirPath(), System.currentTimeMillis());
+            getFirebaseInstance().logEvent("ad_shown_scan_view_3", new Bundle());
+
+        }
+        catch (Exception e){}
+
+
+
+    }
+
+
+
+
+    public void loadAdOnInteraction(){
+
+
+
+        if (App.ADS_RECORD.containsKey(getScanDirPath()) &&
+
+                System.currentTimeMillis() - App.ADS_RECORD.get(getScanDirPath()) < 15*1000
+        ){
+
+
+            Bundle bundle = new Bundle();
+
+            bundle.putString(FirebaseAnalytics.Param.SCREEN_CLASS, "ScanViewGrid");
+            getFirebaseInstance().logEvent("ad_limit_scan_view_2", bundle);
+
+
+            return;
+
+        }
+
+
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString(FirebaseAnalytics.Param.SCREEN_CLASS, "ScanViewGrid");
+        getFirebaseInstance().logEvent("ad_load_scan_view_2", bundle);
+
+
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SCAN_PREVIEW_ACTIVITY)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+                        nativeAd = unifiedNativeAd;
+
+                        if (canShowAdOnLoad && !isAdShown){
+                            showAdOnInteraction();
+                        }
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+
+
+
+    public void loadAdOnInteraction2(){
+
+
+
+        if (App.ADS_RECORD.containsKey(getScanDirPath()) &&
+
+                System.currentTimeMillis() - App.ADS_RECORD.get(getScanDirPath()) < 9*1000
+        ){
+
+
+
+            getFirebaseInstance().logEvent("ad_limit_scan_view_3", new Bundle());
+
+
+            return;
+
+        }
+
+
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString(FirebaseAnalytics.Param.SCREEN_CLASS, "ScanViewGrid");
+        getFirebaseInstance().logEvent("ad_load_scan_view_3", bundle);
+
+
+        AdLoader adLoader = new AdLoader.Builder(this, AdIds.SCAN_PREVIEW_ACTIVITY)
+                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                    @Override
+                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+                        nativeAd = unifiedNativeAd;
+
+
+                    }
+                })
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+
+
+
+    public void loadAndShowAd1() {
+
+
+
+        if (App.ADS_RECORD.containsKey(getScanDirPath()) &&
+
+                System.currentTimeMillis() - App.ADS_RECORD.get(getScanDirPath()) < 15*1000
+        ){
+
+
+            Bundle bundle = new Bundle();
+
+            bundle.putString(FirebaseAnalytics.Param.SCREEN_CLASS, "ScanViewGrid");
+            getFirebaseInstance().logEvent("ad_limit_scan_view_1", bundle);
+
+
+
+            return;
+
+        }
+
+
+
+        getFirebaseInstance().logEvent("ad_load_scan_view_1", new Bundle());
+
 
 
         AdLoader adLoader = new AdLoader.Builder(this, AdIds.SCAN_PREVIEW_ACTIVITY)
@@ -147,6 +352,9 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                         try {
                             new AdDialog(ScanViewActivity.this)
                                     .setAd(unifiedNativeAd);
+                            App.ADS_RECORD.put(getScanDirPath(), System.currentTimeMillis());
+                            isAdShown = true;
+                            getFirebaseInstance().logEvent("ad_shown_scan_view_1", new Bundle());
                         }
                         catch (Exception e){}
 
@@ -163,6 +371,12 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+
+        firebaseInstance = FirebaseAnalytics.getInstance(this);
+
+        loadAdOnInteraction();
 
         executorService2 = Executors.newFixedThreadPool(3);
 
@@ -275,7 +489,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
         bottomsheetBehaviour();
 
-        loadAd1();
+
 
 
     }
@@ -591,6 +805,8 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
+    int nCropped = 1;
+    int lastIndexProcessed = -1;
     @Override
     public void process(int postion, ScanPreviewAdapter.ViewHolder holder) {
 
@@ -598,8 +814,35 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             return;
 
 
+        if (lastIndexProcessed!=postion){
+
+            if (nCropped==1){
+                showAdOnInteraction();
+            }
+            else{
+
+                if (nCropped==3 || nCropped==11 || (nCropped>=22 && nCropped%22==0)){
+                    loadAdOnInteraction2();
+                }
+
+                if (nCropped==5 || nCropped ==13 || (nCropped>24 && nCropped%24==0)){
+                    showAdOnInteraction2();
+                }
+            }
+
+        }
+
+
+
+
+
         isProcessing = true;
         processImage(holder, postion, false);
+
+        nCropped++;
+
+        lastIndexProcessed = postion;
+
 
 
     }
@@ -716,6 +959,7 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             if (holder == null || holder.processing == null)
                 return;
 
+
             chooseColor(holder, position);
         } else if (id == R.id.rotateRL) {
             if (position < 0)
@@ -807,6 +1051,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
             if (holder == null || holder.processing == null)
                 return;
 
+            Bundle bundle = new Bundle();
+
+            getFirebaseInstance().logEvent("copy_single_page", bundle);
+
             copySinglePage(holder, position);
 
         } else if (id == R.id.pasteRL) {
@@ -818,6 +1066,10 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
                 return;
 
             getBottomMenu1().setState(getBottomMenu1().STATE_HIDDEN);
+
+            Bundle bundle = new Bundle();
+
+            getFirebaseInstance().logEvent("paste_pages", bundle);
 
             paste(position);
 
@@ -1128,5 +1380,13 @@ public class ScanViewActivity extends AppCompatActivity implements View.OnClickL
 
     public void onScanDirPathChange(String path) {
 
+    }
+
+    public FirebaseAnalytics getFirebaseInstance() {
+        return firebaseInstance;
+    }
+
+    public void setFirebaseInstance(FirebaseAnalytics firebaseInstance) {
+        this.firebaseInstance = firebaseInstance;
     }
 }

@@ -52,6 +52,7 @@ import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.nguyenhoanglam.imagepicker.model.Image;
 import com.nguyenhoanglam.imagepicker.ui.imagepicker.ImagePicker;
 
@@ -82,6 +83,7 @@ import smartdevelop.ir.eram.showcaseviewlib.listener.GuideListener;
 
 public class CameraScanActivity extends CameraPreviewActivity {
 
+    public static String ACTIVITY_NAME = "CameraScanActivity";
 
     public static final String IMPORT_IMAGES = "import_images";
     private static final int PERMISION_REQUEST_CODE_STORAGE = 2420;
@@ -128,7 +130,10 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     ExecutorService imageCaptureExecutorService = null;
 
-    private int showAdAt = 5;
+
+
+    public static UnifiedNativeAd unifiedNativeAd = null;
+
 
 
     private boolean showGuide = false;
@@ -186,6 +191,43 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
     }
+
+
+
+    public void loadAd(){
+
+
+        if (scanMode == Prefs.UserSettingsCaptureImageWrapper.SCAN_MODE_SINGLE){
+
+
+            if (numPages==0 || numPages==4 || numPages==9 || (numPages>10 && numPages%9==0) ){
+
+
+                Log.d("aaaaaa", "req");
+                AdLoader adLoader = new AdLoader.Builder(this, AdIds.IMAGE_CROP_ACTIVITY)
+                        .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
+                            @Override
+                            public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+
+                                CameraScanActivity.unifiedNativeAd = unifiedNativeAd;
+
+                                Log.d("aaaaaa", "loaded");
+                            }
+                        })
+                        .build();
+
+                adLoader.loadAd(new AdRequest.Builder().build());
+
+            }
+
+
+        }
+
+
+
+
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -552,6 +594,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
 
 
         Utils.checkOpenCV(this);
@@ -965,32 +1008,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
 
-    private void loadAd1() {
 
-
-        AdLoader adLoader = new AdLoader.Builder(this, AdIds.CAMERA_SCAN_ACTIVITY)
-                .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
-                    @Override
-                    public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
-
-
-
-                        try {
-                            new AdDialog(CameraScanActivity.this)
-                                    .setAd(unifiedNativeAd);
-                        }
-                        catch (Exception e){}
-
-
-
-                    }
-                })
-                .build();
-
-        adLoader.loadAd(new AdRequest.Builder().build());
-
-
-    }
 
     @Override
     public void captureImage(ImageView view) {
@@ -1003,12 +1021,7 @@ public class CameraScanActivity extends CameraPreviewActivity {
 
 
 
-        if (numPages==showAdAt){
-
-            showAdAt*=2;
-            loadAd1();
-        }
-
+        loadAd();
 
 
         imageCaptureExecutorService = initializeExecutor(imageCaptureExecutorService, 1);

@@ -49,6 +49,7 @@ import com.google.android.ads.nativetemplates.TemplateView;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -82,10 +83,11 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
 
         binding.recyclerView.setVisibility(View.GONE);
         binding.gridRecyclerView.setVisibility(View.VISIBLE);
@@ -170,14 +172,22 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
         binding.selectMultipleRL.setOnClickListener(this);
 
 
+
         if (getIntent() != null && getIntent().getExtras() != null && getIntent().getExtras().getBoolean(ScanPreviewActivity.NEW_SCAN, false)) {
 
+
+
+            getFirebaseInstance().logEvent("screen_scan_view_new_scan", new Bundle());
 
             singlePageViewModeToggle(true, null, 0);
 
 
         } else {
 
+
+            getFirebaseInstance().logEvent("screen_scan_view_new_scan", new Bundle());
+
+            loadAndShowAd1();
 
             if (!adapter.firstTime) {
 
@@ -681,6 +691,8 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
 
         valueAnimator.start();
 
+        adapter.notifyDataSetChanged();
+
     }
 
     private void syncDataAcrossViews() {
@@ -719,6 +731,10 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
     private void copySelected() {
+
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("copy_selected", bundle);
 
 
         App.CLIPBOARD.clear();
@@ -994,6 +1010,12 @@ public class GridScanViewActivity extends EditScanViewActivity implements GridSc
     }
 
     private void deleteSelected() {
+
+
+        Bundle bundle = new Bundle();
+
+        getFirebaseInstance().logEvent("delete_selected", bundle);
+
 
 
         SpannableString cancel = new SpannableString("Cancel");

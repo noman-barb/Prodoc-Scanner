@@ -22,8 +22,8 @@ android {
         applicationId "com.aaindia.prodocscanner"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 102
-        versionName "3.3.42"
+        versionCode 106
+        versionName "3.3.46"
 
 
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -76,6 +76,8 @@ android {
 
             // Specifies a list of ABIs that Gradle should create APKs for.
             // include "x86", "x86_64"
+
+            include "armeabi-v7a"
 
             // Specifies that we do not want to also generate a universal APK that includes all ABIs.
             universalApk false

@@ -41,6 +41,10 @@
         </activity>
         <activity
 
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+
             android:name=".ocr.OcrActivity"
             android:label="@string/ocr_activity_label">
             <intent-filter>

@@ -43,6 +43,8 @@ public class App extends Application {
     public static LinkedList<CompleteEffectHolder> CLIPBOARD = new LinkedList<>();
 
 
+    public static HashMap<String, Long> ADS_RECORD = new HashMap<>();
+
 
 
 
